@@ -1,0 +1,56 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# node / js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# go
+*.exe
+*.exe~
+*.test
+*.out
+
+# build / dist
+/build/
+/dist/
+/out/
+coverage/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# logs
+*.log
+
+# claude code — local state (committed: skills/agents/hooks/commands)
+.claude/state/
+.claude/tmp/
+.claude/projects/
+.claude/settings.local.json
+.claude/hook-warnings.json
+.claude/alerts-acknowledged.json
+.claude/session-activity.jsonl
+.claude/override-log.jsonl
+
+# claude code — machine-specific binaries (will rebuild per platform)
+tools/**/*.exe
+tools/**/bin/

@@ -1,0 +1,80 @@
+name: Semgrep
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - "LICENSE"
+      - "CONTRIBUTING.md"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
+  pull_request:
+    branches: ["main"]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - "LICENSE"
+      - "CONTRIBUTING.md"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
+  schedule:
+    - cron: "17 13 * * 3"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    name: Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Semgrep
+        run: pip install semgrep==1.67.0
+
+      # Run local custom rules from .semgrep/rules/
+      # No --error flag: findings are informational (uploaded via SARIF).
+      - name: Run local custom rules
+        run: |
+          semgrep --config .semgrep/rules/ \
+            --sarif \
+            --output=semgrep-local.sarif \
+            . || true
+
+      # Test Semgrep rules against annotation files
+      - name: Test Semgrep rules
+        if: always()
+        run: |
+          semgrep --test \
+            --config .semgrep/rules/ \
+            tests/semgrep/
+
+      - name: Verify SARIF output exists
+        if: always()
+        run: test -s semgrep-local.sarif || { echo "::error::semgrep-local.sarif missing or empty — Semgrep scan may have failed silently"; exit 1; }
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
+        if: always() && hashFiles('semgrep-local.sarif') != ''
+        with:
+          sarif_file: semgrep-local.sarif
+          category: semgrep-local

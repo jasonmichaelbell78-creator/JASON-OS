@@ -1,0 +1,76 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Write",
+      "Bash(*)",
+      "WebSearch",
+      "WebFetch",
+      "Skill",
+      "mcp__sonarcloud",
+      "mcp__memory",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "mcp__plugin_episodic-memory_episodic-memory__search"
+    ],
+    "deny": [
+      "Bash(git push --force *)",
+      "Bash(git push origin main)",
+      "Bash(git reset --hard *)",
+      "Bash(rm -rf *)"
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_CODE_GLOB_TIMEOUT_SECONDS": "60"
+  },
+  "enableAllProjectMcpServers": true,
+  "disabledMcpjsonServers": [],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/check-mcp-servers.js",
+            "statusMessage": "Checking MCP availability...",
+            "continueOnError": true
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^(?i)bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push *)",
+            "command": "node .claude/hooks/block-push-to-main.js",
+            "statusMessage": "Checking push target..."
+          }
+        ]
+      },
+      {
+        "matcher": "^(?i)read$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/large-file-gate.js",
+            "continueOnError": true
+          }
+        ]
+      },
+      {
+        "matcher": "^(?i)(write|edit)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/settings-guardian.js"
+          }
+        ]
+      }
+    ]
+  }
+}

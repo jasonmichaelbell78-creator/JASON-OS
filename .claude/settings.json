@@ -27,6 +27,11 @@
   },
   "enableAllProjectMcpServers": true,
   "disabledMcpjsonServers": [],
+  "statusLine": {
+    "type": "command",
+    "command": "bash .claude/statusline-command.sh",
+    "padding": 2
+  },
   "hooks": {
     "SessionStart": [
       {

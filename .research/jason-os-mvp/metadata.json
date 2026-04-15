@@ -1,0 +1,186 @@
+{
+  "topic": "JASON-OS MVP",
+  "slug": "jason-os-mvp",
+  "reframedQuestion": "What spine + organs make SoNash feel like home, and what is the smallest JASON-OS delta that replicates that feel?",
+  "date": "2026-04-15",
+  "depth": "L1",
+  "questionType": "decision-strategy",
+  "domain": "technology",
+  "agentCount": 18,
+  "sessionNumber": 1,
+  "startedAt": "2026-04-15T00:00:00Z",
+  "completedAt": "2026-04-15T00:00:00Z",
+  "synthesisVersion": "1.1",
+  "lastSynthesized": "2026-04-15T00:00:00Z",
+  "reSynthesized": true,
+  "reSynthesisDate": "2026-04-15",
+  "reSynthesisReason": "post-verification corrections + challenge adjustments exceeded 20% threshold",
+  "mode": "post-verification",
+  "sourceCount": 55,
+  "claimCount": 47,
+  "confidenceDistribution": {
+    "HIGH": 42,
+    "MEDIUM": 4,
+    "LOW": 0,
+    "UNVERIFIED": 1
+  },
+  "verificationStats": {
+    "VERIFIED": 39,
+    "REFUTED": 2,
+    "CONFLICTED": 2,
+    "UNVERIFIABLE": 1,
+    "PARTIALLY_REFUTED": 1,
+    "DERIVED": 1,
+    "UNVERIFIED": 1
+  },
+  "hasDebtCandidates": true,
+  "debtCandidates": [
+    "/todo skill script stack entirely missing (todos-cli.js, render-todos.js, todos-mutations.js, .planning/todos.jsonl)",
+    "deep-research hasDebtCandidates routing dead-end — routes to /add-debt which does not exist in JASON-OS",
+    "session-begin Phase 3 health scripts reference npm run patterns:check, session:gaps, hooks:health — none exist in JASON-OS",
+    "pre-commit-fixer referenced in CLAUDE.md guardrail #9 but skill does not exist in JASON-OS",
+    ".nvmrc absent — hooks call node directly with no version guarantee on new environments",
+    "scripts/planning/ directory entirely absent — blocking /todo and future session-end commit step"
+  ],
+  "consumerHints": {
+    "hasStackClaims": false,
+    "hasPitfallClaims": true,
+    "hasDebtCandidates": true,
+    "hasMemoryCandidates": true,
+    "hasArchitectureClaims": true,
+    "hasStrategicOpenQuestions": true,
+    "lowConfidenceCount": 5,
+    "refutedClaimCount": 2
+  },
+  "challengesApplied": [
+    "CH-C-001",
+    "CH-C-002",
+    "CH-C-003",
+    "CH-C-004",
+    "CH-C-005",
+    "CH-C-006",
+    "CH-C-007",
+    "CH-C-008",
+    "CH-C-009",
+    "CH-C-010",
+    "CH-O-001",
+    "CH-O-002",
+    "CH-O-003",
+    "CH-O-004",
+    "CH-O-005",
+    "CH-O-006",
+    "CH-O-007",
+    "CH-O-008"
+  ],
+  "crossModel": "unavailable",
+  "crossModelNote": "Gemini CLI not installed; cross-model verification not conducted",
+  "subQuestions": [
+    {
+      "id": "D1a",
+      "title": "rhythm-spine — what fires always-on",
+      "claimCount": 8
+    },
+    {
+      "id": "D1b",
+      "title": "rhythm-triggers — what fires conditionally",
+      "claimCount": 6
+    },
+    {
+      "id": "D2a",
+      "title": "settings/hooks/statusline organ",
+      "claimCount": 7
+    },
+    {
+      "id": "D2b",
+      "title": "permissions/MCP/keybindings organ",
+      "claimCount": 3
+    },
+    {
+      "id": "D2c",
+      "title": "CLAUDE.md graph organ",
+      "claimCount": 3
+    },
+    {
+      "id": "D2d",
+      "title": "auto-memory organ",
+      "claimCount": 2
+    },
+    {
+      "id": "D2e",
+      "title": "skills-loaded organ",
+      "claimCount": 3
+    },
+    {
+      "id": "D3a",
+      "title": "session-end archaeology",
+      "claimCount": 3
+    },
+    {
+      "id": "D3b",
+      "title": "debt-tracking archaeology",
+      "claimCount": 3
+    },
+    {
+      "id": "D3c",
+      "title": "pr-review archaeology",
+      "claimCount": 2
+    },
+    {
+      "id": "D3d",
+      "title": "pr-retro archaeology",
+      "claimCount": 2
+    },
+    {
+      "id": "D4",
+      "title": "hidden gaps diff",
+      "claimCount": 5
+    },
+    {
+      "id": "D5",
+      "title": "home-feel criteria (synthesized)",
+      "note": "Derived in synthesis. See RESEARCH_OUTPUT.md section (a)."
+    },
+    {
+      "id": "D6",
+      "title": "MVP scope derivation",
+      "note": "Reframed in v1.1 to 3 categories. See RESEARCH_OUTPUT.md section (d)."
+    },
+    {
+      "id": "OTB",
+      "title": "OTB gap claims",
+      "claimCount": 2
+    }
+  ],
+  "findingsFilesCompleted": 16,
+  "challengeFilesCompleted": 2,
+  "contradictionsFound": 5,
+  "contradictions": [
+    "CON-1: hasDebtCandidates JSON path — top-level vs consumerHints only (resolved: write both)",
+    "CON-2: pr-retro pr-ecosystem-audit dependency severity overstated in BOOTSTRAP_DEFERRED.md",
+    "CON-3: pr-retro TDMS as required vs user-gated (resolved: user-gated in practice)",
+    "CON-4: SoNash HOOKS.md incomplete relative to actual settings.json wiring",
+    "CON-5: JASON-OS settings.json MCP allow rules reference servers that don't exist"
+  ],
+  "gaps_noted": [
+    "session-start.js full behavior not audited (500+ lines, only first 80 read)",
+    "scripts/lib/safe-fs.js contents not verified for SoNash deps",
+    "post-write-validator.js inner checks not fully audited for portable subset",
+    "JASON-OS stack decision still TBD (CLAUDE.md §1-3)",
+    "user-prompt-handler.js GSD-specific sub-functions not line-by-line extracted for portable subset",
+    "JASON-OS skill versions not cross-checked for staleness vs SoNash",
+    "AgentSkills compatibility with SKILL.md not assessed",
+    "SoNash canonical-memory divergence cause not investigated"
+  ],
+  "challenges_planned": true,
+  "challenges_completed": true,
+  "selfAuditResult": "PASS",
+  "allFindingsHighConfidence": false,
+  "confidenceNote": "5 claims at MEDIUM (C-009, C-013, C-025, C-039 downgraded; home-feel criteria C-039). 2 REFUTED. Overall MEDIUM-HIGH.",
+  "sourcesTier": {
+    "T1_filesystem": 51,
+    "T2_prior_research": 1,
+    "T2_official_docs": 2,
+    "T3_community": 1,
+    "T4_external_reference": 2
+  }
+}

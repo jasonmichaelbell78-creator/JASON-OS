@@ -1,7 +1,7 @@
 {
   "version": 1,
   "status": "in-progress",
-  "phase": "phase-1-research",
+  "phase": "phase-3.95-ready-to-dispatch-wave-1",
   "topic": "JASON-OS MVP",
   "reframed_question": "What spine + organs make SoNash feel like home, and what's the smallest JASON-OS delta that replicates that feel?",
   "slug": "jason-os-mvp",
@@ -26,19 +26,40 @@
   ],
   "allocation": { "total_phase_1": 12, "wave_size": 4, "waves": 3 },
   "started_at": "2026-04-15",
-  "output_dir": "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\jason-os-mvp\\",
+  "output_dir": "C:\\Users\\jason\\Workspace\\dev-projects\\jason-os\\.research\\jason-os-mvp\\",
+  "locale_history": [
+    { "locale": "jbell", "path": "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\jason-os-mvp\\", "used_through_phase": "3.9" },
+    { "locale": "jason", "path": "C:\\Users\\jason\\Workspace\\dev-projects\\jason-os\\.research\\jason-os-mvp\\", "used_from_phase": "3.95" }
+  ],
   "current_wave": 3,
   "agents_completed": 12,
-  "phase": "phase-3.9-complete-awaiting-phase-3.95-checkpoint",
   "wave_1_completed": ["D1a", "D1b", "D2a", "D2b"],
   "wave_2_completed": ["D2c", "D2d", "D2e", "D3a"],
   "wave_3_completed": ["D3b", "D3c", "D3d", "D4"],
   "verifiers_completed": ["V1a (C-001-012)", "V1b (C-013-023)", "V2a (C-024-034)", "V2b (C-035-045)"],
   "challenges_completed": ["contrarian-v1 (10 challenges)", "otb-v1 (8 challenges)"],
   "re_synthesis_completed": "2026-04-15",
-  "paused_at": "phase-3.95-gap-pursuit-user-checkpoint",
-  "pause_reason": "User requested session handoff after re-synthesis. Resume at Phase 3.95 gap pursuit decision — Y to spawn gap agents, skip to Phase 4 self-audit, or review RESEARCH_OUTPUT.md first.",
-  "resume_next_phase": "phase-3.95-gap-pursuit",
+  "phase_3_95_scan_completed": "2026-04-15",
+  "phase_3_95_scan_items_total": 20,
+  "phase_3_95_scan_items_pursuable": 19,
+  "phase_3_95_scan_items_deferred_to_deep_plan": ["G16 (stack decision — strategic, not researchable)"],
+  "gap_agent_dispatch_plan": {
+    "option": "C (6 agents, 2 waves — splits the two heaviest agents)",
+    "plan_file": ".research/jason-os-mvp/PHASE_3_95_PLAN.md",
+    "wave_1": [
+      { "agent": "G1-session-rhythm-infra", "items": ["G1", "G2", "G14"] },
+      { "agent": "G2-knowledge-arch", "items": ["G6", "G10", "G15"] },
+      { "agent": "G3-hooks-extraction", "items": ["G3", "G4"] },
+      { "agent": "G4-governance-annotations", "items": ["G5", "G8", "G12", "G17"] }
+    ],
+    "wave_2": [
+      { "agent": "G5-navigation-skill-infra", "items": ["G7", "G9", "G11", "G13", "G18", "G20"] },
+      { "agent": "G6-agentskills-feasibility", "items": ["G19"] }
+    ]
+  },
+  "paused_at": "phase-3.95-pre-dispatch-session-restart",
+  "pause_reason": "Session restart required to register repo-local deep-research agents (.claude/agents/*) with Claude Code harness. Repo was cloned mid-session (initial working dir was empty), so agent definitions never loaded at session-start. Resume: verify deep-research-gap-pursuer appears in available subagent_types, then dispatch Wave 1 per PHASE_3_95_PLAN.md.",
+  "resume_next_phase": "phase-3.95-wave-1-dispatch",
   "verification_summary": {
     "verified": 39,
     "refuted": 2,
@@ -48,6 +69,7 @@
     "conflicted_ids": ["C-003", "C-006", "C-022"]
   },
   "re_synthesis_changes_applied": 18,
-  "cross_model": "unavailable (gemini CLI not installed)",
-  "notes": "D5/D6 are synthesis themes — Phase 2 synthesizer must explicitly address home-feel criteria; Phase 3.97 final-synthesizer must address MVP scope derivation."
+  "cross_model": "available (gemini CLI v0.34.0, authenticated via cached credentials on jason locale)",
+  "cross_model_candidates": ["C-023", "C-009", "C-039", "C-031", "C-G1"],
+  "notes": "D5/D6 are synthesis themes — Phase 2 synthesizer must explicitly address home-feel criteria; Phase 3.97 final-synthesizer must address MVP scope derivation. See PHASE_3_95_PLAN.md for full dispatch prompts."
 }

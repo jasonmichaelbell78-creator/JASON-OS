@@ -2,23 +2,8 @@
 # Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
 version: 2
 updates:
-  # Root project dependencies
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    groups:
-      # Group minor/patch updates to reduce PR noise
-      minor-and-patch:
-        update-types:
-          - "minor"
-          - "patch"
-    labels:
-      - "dependencies"
-    commit-message:
-      prefix: "chore(deps)"
+  # npm entry intentionally omitted until JASON-OS has a package.json.
+  # Re-add when stack is chosen.
 
   # GitHub Actions versions
   - package-ecosystem: "github-actions"

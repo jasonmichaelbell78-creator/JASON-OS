@@ -87,8 +87,11 @@
     "CH-O-007",
     "CH-O-008"
   ],
-  "crossModel": "unavailable",
-  "crossModelNote": "Gemini CLI not installed; cross-model verification not conducted",
+  "crossModel": "completed-partial",
+  "crossModelNote": "Gemini CLI v0.34.0 run on jason locale (2026-04-15). 4 of top-5 HIGH-confidence claims attempted (C-G1 skipped as redundant — already resolved by G6+GV1). Results: 3 verdicts returned (C-039 AGREE, C-009 AGREE, C-023 DISAGREE), 1 timed out (C-031 inconclusive). C-023 disagreement is the highest-value finding: Gemini flags '32 of 80 portable' as structural upper bound with known false-positives; runtime-verified subset is smaller. See findings/CROSS_MODEL_GEMINI.md.",
+  "crossModelFile": "findings/CROSS_MODEL_GEMINI.md",
+  "crossModelLocale": "jason",
+  "crossModelDisagreements": ["C-023"],
   "subQuestions": [
     {
       "id": "D1a",

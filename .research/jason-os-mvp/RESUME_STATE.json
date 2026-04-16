@@ -1,7 +1,7 @@
 {
-  "version": 1,
-  "status": "in-progress",
-  "phase": "phase-3.95-ready-to-dispatch-wave-1",
+  "version": 2,
+  "status": "completed",
+  "phase": "phase-4-cross-model-complete",
   "topic": "JASON-OS MVP",
   "reframed_question": "What spine + organs make SoNash feel like home, and what's the smallest JASON-OS delta that replicates that feel?",
   "slug": "jason-os-mvp",
@@ -26,50 +26,96 @@
   ],
   "allocation": { "total_phase_1": 12, "wave_size": 4, "waves": 3 },
   "started_at": "2026-04-15",
-  "output_dir": "C:\\Users\\jason\\Workspace\\dev-projects\\jason-os\\.research\\jason-os-mvp\\",
+  "completed_at": "2026-04-15",
+  "output_dir_current": "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\jason-os-mvp\\",
   "locale_history": [
     { "locale": "jbell", "path": "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\jason-os-mvp\\", "used_through_phase": "3.9" },
-    { "locale": "jason", "path": "C:\\Users\\jason\\Workspace\\dev-projects\\jason-os\\.research\\jason-os-mvp\\", "used_from_phase": "3.95" }
+    { "locale": "jason", "path": "C:\\Users\\jason\\Workspace\\dev-projects\\jason-os\\.research\\jason-os-mvp\\", "used_phases": "3.95-4" },
+    { "locale": "jbell", "path": "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\jason-os-mvp\\", "used_from_phase": "post-sync (pulled deae5b0 2026-04-16)" }
   ],
-  "current_wave": 3,
-  "agents_completed": 12,
+  "phases_completed": [
+    "phase-1-decomposition",
+    "phase-2-searchers (12 D-agents, waves 1-3)",
+    "phase-2.5-verification (4 V-agents)",
+    "phase-3-challenges (contrarian + otb)",
+    "phase-3.5-dispute-resolution",
+    "phase-3.7-resynthesis-v1.1",
+    "phase-3.9-verification",
+    "phase-3.95-gap-scan-and-dispatch",
+    "phase-3.95-gap-pursuit (6 G-agents, waves 1-2)",
+    "phase-3.96-gap-verification (2 GV-agents)",
+    "phase-3.97-resynthesis-v1.2",
+    "phase-4-cross-model-verification"
+  ],
+  "agent_totals": {
+    "discovery": 12,
+    "verifiers": 4,
+    "contrarian": 1,
+    "otb": 1,
+    "gap_pursuit": 6,
+    "gap_verifiers": 2,
+    "cross_model_queries": 4,
+    "total_agents": 26
+  },
   "wave_1_completed": ["D1a", "D1b", "D2a", "D2b"],
   "wave_2_completed": ["D2c", "D2d", "D2e", "D3a"],
   "wave_3_completed": ["D3b", "D3c", "D3d", "D4"],
   "verifiers_completed": ["V1a (C-001-012)", "V1b (C-013-023)", "V2a (C-024-034)", "V2b (C-035-045)"],
   "challenges_completed": ["contrarian-v1 (10 challenges)", "otb-v1 (8 challenges)"],
-  "re_synthesis_completed": "2026-04-15",
+  "re_synthesis_v1_1_completed": "2026-04-15",
   "phase_3_95_scan_completed": "2026-04-15",
   "phase_3_95_scan_items_total": 20,
   "phase_3_95_scan_items_pursuable": 19,
   "phase_3_95_scan_items_deferred_to_deep_plan": ["G16 (stack decision — strategic, not researchable)"],
-  "gap_agent_dispatch_plan": {
+  "gap_pursuit_dispatch": {
     "option": "C (6 agents, 2 waves — splits the two heaviest agents)",
     "plan_file": ".research/jason-os-mvp/PHASE_3_95_PLAN.md",
-    "wave_1": [
+    "wave_1_completed": [
       { "agent": "G1-session-rhythm-infra", "items": ["G1", "G2", "G14"] },
       { "agent": "G2-knowledge-arch", "items": ["G6", "G10", "G15"] },
       { "agent": "G3-hooks-extraction", "items": ["G3", "G4"] },
       { "agent": "G4-governance-annotations", "items": ["G5", "G8", "G12", "G17"] }
     ],
-    "wave_2": [
+    "wave_2_completed": [
       { "agent": "G5-navigation-skill-infra", "items": ["G7", "G9", "G11", "G13", "G18", "G20"] },
       { "agent": "G6-agentskills-feasibility", "items": ["G19"] }
     ]
   },
-  "paused_at": "phase-3.95-pre-dispatch-session-restart",
-  "pause_reason": "Session restart required to register repo-local deep-research agents (.claude/agents/*) with Claude Code harness. Repo was cloned mid-session (initial working dir was empty), so agent definitions never loaded at session-start. Resume: verify deep-research-gap-pursuer appears in available subagent_types, then dispatch Wave 1 per PHASE_3_95_PLAN.md.",
-  "resume_next_phase": "phase-3.95-wave-1-dispatch",
+  "gap_verifiers_completed": [
+    { "agent": "GV1-codebase-claims", "verified": 10, "refuted": 1, "partial": 1, "unverifiable": 1 },
+    { "agent": "GV2-cross-consistency", "contradictions_resolved": 3 }
+  ],
+  "re_synthesis_v1_2_completed": "2026-04-15",
+  "cross_model_verification": {
+    "tool": "gemini CLI v0.34.0",
+    "locale": "jason",
+    "completed_at": "2026-04-15",
+    "findings_file": "findings/CROSS_MODEL_GEMINI.md",
+    "claims_attempted": 4,
+    "claims_skipped": ["C-G1 (redundant — already resolved by G6+GV1)"],
+    "results": {
+      "agree": ["C-039 (auto-memory)", "C-009 (runAnalyze portability)"],
+      "disagree": ["C-023 (32/80 structural analysis — flagged as upper bound with known false-positives)"],
+      "inconclusive": ["C-031 (timed out)"]
+    },
+    "highest_value_finding": "C-023 DISAGREE — deep-plan must treat '32 of 80 portable' as structural upper bound, not ground truth"
+  },
   "verification_summary": {
-    "verified": 39,
-    "refuted": 2,
-    "conflicted": 3,
-    "unverifiable": 1,
+    "pre_gap": { "verified": 39, "refuted": 2, "conflicted": 3, "unverifiable": 1 },
+    "post_gap": { "verified": 59, "refuted": 2, "conflicted": 2, "unverifiable": 1, "partially_refuted": 1, "derived": 2 },
     "refuted_ids": ["C-015", "C-037"],
-    "conflicted_ids": ["C-003", "C-006", "C-022"]
+    "conflicted_ids": ["C-006", "C-022"]
   },
   "re_synthesis_changes_applied": 18,
-  "cross_model": "available (gemini CLI v0.34.0, authenticated via cached credentials on jason locale)",
-  "cross_model_candidates": ["C-023", "C-009", "C-039", "C-031", "C-G1"],
-  "notes": "D5/D6 are synthesis themes — Phase 2 synthesizer must explicitly address home-feel criteria; Phase 3.97 final-synthesizer must address MVP scope derivation. See PHASE_3_95_PLAN.md for full dispatch prompts."
+  "claim_count_final": 67,
+  "source_count_final": 63,
+  "confidence_distribution_final": { "HIGH": 63, "MEDIUM": 4, "LOW": 0, "UNVERIFIED": 0 },
+  "next_action": "deep-plan",
+  "deep_plan_inputs": {
+    "research_output": "RESEARCH_OUTPUT.md v1.2",
+    "open_strategic_questions": ["SQ-1 (extract-from-SoNash vs. design-from-scratch) — CRITICAL, must be resolved in discovery"],
+    "deferred_to_deep_plan": ["G16 (stack decision)"],
+    "caveats": ["Treat '32 of 80 portable' skill figure as structural upper bound (C-023 cross-model DISAGREE)"]
+  },
+  "notes": "D5/D6 are synthesis themes: Phase 2 synthesizer addressed home-feel criteria (§a); Phase 3.97 final-synthesizer addressed MVP scope derivation (§d) as 3-layer model (Layer 0 repairs, Layer 1 rhythm, Layer 2 ambient). One CRITICAL strategic question (SQ-1) deferred to deep-plan."
 }

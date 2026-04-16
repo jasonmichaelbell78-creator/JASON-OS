@@ -6,33 +6,44 @@
   "depth": "L1",
   "questionType": "decision-strategy",
   "domain": "technology",
-  "agentCount": 18,
+  "agentCount": 26,
   "sessionNumber": 1,
   "startedAt": "2026-04-15T00:00:00Z",
   "completedAt": "2026-04-15T00:00:00Z",
-  "synthesisVersion": "1.1",
+  "synthesisVersion": "1.2",
   "lastSynthesized": "2026-04-15T00:00:00Z",
   "reSynthesized": true,
   "reSynthesisDate": "2026-04-15",
-  "reSynthesisReason": "post-verification corrections + challenge adjustments exceeded 20% threshold",
-  "mode": "post-verification",
-  "sourceCount": 55,
-  "claimCount": 47,
+  "reSynthesisReason": "post-gap-pursuit: 6 gap agents (G1-G6), 2 gap verifiers (GV1, GV2), 20 new claims, 8 new sources, 5 critical corrections",
+  "mode": "post-gap-pursuit",
+  "sourceCount": 63,
+  "claimCount": 67,
   "confidenceDistribution": {
-    "HIGH": 42,
+    "HIGH": 63,
     "MEDIUM": 4,
     "LOW": 0,
-    "UNVERIFIED": 1
+    "UNVERIFIED": 0
   },
   "verificationStats": {
-    "VERIFIED": 39,
+    "VERIFIED": 59,
     "REFUTED": 2,
     "CONFLICTED": 2,
     "UNVERIFIABLE": 1,
     "PARTIALLY_REFUTED": 1,
-    "DERIVED": 1,
-    "UNVERIFIED": 1
+    "DERIVED": 2
   },
+  "gapFillRounds": 1,
+  "gapAgentCount": 6,
+  "gapClaimsAdded": 20,
+  "totalClaimsPostGap": 67,
+  "gapVerifierCount": 2,
+  "gapSources": [
+    "d-agent-gaps",
+    "low-unverified-claims",
+    "verification-gaps",
+    "missing-sub-questions",
+    "scope-gaps"
+  ],
   "hasDebtCandidates": true,
   "debtCandidates": [
     "/todo skill script stack entirely missing (todos-cli.js, render-todos.js, todos-mutations.js, .planning/todos.jsonl)",
@@ -40,7 +51,11 @@
     "session-begin Phase 3 health scripts reference npm run patterns:check, session:gaps, hooks:health — none exist in JASON-OS",
     "pre-commit-fixer referenced in CLAUDE.md guardrail #9 but skill does not exist in JASON-OS",
     ".nvmrc absent — hooks call node directly with no version guarantee on new environments",
-    "scripts/planning/ directory entirely absent — blocking /todo and future session-end commit step"
+    "scripts/planning/ directory entirely absent — blocking /todo and future session-end commit step",
+    "hooks/lib 4 files absent (git-utils.js, state-utils.js, sanitize-input.js, rotate-state.js) — compaction defense silently exits without them",
+    "write-invocation.ts references in all 9 ported skill Invocation Tracking sections — SoNash-specific, will error on invocation",
+    "14 of 16 CLAUDE.md guardrails are [BEHAVIORAL: honor-only] with no hook enforcement",
+    "EXTRACTIONS.md referenced in CLAUDE.md §7 but does not exist at session #1"
   ],
   "consumerHints": {
     "hasStackClaims": false,
@@ -49,7 +64,7 @@
     "hasMemoryCandidates": true,
     "hasArchitectureClaims": true,
     "hasStrategicOpenQuestions": true,
-    "lowConfidenceCount": 5,
+    "lowConfidenceCount": 3,
     "refutedClaimCount": 2
   },
   "challengesApplied": [
@@ -149,38 +164,71 @@
       "id": "OTB",
       "title": "OTB gap claims",
       "claimCount": 2
+    },
+    {
+      "id": "G1",
+      "title": "session rhythm infrastructure gap pursuit",
+      "claimCount": 5
+    },
+    {
+      "id": "G2",
+      "title": "knowledge architecture gap pursuit",
+      "claimCount": 3
+    },
+    {
+      "id": "G3",
+      "title": "hooks extraction gap pursuit",
+      "claimCount": 4
+    },
+    {
+      "id": "G4",
+      "title": "governance annotations gap pursuit",
+      "claimCount": 2
+    },
+    {
+      "id": "G5",
+      "title": "navigation, skill infra, and env gap pursuit",
+      "claimCount": 6
+    },
+    {
+      "id": "G6",
+      "title": "AgentSkills feasibility gap pursuit",
+      "claimCount": 2
     }
   ],
-  "findingsFilesCompleted": 16,
+  "findingsFilesCompleted": 18,
   "challengeFilesCompleted": 2,
-  "contradictionsFound": 5,
+  "contradictionsFound": 8,
   "contradictions": [
     "CON-1: hasDebtCandidates JSON path — top-level vs consumerHints only (resolved: write both)",
     "CON-2: pr-retro pr-ecosystem-audit dependency severity overstated in BOOTSTRAP_DEFERRED.md",
     "CON-3: pr-retro TDMS as required vs user-gated (resolved: user-gated in practice)",
     "CON-4: SoNash HOOKS.md incomplete relative to actual settings.json wiring",
-    "CON-5: JASON-OS settings.json MCP allow rules reference servers that don't exist"
+    "CON-5: JASON-OS settings.json MCP allow rules reference servers that don't exist",
+    "CON-6: G4 asserted git-utils.js present in JASON-OS hooks/lib — REFUTED by GV1 R1 and GV2 INTER-1 (filesystem authoritative: ABSENT)",
+    "CON-7: G3 serendipity note claimed D1b misclassified loop-detector as PostToolUse — WRONG: D1b had PostToolUseFailure correct; serendipity misattribution dropped",
+    "CON-8: post-write-validator.js sub-check count — D1b/D2a stated 10; G3 full read found 13 active named validators (G3 authoritative)"
   ],
   "gaps_noted": [
     "session-start.js full behavior not audited (500+ lines, only first 80 read)",
     "scripts/lib/safe-fs.js contents not verified for SoNash deps",
-    "post-write-validator.js inner checks not fully audited for portable subset",
     "JASON-OS stack decision still TBD (CLAUDE.md §1-3)",
-    "user-prompt-handler.js GSD-specific sub-functions not line-by-line extracted for portable subset",
-    "JASON-OS skill versions not cross-checked for staleness vs SoNash",
-    "AgentSkills compatibility with SKILL.md not assessed",
-    "SoNash canonical-memory divergence cause not investigated"
+    "pre-compaction-save.js input source line numbers (lines 49-58) not individually spot-checked — GV1 U1 UNVERIFIABLE",
+    "G4 GATE/BEHAVIORAL table vs D2c cross-check not completed — relationship between G4 §4.14 annotation and V2b settings-guardian verify not cross-confirmed",
+    "G5 ensure-fnm.sh absence claim in SoNash not independently re-verified (GV2 provisional)"
   ],
   "challenges_planned": true,
   "challenges_completed": true,
+  "gapPursuit_completed": true,
+  "gapVerification_completed": true,
   "selfAuditResult": "PASS",
   "allFindingsHighConfidence": false,
-  "confidenceNote": "5 claims at MEDIUM (C-009, C-013, C-025, C-039 downgraded; home-feel criteria C-039). 2 REFUTED. Overall MEDIUM-HIGH.",
+  "confidenceNote": "3 claims at MEDIUM (C-009, C-013, C-039 downgraded during verification). 2 REFUTED (C-015, C-037). 2 DERIVED (C-G2, C-G15). Overall MEDIUM-HIGH.",
   "sourcesTier": {
-    "T1_filesystem": 51,
+    "T1_filesystem": 59,
     "T2_prior_research": 1,
-    "T2_official_docs": 2,
+    "T2_official_docs": 3,
     "T3_community": 1,
-    "T4_external_reference": 2
+    "T4_external_reference": 3
   }
 }

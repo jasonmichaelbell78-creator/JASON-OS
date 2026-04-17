@@ -805,29 +805,23 @@ Each audit uses built-in `code-reviewer` agent or manual code-review pass on mod
 
 ## Post-Foundation Deferrals
 
-**Note:** This section is the TEMPORARY home until `/todo` goes operational (Layer 0 Step 0.1). After MI-6 migration (Step 3), this section becomes a 1-line pointer to the `/todo` backlog filter.
+**Migrated to `/todo` backlog 2026-04-17 per MI-6** (triggered by Layer 0 item 0.1 completion and Layer 0 audit PASS). Filter the live list with the `#foundation-deferral` tag. Items T3–T13 in `.planning/todos.jsonl` / `.planning/TODOS.md`:
 
-### Architecture / scope
-- **CLAUDE.md §3 Architecture fill-in** (D4). **Trigger:** post-sync-mechanism-research, when architecture emerges from that work.
-- **Memory bidirectional sync** (CH-C-010). **Trigger:** sync-mechanism research addresses this as core scope.
-- **Port `_shared/SELF_AUDIT_PATTERN.md` + `_shared/SKILL_STANDARDS.md` from SoNash** (raised 2026-04-17 during 0f port). After the skill-audit refresh, 7 references from skill-audit's SKILL.md and REFERENCE.md point into `_shared/` which does not exist in JASON-OS (dead links). **Trigger:** Layer 3 engagement (SKILL_INDEX.md pairs naturally with `_shared/` infrastructure) OR the first time a skill port requires SELF_AUDIT_PATTERN or SKILL_STANDARDS to complete its per-skill self-audit sub-step (MI-5). Whichever comes first. See PORT_ANALYSIS.md "0f port details" for full reference list.
-- **Port or rewrite `npm run skills:validate` references in skill-audit** (raised 2026-04-17 during 0f port). 5 advisory references in skill-audit/SKILL.md point to a SoNash npm script not in JASON-OS. Currently non-blocking (advisory, not a hard step). **Trigger:** (a) `skills:validate` ported to JASON-OS as part of Layer 3 validation tooling, OR (b) skill-audit refresh from a later SoNash branch that includes a stack-agnostic equivalent. If neither, rewrite the 5 pointers as manual equivalents.
+| Todo | Title | Priority | Source |
+|---|---|---|---|
+| T3 | CLAUDE.md §3 Architecture fill-in | P3 | D4 |
+| T4 | Memory bidirectional sync | P2 | CH-C-010 |
+| T5 | Port `_shared/SELF_AUDIT_PATTERN.md` + `SKILL_STANDARDS.md` from SoNash | P2 | 0f finding 2026-04-17 |
+| T6 | Port or rewrite `npm run skills:validate` refs in skill-audit | P3 | 0f finding 2026-04-17 |
+| T7 | Gemini CLI integration in `/pr-review` | P3 | D23 |
+| T8 | `pr-retro` skill port | P3 | BOOTSTRAP_DEFERRED |
+| T9 | `synthesize` + `recall` skill ports from SoNash | P2 | Step 2 finding 2026-04-17 |
+| T10 | `runAnalyze` mandatory mode flip | P3 | D6, D25 |
+| T11 | Husky pre-commit enrichment (14 deferred checks) | P3 | D36-revised |
+| T12 | Husky pre-push enrichment (11 deferred checks) | P3 | D36-revised |
+| T13 | Pattern cognition & propagation subsystem — full port | P2 | D37 |
 
-### Skills / integrations
-- **Gemini CLI integration in PR review** (D23). **Trigger:** after Qodo + SonarCloud stabilized + user wants another reviewer voice. Requires Gemini OAuth flow (CLI v0.38.1 installed; auth pending).
-- **`pr-retro` skill port** (BOOTSTRAP_DEFERRED.md). **Trigger:** `pr-ecosystem-audit` skill exists (or `pr-retro` simplified to standalone retro).
-- **`synthesize` + `recall` skill ports from SoNash** (raised 2026-04-17 during Step 2). Neither exists in JASON-OS yet. SoNash has active uncommitted upgrade work on both (second-locale work). Not in Foundation firm or gated scope. **Trigger:** (a) SoNash upstream commits land for synthesize + recall — user will signal; AND (b) JASON-OS scope expands to include either skill (expected during or after sync-mechanism research per MI-3, since synthesize touches the propagation pipeline). See PORT_ANALYSIS.md "Deferred — SoNash synthesize + recall skills" section for the full record.
-
-### Enforcement
-- **`runAnalyze` mandatory mode flip** (D6, D25). **Trigger:** ≥5 agents have PROACTIVELY clauses stable + workflow pattern stabilized (≥10 sessions using advisory mode).
-
-### Pre-commit / pre-push enrichment (D36-revised — 24 deferred checks total)
-- **Pre-commit additions:** ESLint, tests, lint-staged, pattern-compliance, propagation-staged, audit-s0s1, skill-validation, cognitive-complexity, cross-doc-deps, doc-headers, doc-index auto-update, agent compliance (non-blocking), debt-schema, JSONL-MD sync. **Triggers:** per-item (e.g., ESLint when stack declared JS/TS; audit-s0s1 when audit system lands; etc.).
-- **Pre-push additions:** circular-deps, pattern-compliance-push, code-reviewer gate, propagation full, hook-tests, security-check, tsc, cyclomatic-CC, cognitive-CC, npm-audit, event-triggers. **Triggers:** per-item (e.g., tsc when TypeScript stack; code-reviewer gate when track-agent-invocation ported in Layer 2).
-
-### Pattern cognition & propagation subsystem (D37)
-- **Scope:** Full port of 8 scripts + JSON registry + test suite + 7 npm scripts. Seeded by Layer 0+ item `0i`.
-- **Trigger:** After Foundation firm layers complete AND sync-mechanism research begins (they pair well — both are "propagate changes across locations").
+Trigger conditions preserved in each todo's description. Run `/todo` to review or update state. The PLAN.md Deferrals section is kept as this pointer for historical traceability; the backlog itself is `/todo`.
 
 ---
 

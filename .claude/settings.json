@@ -45,7 +45,7 @@
         ]
       },
       {
-        "matcher": "compact",
+        "matcher": "^compact$",
         "hooks": [
           {
             "type": "command",
@@ -57,7 +57,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "^(?i)bash$",
+        "matcher": "^[Bb]ash$",
         "hooks": [
           {
             "type": "command",
@@ -100,11 +100,10 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "^(?i)bash$",
+        "matcher": "^[Bb]ash$",
         "hooks": [
           {
             "type": "command",
-            "if": "Bash(git commit *)",
             "command": "bash .claude/hooks/run-node.sh commit-tracker.js",
             "continueOnError": true
           }

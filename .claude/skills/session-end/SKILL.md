@@ -316,6 +316,33 @@ runs `git add` + `git commit`, and `git push origin HEAD` unless the
 If `--no-push` was specified, skip the push; all prior steps still run —
 context is preserved locally without pushing.
 
+**Gate (MUST):** Confirm the script parsed `SESSION_CONTEXT.md` and produced
+a commit. Specifically:
+
+- The script printed `✓ Updated SESSION_CONTEXT.md (Uncommitted Work: No)`
+  **or** `✓ SESSION_CONTEXT.md already up to date`, AND
+- A new commit appears in `git log -1` (or the script reported
+  "No changes to SESSION_CONTEXT.md - session end already complete").
+
+If the script printed `⚠ Could not find Uncommitted Work field` and exited
+without committing, treat Step 10 as **failed** and execute the fallback
+below. Do not silently move on — the gate requires a successful close-out.
+
+**Fallback (MUST if script fails):** Manually close the session.
+
+```bash
+git status
+git add -A
+git commit -m "chore: session end"
+# push only if user approves and `--no-push` is NOT set
+git push origin HEAD
+```
+
+After M1's heading-format fix landed in `scripts/session-end-commit.js`, the
+script handles both the D12 5-field heading format and the legacy SoNash
+inline-bold format, so this fallback should rarely trigger. Keep it as
+belt-and-suspenders for unexpected `SESSION_CONTEXT.md` shapes.
+
 **Progress: Cleanup & closure complete (2/2 live phases).**
 
 ---

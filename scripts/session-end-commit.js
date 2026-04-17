@@ -114,27 +114,36 @@ function updateSessionContext() {
     return false;
   }
 
-  // Update "Uncommitted Work: Yes" to "Uncommitted Work: No"
-  if (content.includes("**Uncommitted Work**: Yes")) {
-    content = content.replaceAll("**Uncommitted Work**: Yes", "**Uncommitted Work**: No");
-    try {
-      safeWriteFileSync(SESSION_CONTEXT_PATH, content);
-    } catch (err) {
-      log(`❌ Failed to write SESSION_CONTEXT.md: ${getErrorMessage(err)}`, colors.red);
-      return false;
-    }
-    log("✓ Updated SESSION_CONTEXT.md (Uncommitted Work: No)", colors.green);
-    return true;
+  // Match BOTH the D12 5-field heading format ("## Uncommitted Work\n<value>")
+  // and the legacy SoNash inline-bold format ("**Uncommitted Work**: <value>").
+  // Group 1 captures the prefix (preserved on rewrite); group 2 captures Yes/No.
+  // Closes T14 from the /todo backlog.
+  const uncommittedWorkPattern =
+    /(\*\*Uncommitted Work\*\*:\s*|##\s*Uncommitted Work\s*\n)(Yes|No)/i;
+  const match = content.match(uncommittedWorkPattern);
+
+  if (!match) {
+    log("⚠ Could not find Uncommitted Work field", colors.yellow);
+    return false;
   }
 
-  // Already marked as no uncommitted work
-  if (content.includes("**Uncommitted Work**: No")) {
+  const [, prefix, value] = match;
+
+  if (/^no$/i.test(value)) {
     log("✓ SESSION_CONTEXT.md already up to date", colors.green);
     return false;
   }
 
-  log("⚠ Could not find Uncommitted Work field", colors.yellow);
-  return false;
+  // value is "Yes" — rewrite to "No" while preserving the matched prefix
+  content = content.replace(uncommittedWorkPattern, `${prefix}No`);
+  try {
+    safeWriteFileSync(SESSION_CONTEXT_PATH, content);
+  } catch (err) {
+    log(`❌ Failed to write SESSION_CONTEXT.md: ${getErrorMessage(err)}`, colors.red);
+    return false;
+  }
+  log("✓ Updated SESSION_CONTEXT.md (Uncommitted Work: No)", colors.green);
+  return true;
 }
 
 /**
@@ -208,26 +217,29 @@ function main() {
     runGit(["add", "SESSION_CONTEXT.md"]);
 
     // Log the hard-coded skips for audit trail
+    // m2: use process.execPath for consistent node resolution, resolve script
+    // path absolute via REPO_ROOT, and pass cwd: REPO_ROOT for parity with runGit.
+    const logOverrideScript = path.join(REPO_ROOT, "scripts", "log-override.js");
     try {
       execFileSync(
-        "node",
+        process.execPath,
         [
-          "scripts/log-override.js",
+          logOverrideScript,
           "--quick",
           "--check=doc-index",
           "--reason=Automated session-end commit",
         ],
-        { timeout: 3000, stdio: "pipe" }
+        { cwd: REPO_ROOT, timeout: 3000, stdio: "pipe" }
       );
       execFileSync(
-        "node",
+        process.execPath,
         [
-          "scripts/log-override.js",
+          logOverrideScript,
           "--quick",
           "--check=doc-header",
           "--reason=Automated session-end commit",
         ],
-        { timeout: 3000, stdio: "pipe" }
+        { cwd: REPO_ROOT, timeout: 3000, stdio: "pipe" }
       );
     } catch {
       /* non-blocking */

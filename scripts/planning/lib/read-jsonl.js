@@ -17,6 +17,7 @@ import { join } from "node:path";
 
 const require = createRequire(import.meta.url);
 const { streamLinesSync } = require("../../lib/safe-fs");
+const { sanitizeError } = require("../../lib/sanitize-error.cjs");
 
 /**
  * Read and parse a JSONL file from the planning directory.
@@ -37,15 +38,16 @@ export function readJsonl(planningDir, filename) {
       try {
         results.push(JSON.parse(trimmed));
       } catch (err) {
+        // CLAUDE.md §5: never log raw err.message — sanitize first.
         console.warn(
-          `WARNING: ${filename} line ${lineNum}: parse error — ${err instanceof Error ? err.message : String(err)}`
+          `WARNING: ${filename} line ${lineNum}: parse error — ${sanitizeError(err)}`
         );
       }
     });
     return results;
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`FATAL: Cannot read ${filename}: ${message}`);
+    // CLAUDE.md §5: never log raw err.message — sanitize first.
+    console.error(`FATAL: Cannot read ${filename}: ${sanitizeError(err)}`);
     process.exit(1);
   }
 }

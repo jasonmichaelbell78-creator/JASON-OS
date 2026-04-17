@@ -1,0 +1,31 @@
+#!/bin/sh
+# pre-commit — JASON-OS husky hook
+# Foundation minimum: gitleaks secrets scan.
+# Per D36-revised: additional checks (ESLint, tests, lint-staged,
+# pattern-compliance, propagation-staged, audit-s0s1, skill-validation,
+# cognitive-complexity, cross-doc-deps, doc-headers, doc-index, agent-
+# compliance, debt-schema, JSONL-MD sync) are Post-Foundation Deferrals
+# tracked in PLAN.md; they become single-line additions to this file
+# as each earns its trigger.
+
+. "$(dirname "$0")/_shared.sh"
+
+echo "Running pre-commit checks..."
+
+# --- Check 1: gitleaks (secrets detection) ---
+if is_skipped "secrets"; then
+  require_skip_reason "SKIP_CHECKS=secrets"
+  echo "  gitleaks skipped (SKIP_REASON: $SKIP_REASON)"
+elif command -v gitleaks >/dev/null 2>&1; then
+  if ! gitleaks protect --staged --redact --no-banner; then
+    echo "" >&2
+    echo "  Commit blocked by gitleaks (secrets detected in staged changes)" >&2
+    echo "  Fix: remove the secret from staging, then recommit." >&2
+    echo "  Skip (only if false positive): SKIP_CHECKS=secrets SKIP_REASON=\"...\" git commit" >&2
+    exit 1
+  fi
+  echo "  gitleaks: no secrets in staged changes"
+else
+  echo "  gitleaks not installed — secrets scan skipped (advisory)" >&2
+  echo "  Install: winget install Gitleaks.Gitleaks (Windows) or brew install gitleaks (macOS)" >&2
+fi

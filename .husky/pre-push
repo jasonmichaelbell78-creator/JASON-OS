@@ -1,0 +1,92 @@
+#!/bin/sh
+# pre-push — JASON-OS husky hook
+# Foundation minimum: escalation-gate (unacked error-severity warnings) +
+# block-push-to-main. Per D36-revised: additional checks (circular-deps,
+# pattern-compliance-push, code-reviewer gate, propagation full, hook-tests,
+# security-check, tsc, cyclomatic-CC, cognitive-CC, npm-audit, event-triggers)
+# are Post-Foundation Deferrals tracked in PLAN.md.
+
+. "$(dirname "$0")/_shared.sh"
+
+# --- Read stdin BEFORE spawning subshells (git feeds pre-push via stdin) ---
+STDIN_LINES="$(cat)"
+
+echo "Running pre-push checks..."
+
+# --- Check 1: escalation-gate — block on unacked error-severity warnings ---
+# Skip in CI (CI environments acknowledge on a different cadence).
+if [ "${CI:-}" = "true" ]; then
+  echo "  escalation-gate: skipped (CI environment)"
+elif is_skipped "warnings"; then
+  require_skip_reason "SKIP_CHECKS=warnings"
+  echo "  escalation-gate: skipped (SKIP_REASON: $SKIP_REASON)"
+else
+  ESCALATION_OUTPUT=$(node -e "
+    const fs = require('node:fs');
+    const warningsPath = '.claude/hook-warnings.json';
+    const ackPath = '.claude/state/hook-warnings-ack.json';
+    try {
+      if (!fs.existsSync(warningsPath)) process.exit(0);
+      const w = JSON.parse(fs.readFileSync(warningsPath, 'utf8'));
+      let ack = { acknowledged: {}, lastCleared: null };
+      try {
+        const parsedAck = JSON.parse(fs.readFileSync(ackPath, 'utf8'));
+        if (parsedAck && typeof parsedAck === 'object') {
+          ack.acknowledged = parsedAck.acknowledged || {};
+          ack.lastCleared = parsedAck.lastCleared || null;
+        }
+      } catch {}
+      const errors = (w.warnings || []).filter(e => {
+        if (e.severity !== 'error') return false;
+        const entryTime = new Date(e.timestamp).getTime();
+        const ackTime = ack.acknowledged[e.type];
+        if (ackTime && entryTime <= new Date(ackTime).getTime()) return false;
+        if (ack.lastCleared && entryTime <= new Date(ack.lastCleared).getTime()) return false;
+        return true;
+      });
+      if (errors.length > 0) {
+        errors.forEach(e => console.error('  ' + e.type + ': ' + e.message));
+        process.exit(1);
+      }
+    } catch (err) {
+      process.exit(0);
+    }
+  " 2>&1)
+  if [ $? -ne 0 ]; then
+    echo "" >&2
+    echo "  PUSH BLOCKED: unacknowledged error-severity warnings" >&2
+    echo "$ESCALATION_OUTPUT" >&2
+    echo "" >&2
+    echo "  Fix the underlying issues, or:" >&2
+    echo "  Skip: SKIP_CHECKS=warnings SKIP_REASON=\"...\" git push" >&2
+    exit 1
+  fi
+  echo "  escalation-gate: no unacked error-severity warnings"
+fi
+
+# --- Check 2: block direct push to main/master ---
+# Iterate the stdin lines we captured above; git pre-push feeds one line per ref.
+printf '%s\n' "$STDIN_LINES" | while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$remote_ref" ] && continue
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/master)
+      echo "" >&2
+      echo "  PUSH BLOCKED: direct push to $remote_ref is not allowed" >&2
+      echo "  Per CLAUDE.md §4.7: use a feature branch + PR, never direct push to main." >&2
+      echo "  Skip: SKIP_CHECKS=main SKIP_REASON=\"...\" git push" >&2
+      if is_skipped "main"; then
+        require_skip_reason "SKIP_CHECKS=main"
+        echo "  block-main: skipped (SKIP_REASON: $SKIP_REASON)" >&2
+        exit 0
+      fi
+      exit 1
+      ;;
+  esac
+done
+# Subshell exit codes don't propagate from `while` on POSIX — re-check by pattern match.
+if printf '%s\n' "$STDIN_LINES" | grep -q -E '^[^ ]+ [^ ]+ refs/heads/(main|master) '; then
+  if ! is_skipped "main"; then
+    exit 1
+  fi
+fi
+echo "  block-main: push target is a feature branch"

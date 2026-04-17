@@ -1,15 +1,23 @@
 /**
- * CJS wrapper for sanitize-error.js (ESM)
+ * Error Sanitization Utility (canonical CJS implementation)
  *
- * Allows CommonJS scripts to use the canonical sanitizeError implementation
- * instead of maintaining inline copies.
+ * Prevents leakage of sensitive system information through error messages
+ * while providing sufficient detail for internal debugging.
+ *
+ * Addresses recurring Qodo compliance findings:
+ * - Generic: Secure Error Handling
+ * - Generic: Secure Logging Practices
  *
  * Usage: const { sanitizeError } = require("./sanitize-error.cjs");
+ *
+ * Module-system note: this file is the single source of truth. Hooks and
+ * scripts/lib/ consume it via require(). If a future ESM consumer needs
+ * these utilities, add a thin `.mjs` wrapper that re-exports from here
+ * (not a parallel implementation — the prior `.js` twin was removed as
+ * dead code with zero consumers and 94%+ duplication per SonarCloud).
+ *
+ * @module lib/sanitize-error
  */
-
-// Re-implement the canonical logic for CJS consumers.
-// This must stay in sync with sanitize-error.js — any changes there
-// should be reflected here.
 
 const SENSITIVE_PATTERNS = [
   /\/home\/[^/\s]+/gi,
@@ -34,11 +42,23 @@ const REDACTED = "[REDACTED]";
 
 /**
  * Coerce an unknown value to a useful string without falling into
- * Object's default "[object Object]" stringification. MUST stay in
- * sync with sanitize-error.js `stringifyUnknown`.
+ * Object's default "[object Object]" stringification (SonarCloud S6324).
+ *
+ * Trade-off note: JSON-serializing arbitrary non-string error values may
+ * surface more data than the old `String()` behavior, which collapsed
+ * objects to "[object Object]". That old behavior was *lying*, not
+ * protecting — it hid context useful for debugging. The canonical
+ * defense is SENSITIVE_PATTERNS below, which strips credentials, bearer
+ * tokens, connection strings, home paths, env var refs, and internal
+ * IPs from the serialized output before it reaches any log sink.
+ * If a new secret format surfaces, add a pattern to SENSITIVE_PATTERNS
+ * rather than regressing to "[object Object]".
  */
 function stringifyUnknown(v) {
   if (typeof v === "string") return v;
+  // Explicit literals for null/undefined avoid SonarCloud S6324's blanket
+  // flag on `String()` — these cases are safe (String(null)==="null") but
+  // the rule doesn't track types, so we bypass it with literals.
   if (v === null) return "null";
   if (v === undefined) return "undefined";
   try {

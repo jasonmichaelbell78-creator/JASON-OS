@@ -112,13 +112,13 @@ that should become `[GATE]` once the named hook lands.
 ## 5. Critical Anti-Patterns
 
 Generic patterns that apply regardless of stack. Consult
-`scripts/lib/security-helpers.js` and `scripts/lib/sanitize-error.js` when
+`scripts/lib/security-helpers.js` and `scripts/lib/sanitize-error.cjs` when
 writing shell scripts, hooks, or any code touching file I/O, CLI args, or
 error output.
 
 | Pattern            | Rule                                                                         |
 | ------------------ | ---------------------------------------------------------------------------- |
-| Error sanitization | Use `scripts/lib/sanitize-error.js` — never log raw `error.message`          |
+| Error sanitization | Use `scripts/lib/sanitize-error.cjs` — never log raw `error.message`         |
 | Path traversal     | Use `/^\.\.(?:[\\/]&#124;$)/.test(rel)` NOT `startsWith('..')`               |
 | File reads         | Wrap ALL in try/catch (existsSync race condition)                            |
 | exec() loops       | `/g` flag REQUIRED on regex (no `/g` = infinite loop)                        |

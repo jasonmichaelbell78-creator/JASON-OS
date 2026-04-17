@@ -51,6 +51,26 @@ const SENSITIVE_PATTERNS = [
 const REDACTED = "[REDACTED]";
 
 /**
+ * Coerce an unknown value to a useful string without falling into
+ * Object's default "[object Object]" stringification (SonarCloud S6324).
+ * Strings pass through; everything else JSON-serializes; circular refs or
+ * other serialization errors fall back to Object.prototype.toString which
+ * at least reports the constructor tag.
+ *
+ * @param {unknown} v
+ * @returns {string}
+ */
+function stringifyUnknown(v) {
+  if (typeof v === "string") return v;
+  if (v === null || v === undefined) return String(v);
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return Object.prototype.toString.call(v);
+  }
+}
+
+/**
  * Sanitize an error message to remove potentially sensitive information.
  *
  * @param {unknown} error - The error to sanitize (Error object or any value)
@@ -65,16 +85,18 @@ export function sanitizeError(error, options = {}) {
     verbose = false,
   } = options;
 
-  // Extract message from various error types
+  // Extract message from various error types.
+  // stringifyUnknown() avoids "[object Object]" from String()/template literals
+  // by JSON-serializing non-strings (with a safe fallback for circular refs).
   let message;
   if (error instanceof Error) {
     message = error.message;
   } else if (typeof error === "string") {
     message = error;
   } else if (error && typeof error === "object" && "message" in error) {
-    message = String(error.message);
+    message = stringifyUnknown(error.message);
   } else {
-    message = String(error);
+    message = stringifyUnknown(error);
   }
 
   // In verbose/dev mode with explicit opt-in, return original

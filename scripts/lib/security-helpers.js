@@ -451,8 +451,8 @@ function maskEmail(email) {
   let maskedDomain;
   if (domainParts.length > 2) {
     const subdomains = domainParts.slice(0, -2);
-    const mainDomain = domainParts[domainParts.length - 2];
-    const tld = domainParts[domainParts.length - 1];
+    const mainDomain = domainParts.at(-2);
+    const tld = domainParts.at(-1);
     const maskedMainDomain = mainDomain.charAt(0) + "***";
     maskedDomain = [...subdomains, maskedMainDomain, tld].join(".");
   } else {

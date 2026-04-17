@@ -810,6 +810,8 @@ Each audit uses built-in `code-reviewer` agent or manual code-review pass on mod
 ### Architecture / scope
 - **CLAUDE.md §3 Architecture fill-in** (D4). **Trigger:** post-sync-mechanism-research, when architecture emerges from that work.
 - **Memory bidirectional sync** (CH-C-010). **Trigger:** sync-mechanism research addresses this as core scope.
+- **Port `_shared/SELF_AUDIT_PATTERN.md` + `_shared/SKILL_STANDARDS.md` from SoNash** (raised 2026-04-17 during 0f port). After the skill-audit refresh, 7 references from skill-audit's SKILL.md and REFERENCE.md point into `_shared/` which does not exist in JASON-OS (dead links). **Trigger:** Layer 3 engagement (SKILL_INDEX.md pairs naturally with `_shared/` infrastructure) OR the first time a skill port requires SELF_AUDIT_PATTERN or SKILL_STANDARDS to complete its per-skill self-audit sub-step (MI-5). Whichever comes first. See PORT_ANALYSIS.md "0f port details" for full reference list.
+- **Port or rewrite `npm run skills:validate` references in skill-audit** (raised 2026-04-17 during 0f port). 5 advisory references in skill-audit/SKILL.md point to a SoNash npm script not in JASON-OS. Currently non-blocking (advisory, not a hard step). **Trigger:** (a) `skills:validate` ported to JASON-OS as part of Layer 3 validation tooling, OR (b) skill-audit refresh from a later SoNash branch that includes a stack-agnostic equivalent. If neither, rewrite the 5 pointers as manual equivalents.
 
 ### Skills / integrations
 - **Gemini CLI integration in PR review** (D23). **Trigger:** after Qodo + SonarCloud stabilized + user wants another reviewer voice. Requires Gemini OAuth flow (CLI v0.38.1 installed; auth pending).

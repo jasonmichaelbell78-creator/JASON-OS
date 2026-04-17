@@ -104,6 +104,19 @@ audit checkpoint findings).
 
 **Pre-port doc-hygiene observation** (to handle during Layer 0+ item `0f` pre-analysis, not now): SKILL.md frontmatter declares `Document Version: 3.0 (2026-03-06)` but commit `eb258803` was titled "Wave 3 SKILL.md v4.0 bump". Reconcile the version string during the port — likely a commit-message-vs-content mismatch to correct on import.
 
+**Resolved during 0f port (2026-04-17):** The v3.0 declaration is what SoNash 41526 currently carries — no content mismatch in the files themselves. Commit `eb258803`'s "v4.0 bump" label appears to have been either reverted subsequently or overstated in the message. JASON-OS adopts v3.0 as declared to match source of truth. If SoNash later updates to v4.0 and JASON-OS wants to re-sync, the sync-mechanism research (MI-3) will carry it.
+
+**0f port details (2026-04-17):**
+
+- **Sanitization applied:** Invocation Tracking block stripped from SKILL.md (mirrors 0c's strip on the pre-refresh file — the block re-appeared when SoNash content was pulled in; re-strip preserves 0c's invariant that JASON-OS skills don't reference `write-invocation.ts`).
+- **AgentSkills fields restored:** `compatibility: agentskills-v1` + `metadata.version: 3.0` re-added to frontmatter (these were present on pre-refresh JASON-OS file via 0e; overwriting with SoNash content would have removed them).
+- **Retained as advisory (flagged for later):** 5 `npm run skills:validate` references in SKILL.md. The SoNash `skills:validate` script is not ported to JASON-OS and is not in any Foundation layer. Users running the refreshed skill-audit will see these pointers and get a missing-npm-script error if they execute them. The skill remains functional — these are advisory "if you have this command, run it" prompts, not hard steps. Flagged for follow-up: either port `skills:validate` or rewrite the prompts.
+- **Dead links flagged (not in Foundation scope):** Both SKILL.md (6 refs) and REFERENCE.md (1 ref) reference `_shared/SELF_AUDIT_PATTERN.md` and `_shared/SKILL_STANDARDS.md`. Neither `_shared/` dir nor its contents exist in JASON-OS. These refs are dead links that will render broken when followed. Options for later:
+  1. Port `_shared/SELF_AUDIT_PATTERN.md` + `_shared/SKILL_STANDARDS.md` — pairs naturally with MI-5 (per-skill self-audit work) and Layer 3 SKILL_INDEX infrastructure.
+  2. Rewrite refs in skill-audit to drop `_shared/` paths (content duplication).
+  Recommendation: Option 1, handled as a Layer 3 scope addition — log as Post-Foundation Deferral / migration-to-/todo candidate.
+- **User-action step outstanding:** ⚠️ After this commit lands, user should restart Claude Code session to reload the skill registry (per memory `feedback_agent_hot_reload.md`). NOT required immediately — the refreshed skill-audit is only invoked starting at MI-5 "per-skill self-audit" sub-steps during Layer 0 /todo port and beyond. Restart can be deferred to Layer 0+ completion boundary (after 0g and 0h), which is a natural session edge.
+
 **Process miss noted:** initial analysis misread `git merge-base --is-ancestor main 41526 → NO` as "41526 lacks the skill-audit commits." The ancestor check doesn't answer that — `branch --contains <sha>` does. Future port pre-analyses must use `--contains` directly, not ancestor inference, to avoid wrong-file-ported bugs.
 
 ---
@@ -128,7 +141,8 @@ audit checkpoint findings).
 
 | # | Source (SoNash) | Target (JASON-OS) | Refs Found | Upstream Callers | Downstream Deps | Verdict | Port Date | Commit SHA |
 |---|---|---|---|---|---|---|---|---|
-| *(no rows yet — first port row lands at Step 2 notes / Layer 0+ item `0f`)* | | | | | | | | |
+| 0f-a | `41526:.claude/skills/skill-audit/SKILL.md` | `.claude/skills/skill-audit/SKILL.md` | `write-invocation.ts: 2` (stripped), `npm run skills:validate: 5` (retained as advisory — see notes) | 20+ SoNash skills cross-reference; for JASON-OS only `skill-creator/SKILL.md` cross-refs | `_shared/SELF_AUDIT_PATTERN.md`, `_shared/SKILL_STANDARDS.md` (6 refs; **dead links in JASON-OS** — no `_shared/` dir) | `sanitize-then-copy` | 2026-04-17 | *pending commit* |
+| 0f-b | `41526:.claude/skills/skill-audit/REFERENCE.md` | `.claude/skills/skill-audit/REFERENCE.md` | 0 regex hits | Companion to SKILL.md (referenced from its Steps / Closure) | `_shared/SELF_AUDIT_PATTERN.md` (1 ref; **dead link in JASON-OS**) | `copy-as-is` | 2026-04-17 | *pending commit* |
 
 ---
 

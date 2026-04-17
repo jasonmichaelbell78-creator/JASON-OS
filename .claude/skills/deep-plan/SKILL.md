@@ -6,6 +6,9 @@ description: >-
   step-by-step implementation plan with audit checkpoints and convergence-loop
   verification of diagnosis and plan claims for user approval before any code is
   written.
+compatibility: agentskills-v1
+metadata:
+  version: 3.0
 ---
 
 <!-- prettier-ignore-start -->
@@ -324,12 +327,6 @@ companions), the executor MUST reference
 version history section, self-audit phase (Standard/Complex tier), line count
 under 300, MUST/SHOULD hierarchy. The skill-creator enforces these; direct
 execution from deep-plan must enforce them manually.
-
-**Invocation tracking** (MUST):
-
-```bash
-cd scripts/reviews && npx tsx write-invocation.ts --data '{"skill":"deep-plan","type":"skill","success":true,"schema_version":1,"completeness":"stub","origin":{"type":"manual"},"context":{"topic":"TOPIC","decisions":N}}'
-```
 
 **Completion message:** List artifacts (DIAGNOSIS.md, DECISIONS.md, PLAN.md),
 location, and execution route.

@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/check-mcp-servers.js",
+            "command": "bash .claude/hooks/run-node.sh check-mcp-servers.js",
             "statusMessage": "Checking MCP availability...",
             "continueOnError": true
           }
@@ -52,7 +52,7 @@
           {
             "type": "command",
             "if": "Bash(git push *)",
-            "command": "node .claude/hooks/block-push-to-main.js",
+            "command": "bash .claude/hooks/run-node.sh block-push-to-main.js",
             "statusMessage": "Checking push target..."
           }
         ]
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/large-file-gate.js",
+            "command": "bash .claude/hooks/run-node.sh large-file-gate.js",
             "continueOnError": true
           }
         ]
@@ -72,7 +72,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/settings-guardian.js"
+            "command": "bash .claude/hooks/run-node.sh settings-guardian.js"
           }
         ]
       }

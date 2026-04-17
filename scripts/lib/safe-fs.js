@@ -176,6 +176,26 @@ function safeRenameSync(src, dest) {
 }
 
 /**
+ * Normalize writeFileSync options for atomic-write use. Accepts string
+ * (encoding shorthand), object, or undefined. Applies `flag: "wx"` LAST so
+ * callers cannot override it — that flag is load-bearing for the
+ * tmp-create-or-fail semantics in safeAtomicWriteSync. Also avoids the
+ * `...(options || {})` empty-spread idiom (SonarCloud S6661).
+ *
+ * @param {string|object|undefined} options
+ * @returns {object}
+ */
+function normalizeAtomicWriteOptions(options) {
+  if (typeof options === "string") {
+    return { encoding: options, flag: "wx" };
+  }
+  if (options && typeof options === "object") {
+    return { ...options, flag: "wx" };
+  }
+  return { flag: "wx" };
+}
+
+/**
  * Safe atomic write: write to tmp, then rename to final.
  * Guards both tmp and final paths against symlinks.
  *
@@ -199,19 +219,7 @@ function safeAtomicWriteSync(filePath, data, options) {
   if (!isSafeToWrite(tmpPath)) {
     throw new Error(`Refusing atomic write via symlinked tmp path: ${path.basename(tmpPath)}`);
   }
-  // Normalize options: writeFileSync accepts a string (encoding shorthand),
-  // an object, or undefined. Handle all three shapes, then apply flag: "wx"
-  // LAST so callers cannot override it — that flag is load-bearing for the
-  // tmp-create-or-fail semantics below. Also avoids the "...(options || {})"
-  // empty-spread idiom (SonarCloud S6661) by not spreading a literal {}.
-  let writeOptions;
-  if (typeof options === "string") {
-    writeOptions = { encoding: options, flag: "wx" };
-  } else if (options && typeof options === "object") {
-    writeOptions = { ...options, flag: "wx" };
-  } else {
-    writeOptions = { flag: "wx" };
-  }
+  const writeOptions = normalizeAtomicWriteOptions(options);
   try {
     try {
       fs.writeFileSync(tmpPath, data, writeOptions);

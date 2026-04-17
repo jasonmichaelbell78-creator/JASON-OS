@@ -4,6 +4,9 @@ description: >-
   Cross-session todo management with interactive menu, JSONL-backed persistence,
   and AI-powered context capture. Manages ideas, tasks, and insights that emerge
   during sessions so they survive across sessions. Independent of GSD.
+compatibility: agentskills-v1
+metadata:
+  version: 1.2
 ---
 
 # Todo — Cross-Session Task Management
@@ -337,27 +340,6 @@ compaction occurs mid-`/todo`, re-invoke `/todo` to resume from the JSONL.
 - **Regression guard:** The CLI compares post-mutation state against
   per-operation expectations (line count delta, removed/added/prior ids). Any
   mismatch aborts the write. This is the actual T30 fix.
-
-## Invocation Tracking
-
-After the user exits `/todo`, log the invocation. The writer auto-fills
-`schema_version`, `completeness`, and `origin` if missing — see
-`.claude/skills/_shared/SKILL_STANDARDS.md` "Invocation Tracking" section for
-the canonical snippet.
-
-```bash
-cd scripts/reviews && npx tsx write-invocation.ts --data '{
-  "skill": "todo",
-  "type": "skill",
-  "success": true,
-  "schema_version": 1,
-  "completeness": "stub",
-  "origin": { "type": "manual" },
-  "context": { "action": "MENU_ACTION", "todosActive": N }
-}'
-```
-
----
 
 ## Version History
 

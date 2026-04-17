@@ -182,7 +182,12 @@ function safeGitAdd(repoRoot, filePath) {
   // Validate path is within repo (Pattern #41)
   const validPath = validatePathInDir(repoRoot, filePath);
 
-  // Use -- terminator to prevent option injection (Pattern #31)
+  // Use -- terminator to prevent option injection (Pattern #31).
+  // SonarCloud S4036 (PATH search for "git"): accepted. This helper is
+  // invoked only from local Claude Code hooks running in the operator's
+  // own user environment. PATH is part of the operator's shell config,
+  // not attacker-controlled. An attacker who can shadow `git` on PATH
+  // already owns the user account. No realistic threat model here.
   execFileSync("git", ["add", "--", validPath], { cwd: repoRoot });
 }
 
@@ -207,6 +212,9 @@ function safeGitCommit(repoRoot, message) {
       mode: 0o600,
     });
 
+    // SonarCloud S4036 (PATH search for "git"): accepted — same rationale
+    // as safeGitAdd above. Hook-only code running in operator user space;
+    // PATH not attacker-controlled.
     execFileSync("git", ["commit", "-F", msgFile], { cwd: repoRoot });
     return true;
   } catch (error) {
@@ -259,11 +267,12 @@ function sanitizeFilename(name, options = {}) {
  *   "--count": { type: "number", min: 1, max: 100 }
  * }
  */
-function parseCliArgs(args, schema) {
+/**
+ * Seed options dict with schema defaults (boolean=false, or explicit
+ * `default` value when defined).
+ */
+function initCliDefaults(schema) {
   const options = {};
-  const errors = [];
-
-  // Initialize defaults
   for (const [flag, def] of Object.entries(schema)) {
     if (def.type === "boolean") {
       options[flag] = false;
@@ -271,51 +280,84 @@ function parseCliArgs(args, schema) {
       options[flag] = def.default;
     }
   }
+  return options;
+}
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    const def = schema[arg];
+/**
+ * Parse + validate a number-typed CLI argument value against its schema
+ * (type=number, optional min/max). Returns {value} on success or {error}.
+ *
+ * @param {string} arg - The flag name (for error message phrasing).
+ * @param {string} next - The raw value string from argv.
+ * @param {{min?: number, max?: number}} def - Schema entry for this flag.
+ * @returns {{value: number}|{error: string}}
+ */
+function parseCliNumber(arg, next, def) {
+  // Strict match: allow optional minus + digits only. Number.parseInt would
+  // silently accept "10px" → 10 or "10.5" → 10 (truncating), and the schema
+  // contract is integers, so reject anything non-integer upfront.
+  if (!/^-?\d+$/.test(next)) return { error: `${arg} must be a number` };
+  const num = Number(next);
+  // Guard against overflow silently producing NaN/Infinity on extreme inputs.
+  if (!Number.isSafeInteger(num)) return { error: `${arg} must be a number` };
+  if (def.min !== undefined && num < def.min) return { error: `${arg} must be >= ${def.min}` };
+  if (def.max !== undefined && num > def.max) return { error: `${arg} must be <= ${def.max}` };
+  return { value: num };
+}
 
-    if (!def) continue;
-
-    if (def.type === "boolean") {
-      options[arg] = true;
-    } else {
-      const next = args[++i]; // Consume next arg (the value)
-
-      // Validate value exists and isn't another flag
-      if (!next || next.startsWith("--")) {
-        errors.push(`Missing value for ${arg}`);
-        continue;
-      }
-
-      if (def.type === "number") {
-        const num = Number.parseInt(next, 10);
-        if (Number.isNaN(num)) {
-          errors.push(`${arg} must be a number`);
-          continue;
-        }
-        if (def.min !== undefined && num < def.min) {
-          errors.push(`${arg} must be >= ${def.min}`);
-          continue;
-        }
-        if (def.max !== undefined && num > def.max) {
-          errors.push(`${arg} must be <= ${def.max}`);
-          continue;
-        }
-        options[arg] = num;
-      } else {
-        options[arg] = next;
-      }
-    }
-  }
-
-  // Check required
+/**
+ * Walk the schema and return a list of error messages for any `required`
+ * flag that is still undefined after arg parsing.
+ */
+function validateRequiredCliArgs(schema, options) {
+  const errors = [];
   for (const [flag, def] of Object.entries(schema)) {
     if (def.required && options[flag] === undefined) {
       errors.push(`${flag} is required`);
     }
   }
+  return errors;
+}
+
+function parseCliArgs(args, schema) {
+  const options = initCliDefaults(schema);
+  const errors = [];
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    const def = schema[arg];
+    if (!def) {
+      // Fail loudly on unknown --flags so typos surface at parse time
+      // instead of silently defaulting. Non-flag tokens are left alone;
+      // callers that support positional args can layer their own handling.
+      if (arg.startsWith("--")) errors.push(`Unknown option: ${arg}`);
+      continue;
+    }
+
+    if (def.type === "boolean") {
+      options[arg] = true;
+      continue;
+    }
+
+    const next = args[++i]; // Consume next arg (the value)
+    if (!next || next.startsWith("--")) {
+      errors.push(`Missing value for ${arg}`);
+      continue;
+    }
+
+    if (def.type === "number") {
+      const parsed = parseCliNumber(arg, next, def);
+      if (parsed.error) {
+        errors.push(parsed.error);
+        continue;
+      }
+      options[arg] = parsed.value;
+    } else {
+      options[arg] = next;
+    }
+  }
+
+  errors.push(...validateRequiredCliArgs(schema, options));
 
   if (errors.length > 0) {
     throw new Error(`CLI argument errors:\n  - ${errors.join("\n  - ")}`);
@@ -451,8 +493,8 @@ function maskEmail(email) {
   let maskedDomain;
   if (domainParts.length > 2) {
     const subdomains = domainParts.slice(0, -2);
-    const mainDomain = domainParts[domainParts.length - 2];
-    const tld = domainParts[domainParts.length - 1];
+    const mainDomain = domainParts.at(-2);
+    const tld = domainParts.at(-1);
     const maskedMainDomain = mainDomain.charAt(0) + "***";
     maskedDomain = [...subdomains, maskedMainDomain, tld].join(".");
   } else {
@@ -467,6 +509,16 @@ function maskEmail(email) {
 /**
  * Normalize a string to a URL-safe slug (lowercase, hyphens only).
  * Shared across CAS scripts for consistent source matching.
+ *
+ * SonarCloud S5852 (slow regex): accepted — NOT vulnerable to ReDoS.
+ * Both regexes are atomic with no shared-prefix alternation:
+ *   /[^a-z0-9]+/g     — negated character class + greedy +; no
+ *                       backtracking possible (each char matches or
+ *                       doesn't; no sub-pattern to retry).
+ *   /^-+|-+$/g        — two alternatives anchored to opposite ends of
+ *                       the string (^ vs $), with only a literal char
+ *                       repeated; no overlap, no catastrophic backtrack.
+ * Worst-case complexity is linear in input length. Safe.
  */
 function slugify(s) {
   return String(s)

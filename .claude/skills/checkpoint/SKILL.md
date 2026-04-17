@@ -4,8 +4,10 @@ description: |
   Save session state for recovery after compaction or failures. Default: save to
   local files (.claude/state/). With --mcp: also save to MCP memory for
   cross-session persistence.
+compatibility: agentskills-v1
 metadata:
   short-description: Save session state (local + optional MCP memory)
+  version: 2.0
 ---
 
 <!-- prettier-ignore-start -->

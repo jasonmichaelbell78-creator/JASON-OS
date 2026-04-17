@@ -49,7 +49,7 @@ Key patterns to keep in mind:
 - **Regex performance** — avoid greedy `.*`; use bounded `[\s\S]{0,N}?`
 - **exec() with /g** — `/g` flag REQUIRED on regex used in replace loops
 - **Path traversal** — `/^\.\.(?:[\\/]|$)/.test(rel)`, not `startsWith('..')`
-- **Error sanitization** — use `scripts/lib/sanitize-error.js` before logging
+- **Error sanitization** — use `scripts/lib/sanitize-error.cjs` before logging
 
 ---
 

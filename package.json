@@ -1,0 +1,15 @@
+{
+  "name": "jason-os",
+  "version": "0.0.1",
+  "private": true,
+  "description": "JASON-OS — portable Claude Code operating system. Infra-level package.json: husky + dev deps only, no runtime deps. Downstream projects that consume JASON-OS are not required to use Node.js themselves.",
+  "scripts": {
+    "prepare": "husky || echo 'Husky not available; skipping hook install'"
+  },
+  "devDependencies": {
+    "husky": "^9"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

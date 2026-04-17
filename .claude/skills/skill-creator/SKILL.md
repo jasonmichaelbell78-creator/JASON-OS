@@ -6,6 +6,9 @@ description: >-
   skill packages (SKILL.md + companions) using deep-plan-style discovery with
   skill-specific question categories and convergence-loop verification of
   codebase claims.
+compatibility: agentskills-v1
+metadata:
+  version: 3.4
 ---
 
 # Skill Creator
@@ -316,13 +319,9 @@ behavioral quality that structural validation cannot catch.
 2. **Retro prompt** (MUST): "What did discovery surface that you didn't expect?
    What did the checklist catch? What would you do differently?" Capture in
    state file `process_feedback`.
-3. **Invocation tracking** (MUST):
-   ```bash
-   cd scripts/reviews && npx tsx write-invocation.ts --data '{"skill":"skill-creator","type":"skill","success":true,"schema_version":1,"completeness":"stub","origin":{"type":"manual"},"context":{"target":"SKILL_NAME"}}'
-   ```
-4. **Session cleanup** (SHOULD): Commit created skill files. State file retained
+3. **Session cleanup** (SHOULD): Commit created skill files. State file retained
    as creation record. Run `/session-end` if ending session.
-5. **Version history** (MUST): WHAT changed + WHY in every entry.
+4. **Version history** (MUST): WHAT changed + WHY in every entry.
 
 ---
 

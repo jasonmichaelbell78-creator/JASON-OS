@@ -6,6 +6,9 @@ description: >-
   research-grade agents, and contrarian challenge to move from seed ideas to
   chosen directions with structured BRAINSTORM.md output that feeds directly
   into /deep-plan or /deep-research.
+compatibility: agentskills-v1
+metadata:
+  version: 1.0
 ---
 
 <!-- prettier-ignore-start -->
@@ -285,12 +288,6 @@ Brainstorm complete. What next?
 ```
 
 > See [REFERENCE.md](./REFERENCE.md) for the BRAINSTORM.md template.
-
-### Invocation Tracking (MUST)
-
-```bash
-cd scripts/reviews && npx tsx write-invocation.ts --data '{"skill":"brainstorm","type":"skill","success":true,"schema_version":1,"completeness":"stub","origin":{"type":"manual"},"context":{"topic":"TOPIC","directions":N,"chosen":"DIRECTION_NAME"}}'
-```
 
 **Retro (SHOULD):** "Did the brainstorm surface anything unexpected? What would
 you do differently?" Save to state file `process_feedback`.

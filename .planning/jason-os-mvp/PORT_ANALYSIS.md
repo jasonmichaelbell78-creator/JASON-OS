@@ -172,6 +172,24 @@ Round-trip verified: add → jsonl write + TODOS.md render → delete → clean 
 | L1p-b | `41526:.claude/hooks/lib/state-utils.js` | `.claude/hooks/lib/state-utils.js` | 0 regex hits | SoNash hooks consume; JASON-OS hooks will consume at Layer 1 wiring | node builtins only (`fs`, `path`) | `copy-as-is` | 2026-04-17 | `81e04ac` |
 | L1p-c | `41526:.claude/hooks/lib/sanitize-input.js` | `.claude/hooks/lib/sanitize-input.js` | 0 regex hits | SoNash hooks consume; JASON-OS hooks will consume at Layer 1 wiring | **no imports** (pure module) | `copy-as-is` | 2026-04-17 | `81e04ac` |
 | L1p-d | `41526:.claude/hooks/lib/rotate-state.js` | `.claude/hooks/lib/rotate-state.js` | 0 regex hits | SoNash hooks consume; JASON-OS hooks will consume at Layer 1 wiring | node builtins (`fs`, `path`) + `../../../scripts/lib/parse-jsonl-line` (`safeParseLine` — verified present in JASON-OS) | `copy-as-is` | 2026-04-17 | `81e04ac` |
+| 1.2-a | `41526:.claude/skills/session-end/SKILL.md` | `.claude/skills/session-end/SKILL.md` | 12 regex hits in source (mostly Phase 2/3 SoNash-specific: SESSION_HISTORY, ROADMAP, TDMS, reviews:sync, run-ecosystem-health, MASTER_DEBT, npm run hooks:health, npm run session:end). All functional refs removed; 4 annotations retained that **describe** what was stripped (intro note, Phase 3 gate, version history) | SoNash session-end skill has no internal callers (top-level skill); session-begin consumes its outputs (SESSION_CONTEXT.md 5 fields) | Skill doesn't directly require scripts — orchestrates Bash commands. v0 removes Phase 3 pipeline commands; Phase 2 commands gracefully skip when their state files are absent | `sanitize-then-copy` (heavy — 465→405 lines, Phase 3 stripped, Step 3 adapted to `.planning/jason-os-mvp/PLAN.md` per D33, Phase 2 annotated as Layer-2-gated, AgentSkills fields added, version bumped 2.2 → 2.2-jasonos-v0.1) | 2026-04-17 | `(see 1.2 commit)` |
+| 1.2-b | `41526:scripts/session-end-commit.js` | `scripts/session-end-commit.js` | 0 regex hits | SoNash Step 10 invokes via `npm run session:end`; JASON-OS session-end SKILL.md Step 10 now invokes directly via `node scripts/session-end-commit.js` | node builtins + `./lib/safe-fs` (`safeWriteFileSync` — verified present in JASON-OS scripts/lib/safe-fs.js) | `copy-as-is` | 2026-04-17 | `(see 1.2 commit)` |
+
+**Notes on 1.2 port (Layer 1 item 1.2, 2026-04-17):**
+
+- **Scope:** SKILL.md substantially rewritten (465→405 lines). `scripts/session-end-commit.js` is byte-for-byte copy (272 lines, 0 sanitization hits).
+- **Phase 3 strip:** Entire Phase 3 Metrics & Data Pipeline table (4 commands) removed per PLAN.md 1.2 explicit instruction. Replaced with a "STRIPPED IN V0" block explaining the rationale and pointing to `/todo` backlog for when it returns.
+- **Phase 2 treatment:** Did not strip — kept SoNash's existing "skip silently if data source absent" defensive structure. In v0, Layer 2 state files don't exist yet, so Phase 2 auto-skips. Annotated with "v0 note" blocks on each sub-step.
+- **Step 3 adapted:** From "Roadmap Check (ROADMAP.md)" → "Plan Check (`.planning/<topic>/PLAN.md`)", hard-coded to `jason-os-mvp/PLAN.md` per D33 rationale.
+- **Step 10 adapted:** `npm run session:end` → `node scripts/session-end-commit.js`. Same behavior, Node-native.
+- **AgentSkills frontmatter added:** `compatibility: agentskills-v1`, `metadata.short-description`, `metadata.version: 2.2-jasonos-v0.1`. Version explicitly preserves SoNash lineage.
+- **session-end-commit.js:** Downstream dep verified (`safeWriteFileSync` in `scripts/lib/safe-fs.js`). `node --check` passed. Clean copy — no rewrite needed.
+- **MI-5 per-skill self-audit:** DEFERRED to Layer 1 audit checkpoint. The refreshed skill-audit (0f) should run against this ported session-end/SKILL.md. Scheduled for the Layer 1 audit pass per D29.
+- **Hot-reload note:** session-end appeared in the skill registry immediately after Write (no session restart needed), unlike agents which require restart per user memory `feedback_agent_hot_reload.md`.
+
+---
+
+
 
 **Notes on L1p-a..d (Layer 1 prereq, 2026-04-17):**
 

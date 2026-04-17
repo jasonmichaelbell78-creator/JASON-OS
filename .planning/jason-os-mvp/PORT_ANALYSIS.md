@@ -148,6 +148,89 @@ audit checkpoint findings).
 
 ---
 
+## Audit Checkpoints (D29)
+
+### Layer 0+ Audit — PASS (2026-04-17)
+
+**Method:** Manual code-reviewer pass (JASON-OS does not yet have a
+`code-reviewer` agent; SoNash port deferred per Layer 4 candidacy — see
+Post-Foundation Deferrals). Three steps per PLAN.md D29: (1) review
+modified files, (2) verify each done-when, (3) confirm D18 bundling.
+
+**Done-when verification:**
+
+| # | Done-when | Result |
+|---|---|---|
+| 0a | `grep -c PROACTIVELY .claude/agents/*.md` ≥ 8 | PASS — 8 files, 1 clause each |
+| 0b | `.nvmrc` exists | PASS — contains `22` |
+| 0c | `grep -l write-invocation.ts .claude/skills/**/SKILL.md` → empty | PASS (exit 1) |
+| 0d | Each §4.N rule has bracketed annotation | PASS — 1 GATE + 1 MIXED + 14 BEHAVIORAL + 3 NEEDS_GATE flags |
+| 0e | `grep -l "compatibility: agentskills-v1" .claude/skills/**/SKILL.md \| wc -l` = 9 | PASS |
+| 0f | skill-audit SKILL.md matches SoNash 41526 + commit landed | PASS — `afb7270` (roundtrip no-op, validates port logic) |
+| 0g | sonar-project.properties + workflow YAML exist + secrets in repo | PASS — `f62e6ee`; first SonarCloud run already completed on initial import (baseline findings addressed in f9fc0ca/93a5a9e/ac58876/ea69efa) |
+| 0h | `.husky/pre-commit` + `.husky/pre-push` exist + fire on test commit | PASS — pre-commit observed live on `fde851a` and every commit since (gitleaks output in commit stream) |
+| 0i | `scripts/config/propagation-patterns.seed.json` exists + validates as JSON | PASS — `2c28c20`, 4 patterns, valid |
+| 0j | §1 + §2 have real content; §3 stays `_TBD_` | PASS — lines 17 + 31 populated, line 65 still TBD |
+
+**Code-review notes (manual pass on modified files):**
+
+- **Agents (8 files):** PROACTIVELY clauses are scoped to *concrete*
+  trigger conditions ("irreversible decisions" on contrarian-challenger,
+  "no alternatives considered" on otb-challenger) rather than vague
+  capability statements. Low over-invocation risk.
+- **CLAUDE.md:** §4 annotations read cleanly with the intro explainer
+  paragraph. NEEDS_GATE flags (§4.5 / §4.9 / §4.15) preserve forward
+  guidance so Layer 2 hook-porting work knows which rules are waiting
+  for enforcement infrastructure. §1 + §2 content matches PLAN.md
+  verbatim; §3 correctly stays TBD per D4.
+- **9 SKILL.md files:** AgentSkills fields (compatibility, metadata.version)
+  applied uniformly. `checkpoint`'s pre-existing `metadata:` block
+  correctly extended (short-description preserved + version added)
+  rather than overwritten. Versions sourced from each SKILL.md's own
+  Document Version / Version History row.
+- **Husky scaffolds (4 new files):** all three shells pass `bash -n`;
+  executable bits set; `core.hooksPath` wired to `.husky/_`; pre-commit
+  + pre-push shims present. Pre-commit verified firing live on every
+  subsequent commit. Pre-push not yet fired (no push authorized).
+- **`scripts/config/propagation-patterns.seed.json`:** validates as JSON;
+  schema matches future `check-pattern-compliance.js` consumer shape.
+- **SonarCloud/Qodo wiring:** Actions pinned by SHA for supply-chain
+  integrity; fork-PR skip guard in place; `permissions:` minimized to
+  needed scopes. Exclusions cover `.research/`, `.planning/`,
+  `node_modules/`, `.husky/_/`.
+- **SonarCloud baseline fixes (4 follow-up commits):** all 10 findings
+  addressed. Smoke tests passed for the two refactors: `parseCliArgs`
+  covered by happy-path, defaults, required-missing, out-of-range, NaN,
+  missing-value cases (all behave identically). `safeAtomicWriteSync`
+  exports unchanged; `normalizeAtomicWriteOptions` module-private.
+
+**D18 bundling check:** PASS. Each item is its own atomic revertible
+unit (0a/0b/0c/0d/0e/0f/0g/0i/0j each single-commit, plus 0f ledger
+backfill as a deliberate follow-up, plus 0h scaffold + package-lock as
+a deliberate split). Nothing co-mingled.
+
+**Issues surfaced during audit:**
+1. *0f no-op finding* — documented above and in 0f notes; not a defect.
+2. *SonarCloud first scan triggered by operator's initial repo import,
+   not our workflow* — 10 baseline findings now addressed. Next push
+   after this audit will trigger our workflow version for real + first
+   re-scan to verify findings cleared.
+3. *Missing `code-reviewer` agent* — noted as Layer 4 candidate rather
+   than Foundation scope.
+4. *Still-advisory `npm run skills:validate` + `_shared/` dead links
+   in skill-audit* — flagged in 0f port details; non-blocking.
+
+**Verdict: PASS. Layer 0+ closed. Layer 0 may open.**
+
+**⚠️ USER ACTION for 0g follow-up:**
+In SonarCloud UI, mark the 3 hotspots as Safe with the rationale summary
+from commit `ea69efa`. Hotspots:
+1. scripts/lib/security-helpers.js slugify regex (S5852 Medium)
+2. scripts/lib/security-helpers.js safeGitAdd execFileSync (S4036 Low)
+3. scripts/lib/security-helpers.js safeGitCommit execFileSync (S4036 Low)
+
+---
+
 ## Row Count Invariants (for audit checkpoints)
 
 At each PLAN.md audit checkpoint (D29), expected minimum row counts:

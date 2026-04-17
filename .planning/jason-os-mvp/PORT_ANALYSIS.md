@@ -139,12 +139,35 @@ audit checkpoint findings).
 
 ---
 
+### 0.1 port details (2026-04-17)
+
+**Plan-reality divergence.** PLAN.md D9 listed 3 scripts all under `scripts/planning/`, naming `todos-mutations.js` at `scripts/planning/todos-mutations.js`. Pre-analysis showed the real path in SoNash 41526 is `scripts/lib/todos-mutations.js` (top-level `scripts/lib/`, not under `planning/`). Target path corrected accordingly; ledger row `0.1-d` reflects the corrected target.
+
+**New dep discovered during pre-analysis.** `scripts/planning/render-todos.js` imports `./lib/read-jsonl.js`, which is a *different* file from the broadly-used `scripts/lib/read-jsonl.js` in SoNash (the planning-local variant only deps on `streamLinesSync` from `safe-fs`; the top-level variant is a more elaborate validating reader). The planning-local variant was not mentioned in PLAN.md's 3-file list. It was added to this port as row `0.1-c`. Final port count: **4 files**, not 3.
+
+**Sanitize-error rewrite.** JASON-OS canonicalized `scripts/lib/sanitize-error` on `.cjs` during the SonarCloud duplication cleanup in PR #2 (the `.js` twin was deleted). SoNash 41526's `todos-cli.js` still imports `../lib/sanitize-error.js`. Pre-port verified that `scripts/lib/sanitize-error.cjs` is ESM-importable via Node's interop layer (confirmed before port execution). Resolution A (user-approved 2026-04-17): rewrite line 47 of target `scripts/planning/todos-cli.js` from `sanitize-error.js` to `sanitize-error.cjs`. This is the **only** byte modification to the extracted source; every other byte is a 1:1 copy from SoNash 41526. `todos-mutations.js` (row `0.1-d`) already imports `.cjs` in source — no rewrite needed there.
+
+**Test evidence.** Smoke test executed before commit on the empty-state JASON-OS `.planning/`:
+
+- `node scripts/planning/todos-cli.js validate` → exit 0; output `Integrity OK: 0 todos, last id (empty)`.
+- `node scripts/planning/todos-cli.js add --data '{"title":"port-0.1-smoke-test","priority":"P2","tags":["#test"]}'` → exit 0; output `Added T1: port-0.1-smoke-test (P2)`. Created `.planning/todos.jsonl` (one JSON line with T1 record) and regenerated `.planning/TODOS.md`.
+- `node scripts/planning/todos-cli.js delete --id T1` → exit 0; output `Deleted T1: port-0.1-smoke-test`.
+- Empty-state cleanup: both `.planning/todos.jsonl` and `.planning/TODOS.md` removed after the round-trip to keep the commit free of stray state. Node emitted `MODULE_TYPELESS_PACKAGE_JSON` warnings on the ESM scripts — cosmetic only (JASON-OS `package.json` does not set `"type": "module"`); scripts ran to completion with exit 0.
+
+Round-trip verified: add → jsonl write + TODOS.md render → delete → clean state. All 4 ported files function correctly against the JASON-OS helpers (`safe-fs.js`, `sanitize-error.cjs`, `parse-jsonl-line.js` transitively via validation).
+
+---
+
 ## Ledger
 
 | # | Source (SoNash) | Target (JASON-OS) | Refs Found | Upstream Callers | Downstream Deps | Verdict | Port Date | Commit SHA |
 |---|---|---|---|---|---|---|---|---|
 | 0f-a | `41526:.claude/skills/skill-audit/SKILL.md` | `.claude/skills/skill-audit/SKILL.md` | `write-invocation.ts: 2` (stripped), `npm run skills:validate: 5` (retained as advisory — see notes) | 20+ SoNash skills cross-reference; for JASON-OS only `skill-creator/SKILL.md` cross-refs | `_shared/SELF_AUDIT_PATTERN.md`, `_shared/SKILL_STANDARDS.md` (6 refs; **dead links in JASON-OS** — no `_shared/` dir) | `sanitize-then-copy` → **no-op-verified** | 2026-04-17 | `afb7270` |
 | 0f-b | `41526:.claude/skills/skill-audit/REFERENCE.md` | `.claude/skills/skill-audit/REFERENCE.md` | 0 regex hits | Companion to SKILL.md (referenced from its Steps / Closure) | `_shared/SELF_AUDIT_PATTERN.md` (1 ref; **dead link in JASON-OS**) | `copy-as-is` → **no-op-verified** | 2026-04-17 | `afb7270` |
+| 0.1-a | `41526:scripts/planning/todos-cli.js` | `scripts/planning/todos-cli.js` | `/add-debt: 1` (comment-only reference to mirror pattern; non-functional) | None (top-level CLI entrypoint) | `../lib/safe-fs.js`, `../lib/sanitize-error.cjs` (rewritten from `.js`), `./render-todos.js`, `../lib/todos-mutations.js` — all resolve in JASON-OS | `sanitize-then-copy` (1 import-path rewrite `.js`→`.cjs`) | 2026-04-17 | TBD |
+| 0.1-b | `41526:scripts/planning/render-todos.js` | `scripts/planning/render-todos.js` | none | `scripts/planning/todos-cli.js` (ported as 0.1-a) | `../lib/safe-fs.js`, `./lib/read-jsonl.js` — all resolve in JASON-OS | `copy-as-is` | 2026-04-17 | TBD |
+| 0.1-c | `41526:scripts/planning/lib/read-jsonl.js` | `scripts/planning/lib/read-jsonl.js` | none | `scripts/planning/render-todos.js` (ported as 0.1-b); SoNash `generate-decisions.js` + `generate-discovery-record.js` not in Foundation scope | `../../lib/safe-fs` (`streamLinesSync`) — resolves in JASON-OS | `copy-as-is` | 2026-04-17 | TBD |
+| 0.1-d | `41526:scripts/lib/todos-mutations.js` | `scripts/lib/todos-mutations.js` | `SonarCloud: 1` (comment-only reference to rule S3696; non-functional) | `scripts/planning/todos-cli.js` (ported as 0.1-a) | `./sanitize-error.cjs` (already `.cjs` in source; no rewrite) — resolves in JASON-OS | `copy-as-is` | 2026-04-17 | TBD |
 
 ---
 

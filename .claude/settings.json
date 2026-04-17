@@ -43,11 +43,21 @@
             "continueOnError": true
           }
         ]
+      },
+      {
+        "matcher": "^compact$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/run-node.sh compact-restore.js",
+            "continueOnError": true
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
-        "matcher": "^(?i)bash$",
+        "matcher": "^[Bb]ash$",
         "hooks": [
           {
             "type": "command",
@@ -58,7 +68,7 @@
         ]
       },
       {
-        "matcher": "^(?i)read$",
+        "matcher": "^[Rr]ead$",
         "hooks": [
           {
             "type": "command",
@@ -68,11 +78,34 @@
         ]
       },
       {
-        "matcher": "^(?i)(write|edit)$",
+        "matcher": "^([Ww]rite|[Ee]dit)$",
         "hooks": [
           {
             "type": "command",
             "command": "bash .claude/hooks/run-node.sh settings-guardian.js"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/run-node.sh pre-compaction-save.js",
+            "continueOnError": true
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^[Bb]ash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/run-node.sh commit-tracker.js",
+            "continueOnError": true
           }
         ]
       }

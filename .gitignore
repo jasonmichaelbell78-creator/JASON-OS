@@ -50,6 +50,7 @@ coverage/
 .claude/alerts-acknowledged.json
 .claude/session-activity.jsonl
 .claude/override-log.jsonl
+.claude/hooks/.*-state.json
 
 # claude code — machine-specific binaries (will rebuild per platform)
 tools/**/*.exe

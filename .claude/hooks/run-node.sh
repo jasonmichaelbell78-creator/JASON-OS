@@ -23,6 +23,15 @@ if [[ -z "$SCRIPT_REL" ]]; then
 fi
 shift
 
+# Path-traversal guard: reject absolute paths, `..` segments, and backslashes
+# so SCRIPT_REL can only address files under HOOKS_DIR.
+case "$SCRIPT_REL" in
+  /*|*..*|*'\'*)
+    echo "run-node.sh: invalid script path (must be relative; no .. or \\): $SCRIPT_REL" >&2
+    exit 2
+    ;;
+esac
+
 SCRIPT_PATH="$HOOKS_DIR/$SCRIPT_REL"
 if [[ ! -f "$SCRIPT_PATH" ]]; then
   echo "run-node.sh: script not found: $SCRIPT_PATH" >&2
@@ -56,8 +65,16 @@ resolve_node() {
   fi
 
   # 4. fnm multishells (pick most recently modified)
-  local fnm_root="${LOCALAPPDATA:-$HOME/AppData/Local}/fnm_multishells"
-  if [[ -d "$fnm_root" ]]; then
+  # Build fnm_root defensively: under `set -u`, referencing $HOME in a default
+  # expansion crashes when both LOCALAPPDATA and HOME are unset. Resolve each
+  # candidate explicitly with safe fallbacks instead.
+  local fnm_root=""
+  if [[ -n "${LOCALAPPDATA:-}" ]]; then
+    fnm_root="$LOCALAPPDATA/fnm_multishells"
+  elif [[ -n "$home_unix" ]]; then
+    fnm_root="$home_unix/AppData/Local/fnm_multishells"
+  fi
+  if [[ -n "$fnm_root" && -d "$fnm_root" ]]; then
     local latest
     latest="$(ls -t "$fnm_root" 2>/dev/null | head -1)"
     if [[ -n "$latest" && -x "$fnm_root/$latest/node.exe" ]]; then

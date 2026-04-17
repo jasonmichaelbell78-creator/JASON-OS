@@ -32,6 +32,22 @@ const SENSITIVE_PATTERNS = [
 
 const REDACTED = "[REDACTED]";
 
+/**
+ * Coerce an unknown value to a useful string without falling into
+ * Object's default "[object Object]" stringification. MUST stay in
+ * sync with sanitize-error.js `stringifyUnknown`.
+ */
+function stringifyUnknown(v) {
+  if (typeof v === "string") return v;
+  if (v === null) return "null";
+  if (v === undefined) return "undefined";
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return Object.prototype.toString.call(v);
+  }
+}
+
 function sanitizeError(error, options = {}) {
   const { verbose = false } = options;
 
@@ -41,9 +57,9 @@ function sanitizeError(error, options = {}) {
   } else if (typeof error === "string") {
     message = error;
   } else if (error && typeof error === "object" && "message" in error) {
-    message = String(error.message);
+    message = stringifyUnknown(error.message);
   } else {
-    message = String(error);
+    message = stringifyUnknown(error);
   }
 
   if (verbose && process.env.NODE_ENV === "development") {

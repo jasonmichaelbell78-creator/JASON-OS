@@ -14,54 +14,86 @@ STDIN_LINES="$(cat)"
 echo "Running pre-push checks..."
 
 # --- Check 1: escalation-gate — block on unacked error-severity warnings ---
+# Exit-code contract from the inline node block:
+#   0 — gate passed (no unacked error-severity entries, or no warnings file)
+#   1 — gate failed (unacked error-severity entries found)
+#   2 — setup/environment error (non-ENOENT read failure, parse failure)
+# Setup errors do NOT block the push — they emit a distinct message so the
+# operator can fix the underlying issue. Only exit code 1 blocks.
+#
 # Skip in CI (CI environments acknowledge on a different cadence).
 if [ "${CI:-}" = "true" ]; then
   echo "  escalation-gate: skipped (CI environment)"
 elif is_skipped "warnings"; then
   require_skip_reason "SKIP_CHECKS=warnings"
   echo "  escalation-gate: skipped (SKIP_REASON: $SKIP_REASON)"
+elif ! command -v node >/dev/null 2>&1; then
+  echo "  escalation-gate: skipped (node not on PATH; install Node per .nvmrc)" >&2
 else
   ESCALATION_OUTPUT=$(node -e "
     const fs = require('node:fs');
     const warningsPath = '.claude/hook-warnings.json';
     const ackPath = '.claude/state/hook-warnings-ack.json';
+
+    // Read warnings file; ENOENT = no warnings ever written = gate passes.
+    // Any other error = setup/environment issue; surface and exit 2.
+    let w;
     try {
-      if (!fs.existsSync(warningsPath)) process.exit(0);
-      const w = JSON.parse(fs.readFileSync(warningsPath, 'utf8'));
-      let ack = { acknowledged: {}, lastCleared: null };
-      try {
-        const parsedAck = JSON.parse(fs.readFileSync(ackPath, 'utf8'));
-        if (parsedAck && typeof parsedAck === 'object') {
-          ack.acknowledged = parsedAck.acknowledged || {};
-          ack.lastCleared = parsedAck.lastCleared || null;
-        }
-      } catch {}
-      const errors = (w.warnings || []).filter(e => {
-        if (e.severity !== 'error') return false;
-        const entryTime = new Date(e.timestamp).getTime();
-        const ackTime = ack.acknowledged[e.type];
-        if (ackTime && entryTime <= new Date(ackTime).getTime()) return false;
-        if (ack.lastCleared && entryTime <= new Date(ack.lastCleared).getTime()) return false;
-        return true;
-      });
-      if (errors.length > 0) {
-        errors.forEach(e => console.error('  ' + e.type + ': ' + e.message));
-        process.exit(1);
+      w = JSON.parse(fs.readFileSync(warningsPath, 'utf8'));
+    } catch (err) {
+      if (err && err.code === 'ENOENT') process.exit(0);
+      console.error('  hook-warnings.json read/parse failed: ' + (err && (err.code || err.message)));
+      process.exit(2);
+    }
+
+    // Read ack file; ENOENT = nothing acked yet (fine). Non-ENOENT parse
+    // errors are surfaced but treated as empty ack (conservative — may
+    // block a push that would otherwise pass, but never silently passes).
+    let ack = { acknowledged: {}, lastCleared: null };
+    try {
+      const parsedAck = JSON.parse(fs.readFileSync(ackPath, 'utf8'));
+      if (parsedAck && typeof parsedAck === 'object') {
+        ack.acknowledged = parsedAck.acknowledged || {};
+        ack.lastCleared = parsedAck.lastCleared || null;
       }
     } catch (err) {
-      process.exit(0);
+      if (err && err.code !== 'ENOENT') {
+        console.error('  hook-warnings-ack.json read/parse failed (treating as empty ack): ' + (err.code || err.message));
+      }
+    }
+
+    const errors = (w.warnings || []).filter(e => {
+      if (e.severity !== 'error') return false;
+      const entryTime = new Date(e.timestamp).getTime();
+      const ackTime = ack.acknowledged[e.type];
+      if (ackTime && entryTime <= new Date(ackTime).getTime()) return false;
+      if (ack.lastCleared && entryTime <= new Date(ack.lastCleared).getTime()) return false;
+      return true;
+    });
+    if (errors.length > 0) {
+      errors.forEach(e => console.error('  ' + e.type + ': ' + e.message));
+      process.exit(1);
     }
   " 2>&1)
-  if [ $? -ne 0 ]; then
-    echo "" >&2
-    echo "  PUSH BLOCKED: unacknowledged error-severity warnings" >&2
-    echo "$ESCALATION_OUTPUT" >&2
-    echo "" >&2
-    echo "  Fix the underlying issues, or:" >&2
-    echo "  Skip: SKIP_CHECKS=warnings SKIP_REASON=\"...\" git push" >&2
-    exit 1
-  fi
-  echo "  escalation-gate: no unacked error-severity warnings"
+  ESCALATION_EXIT=$?
+  case "$ESCALATION_EXIT" in
+    0)
+      echo "  escalation-gate: no unacked error-severity warnings"
+      ;;
+    1)
+      echo "" >&2
+      echo "  PUSH BLOCKED: unacknowledged error-severity warnings" >&2
+      echo "$ESCALATION_OUTPUT" >&2
+      echo "" >&2
+      echo "  Fix the underlying issues, or:" >&2
+      echo "  Skip: SKIP_CHECKS=warnings SKIP_REASON=\"...\" git push" >&2
+      exit 1
+      ;;
+    *)
+      echo "  escalation-gate: setup error (exit $ESCALATION_EXIT); push NOT blocked" >&2
+      echo "$ESCALATION_OUTPUT" >&2
+      ;;
+  esac
 fi
 
 # --- Check 2: block direct push to main/master ---

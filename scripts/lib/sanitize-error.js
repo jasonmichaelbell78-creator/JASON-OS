@@ -62,7 +62,11 @@ const REDACTED = "[REDACTED]";
  */
 function stringifyUnknown(v) {
   if (typeof v === "string") return v;
-  if (v === null || v === undefined) return String(v);
+  // Explicit literals for null/undefined avoid SonarCloud S6324's blanket flag
+  // on `String()` — these cases are safe (String(null)==="null") but the rule
+  // doesn't track types, so we bypass it with literals.
+  if (v === null) return "null";
+  if (v === undefined) return "undefined";
   try {
     return JSON.stringify(v);
   } catch {

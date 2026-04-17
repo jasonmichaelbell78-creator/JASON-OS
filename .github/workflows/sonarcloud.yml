@@ -1,0 +1,41 @@
+# SonarCloud analysis workflow for JASON-OS
+# Triggered on push/PR to main, or manual dispatch.
+# Config lives in sonar-project.properties at repo root.
+# Per Layer 0+ item 0g (D22, D23, MI-4).
+
+name: SonarCloud analysis
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read # required for actions/checkout
+  pull-requests: write # allows SonarCloud to decorate PRs with analysis results
+  security-events: write # required to publish results to GitHub Code Scanning (if enabled)
+
+jobs:
+  Analysis:
+    # Skip analysis for fork PRs (SONAR_TOKEN not available to forks)
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0 # Full history for accurate blame + PR decoration
+
+      - name: Analyze with SonarCloud
+        uses: SonarSource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8 # v5.0.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }} # Required for PR decoration
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: .
+          # Scanner args not needed — reads from sonar-project.properties

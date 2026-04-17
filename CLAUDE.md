@@ -30,29 +30,44 @@ _TBD — populated as the OS structure solidifies._
 
 > [!CAUTION] Non-negotiable. Violating these wastes the user's time.
 
+Annotations per research G4: `[GATE]` = automated hook/CI enforcement exists;
+`[BEHAVIORAL: honor-only]` = no automated block, relies on in-context
+compliance; `[MIXED]` = partially gated. `NEEDS_GATE: <hook>` flags rules
+that should become `[GATE]` once the named hook lands.
+
 1. **Ask on first confusion, not fourth.** Don't guess-and-retry.
+   `[BEHAVIORAL: honor-only]`
 2. **Never implement without explicit approval.** Present plan, wait for "go."
+   `[BEHAVIORAL: honor-only]`
 3. **Read SKILL.md before following any skill format.** Don't improvise from
-   memory.
+   memory. `[BEHAVIORAL: honor-only]`
 4. **"Stop and ask" = hard stop.** No action until clarification received.
+   `[BEHAVIORAL: honor-only]`
 5. **One correction = full stop.** Stop, ask what's wrong, confirm, then
-   proceed.
+   proceed. `[BEHAVIORAL: honor-only — NEEDS_GATE: user-prompt-handler frustrationDetection]`
 6. **All surfaced data must force acknowledgment.** No fire-and-forget warnings.
+   `[BEHAVIORAL: honor-only]`
 7. **Never push without explicit approval.** `commit` is fine; `push` requires
-   user say-so.
+   user say-so. `[GATE: block-push-to-main.js]`
 8. **Respect declared platform/shell.** Check system prompt before shell
-   commands.
+   commands. `[BEHAVIORAL: honor-only]`
 9. **On pre-commit failure, use `/pre-commit-fixer`.** After 2 attempts, ask.
+   `[BEHAVIORAL: honor-only — NEEDS_GATE: loop-detector.js]`
 10. **Question batches: 5-8 max** (unless `/deep-plan` exhaustive mode).
+    `[BEHAVIORAL: honor-only]`
 11. **Verify no untracked files** before PR, branch completion, or
-    `/session-end`.
+    `/session-end`. `[BEHAVIORAL: honor-only]`
 12. **Verify file state against filesystem**, not docs/memory/conversation.
+    `[BEHAVIORAL: honor-only]`
 13. **Review hook summary after every commit/push.** Present warnings with
-    remediation options.
+    remediation options. `[BEHAVIORAL: honor-only]`
 14. **Never set SKIP_REASON autonomously.** User must authorize exact wording.
+    `[MIXED: settings-guardian.js (settings.json write); git push args BEHAVIORAL]`
 15. **Never accept empty agent results silently.** Windows 0-byte bug — check
     `<result>` field, report failures.
+    `[BEHAVIORAL: honor-only — NEEDS_GATE: track-agent-invocation.js result-size check]`
 16. **Follow skills exactly.** Never skip steps without explicit user approval.
+    `[BEHAVIORAL: honor-only]`
 
 ## 5. Critical Anti-Patterns
 

@@ -40,6 +40,16 @@ if [[ ! -f "$SCRIPT_PATH" ]]; then
   exit 2
 fi
 
+# Outright refuse to execute a symlinked script. The `cd -P` canonicalization
+# below handles DIRECTORY symlinks correctly, but if SCRIPT_PATH itself is a
+# symlink that file still lives inside HOOKS_DIR_REAL, and the prefix check
+# would pass while the exec target resolved elsewhere. Hook scripts are
+# internal project files — there's no legitimate reason to symlink them.
+if [[ -L "$SCRIPT_PATH" ]]; then
+  echo "run-node.sh: refusing to execute symlinked script: $SCRIPT_PATH" >&2
+  exit 2
+fi
+
 # Defense-in-depth against symlink escape: canonicalize both HOOKS_DIR and
 # the resolved SCRIPT_PATH, then verify SCRIPT_PATH stays inside HOOKS_DIR.
 # Requires local write access to exploit (attacker-placed symlink), but the

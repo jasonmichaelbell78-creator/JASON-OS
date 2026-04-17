@@ -326,7 +326,13 @@ function parseCliArgs(args, schema) {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     const def = schema[arg];
-    if (!def) continue;
+    if (!def) {
+      // Fail loudly on unknown --flags so typos surface at parse time
+      // instead of silently defaulting. Non-flag tokens are left alone;
+      // callers that support positional args can layer their own handling.
+      if (arg.startsWith("--")) errors.push(`Unknown option: ${arg}`);
+      continue;
+    }
 
     if (def.type === "boolean") {
       options[arg] = true;

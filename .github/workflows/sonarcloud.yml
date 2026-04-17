@@ -32,7 +32,11 @@ jobs:
           fetch-depth: 0 # Full history for accurate blame + PR decoration
 
       - name: Analyze with SonarCloud
-        uses: SonarSource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8 # v5.0.0
+        # sonarqube-scan-action is the drop-in replacement for the deprecated
+        # sonarcloud-github-action. Using tag pin here; tighten to SHA pin
+        # after first green run on PR #2 (matches the hardening pattern on
+        # actions/checkout above).
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ github.token }} # Required for PR decoration
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

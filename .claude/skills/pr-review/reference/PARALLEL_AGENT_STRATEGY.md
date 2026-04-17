@@ -25,6 +25,12 @@ Script Files:         [2, 4, 6]    → code-reviewer agent (scripts)
 TypeScript Files:     [7, 9-11]    → code-reviewer agent (TS/React)
 ```
 
+> **Foundation note (JASON-OS v0):** `code-reviewer`, `technical-writer`,
+> and `security-focused` are example role labels — JASON-OS Foundation
+> ships only `general-purpose` plus the deep-research agent suite. Read the
+> v0 caveat at the bottom of this file before invoking these by name; for
+> now, dispatch `general-purpose` with role-specific prompts.
+
 ## Step 2 — Create parallel batches
 
 - Batch by file type OR concern area (whichever produces fewer batches)

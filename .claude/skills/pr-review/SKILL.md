@@ -119,7 +119,7 @@ acknowledgment. Apply suppressions before individual item triage to reduce
 noise.
 
 **First-scan detection (MUST for R1):** If SonarCloud items >100 on R1 OR the
-PR is primarily research/state/docs files (>.80 files under `.research/`,
+PR is primarily research/state/docs files (>80% of files under `.research/`,
 `.claude/state/`, `docs/`), most items are likely first-scan noise on new
 files (not bugs introduced by the PR). Offer batch acknowledgment:
 "SonarCloud flagged N items on R1. This appears to be first-scan volume on
@@ -151,8 +151,8 @@ Step 2 triage.
 
 ## Step 1: Context & Parse (MUST)
 
-> Read `reference/PRE_CHECKS.md` for generic pre-push checks. Run ALL
-> applicable checks before first CI push.
+> (SHOULD) Read `reference/PRE_CHECKS.md` for generic pre-push checks. Run
+> ALL applicable checks before first CI push.
 
 **Context (SHOULD):** Load `CLAUDE.md` and any project-local pattern docs.
 For R2+: load previous round's state file, auto-detect repeat items (same

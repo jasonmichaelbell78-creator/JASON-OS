@@ -49,3 +49,49 @@
 - **Parallel `general-purpose` agents with file-disjoint scopes are reliable.** Three concurrent agents touched 9 distinct files with zero merge conflicts and zero git-index races. Pattern is now confirmed (Step 4 + PR #3 R1 fixes both clean).
 - **Worktree isolation routinely doesn't activate.** Both Step 4 dispatches and this round's dispatches resulted in agents bypassing locked worktrees and writing to the main checkout. As long as scope files are disjoint, this is fine; document the pattern explicitly so future dispatch isn't surprised.
 - **Convergence-loop the cross-source signal at Step 2.** When Gemini and Qodo both flag the same defect, the convergence-elevation rule earns its place. Without it, M1 (session-end format) would have shipped to a customer who immediately hit the bug.
+
+#### Review #2: Foundation milestone PR (PR #3) — Round 2 (2026-04-17)
+
+**Source:** Mixed — SonarCloud + Semgrep + Qodo (Gemini did not re-review on R2)
+**PR/Branch:** PR #3 / `bootstrap-41726` → `main`
+**Items:** 14 total (Critical: 0, Major: 2, Minor: 5, Trivial: 2 false positives, Design: 1, R1 dedup: 4)
+
+**Patterns Identified:**
+
+1. **Cross-round dedup carries real load.**
+   - Root cause: 4 of 14 R2 items were re-flags of issues R1 already rejected (audit-trail user-id, sensitive log exposure, secure-error user-facing leak, secure-logging incomplete redaction). Without the cross-round rule these would have re-litigated each round.
+   - Prevention: state file `task-pr-review-{pr}-r{N}.state.json` is the canonical disposition record; warm-up MUST load it. Confirmed working this round.
+
+2. **Static-analysis tools cannot see runtime guards.**
+   - Root cause: Semgrep's prototype-pollution rule (#17) re-flagged the same loop in `rotate-state.js:210` despite Agent A's R1 M10 fix that adds an explicit `PROTO_POLLUTION_KEYS.has(keys[i])` guard returning before the polluting line. The rule is heuristic AST-pattern, not runtime-flow.
+   - Prevention: when fixing a static-analysis flag with a runtime guard, expect repeat flags on subsequent scans; document the guard with an inline comment referencing the rule ID + PR round (we did this — pattern works for human reviewers; bot will keep flagging anyway).
+
+3. **Stale-snapshot detection from external scanners.**
+   - Root cause: SonarCloud flagged a "TODO" at `session-end-commit.js:120` that doesn't exist in current HEAD (line 120 is `// Closes T14 from the /todo backlog.`). Likely matched "Closes T14" as a task marker via fuzzy text rule.
+   - Prevention: Step 1 critical-claim validation MUST grep the actual file before triaging — caught both this and the Semgrep false positive without wasted effort.
+
+**Resolution:**
+
+- **Fixed: 5 items** (in-session single commit, no agent dispatch needed for this volume)
+  - **N1** commit-tracker.js `validateGitDir()`: resolve symlinks via `realpathSync` before containment check (Qodo 8/10 security)
+  - **N2** state-utils.js `saveJson()`: pre-check parent dir against allowed `.claude/{state,hooks}/` roots BEFORE `mkdirSync` (Qodo 8/10 security)
+  - **N3** sanitize-input.js `sanitizeInput()`: coerce non-string inputs to string to prevent TypeError on truthy non-strings; null/undefined → empty string (Qodo 7/10)
+  - **N4** read-jsonl.js: cap parse-error warnings at 25 with summary message after, prevents log DoS on heavily corrupted JSONL (Qodo 6/10)
+  - **N5** settings.json: symmetric m6 fix on PreToolUse `read` and `write|edit` matchers — `^(?i)X$` → `^[Xx]$` style; flagged as R1 follow-up, not surfaced by any reviewer this round, included anyway for consistency
+- **Deferred: 0 items**
+- **Rejected: 9 items** (with justifications)
+  - **R1 cross-round dedups (4):** audit-trail user-id (R1 A2), sensitive log exposure handoff/commit-failures (R1 A1 extended), secure-error user-facing leak (R1 A3), secure-logging incomplete redaction (R1 A3). Same justifications carry forward.
+  - **t3** Semgrep #17 prototype-pollution: validated false positive — Agent A's M10 guard returns before the polluting line; Semgrep rule is structural, can't see runtime guards.
+  - **t4** SonarCloud "TODO at session-end-commit.js:120": validated false positive — no TODO/FIXME exists; line 120 is a "Closes T14" comment.
+  - **r1** Qodo "Robust Error Handling: Silent failure paths" in `appendCommitLog`: deliberate design — hooks must NEVER block git workflow; graceful degradation is the contract.
+  - **r2** Qodo "Compact matcher case-insensitive `^[Cc]ompact$`": rejected — Claude Code emits `compact` lowercase per protocol; case-insensitive is gilding without observed need.
+  - **r3** Qodo "Sanitize `getErrorMessage` in session-end-commit.js": rejected — even Qodo's "Why" notes this is a developer-facing CLI script where detailed errors are desirable.
+
+**Pending user action:** None new in R2 (R1's m1 SonarCloud Mark-as-Safe still pending).
+
+**Key Learnings:**
+
+- **Cross-round dedup rule is load-bearing.** 29% of R2 items (4/14) were R1 dedups. Without state-file carry-forward, every round would re-debate the same architectural rejections.
+- **Validate critical claims before triage.** Both R2 trivials (Semgrep + SonarCloud) were false positives caught by 5-second grep checks. Cheap, mandatory, prevents pointless agent dispatch.
+- **R2 volume drops sharply when R1 is thorough.** R1 = 22 items. R2 = 14 items, of which 9 are auto-reject categories (4 dedups + 2 false positives + 3 deliberate). Net R2 work: 5 fixes. Signal-to-noise drop is the diminishing-returns indicator the skill's Step 7.5 watches for at R4+.
+- **In-session beats agent dispatch for low-volume rounds.** R1 (15 fixes) earned 3 parallel agents. R2 (5 fixes across 5 small files) was faster done in-session — agent dispatch overhead would have exceeded the work.

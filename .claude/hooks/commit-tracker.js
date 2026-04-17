@@ -437,8 +437,18 @@ function resolveGitDir() {
       // Reject filesystem roots (too broad to be a safe git dir)
       const parent = path.dirname(abs);
       if (parent === abs) return dotGitPath;
+
+      // PR #3 R2 (N1): resolve symlinks before containment check to prevent
+      // bypass via attacker-planted symlink that points outside the cwd tree.
+      let realAbs = abs;
+      try {
+        realAbs = fs.realpathSync.native ? fs.realpathSync.native(abs) : fs.realpathSync(abs);
+      } catch {
+        // Path may not exist yet — fall back to path-resolved value.
+      }
+
       const norm = (p) => (process.platform === "win32" ? p.toLowerCase() : p);
-      const gitDir = norm(abs);
+      const gitDir = norm(realAbs);
       const cwdAbs = norm(path.resolve(cwd));
       const cwdParent = norm(path.dirname(path.resolve(cwd)));
       // Allow: inside cwd, equal to cwd, or inside cwd's parent (worktree layouts)
@@ -451,7 +461,7 @@ function resolveGitDir() {
 
       // PR #3 R1 (m3): require resolved path to look like a git directory.
       const sep = path.sep;
-      const absNorm = abs;
+      const absNorm = realAbs;
       const looksLikeGitDir =
         absNorm.endsWith(`${sep}.git`) ||
         absNorm.includes(`${sep}.git${sep}`) ||
@@ -459,7 +469,7 @@ function resolveGitDir() {
         path.basename(absNorm) === ".git";
       if (!looksLikeGitDir) return dotGitPath;
 
-      return abs;
+      return realAbs;
     } catch {
       // fall through
     }

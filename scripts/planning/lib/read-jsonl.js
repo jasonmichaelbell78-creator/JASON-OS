@@ -30,6 +30,10 @@ export function readJsonl(planningDir, filename) {
   const filepath = join(planningDir, filename);
   const results = [];
   let lineNum = 0;
+  // PR #3 R2 (N4): cap parse-error warnings to prevent log DoS on heavily
+  // corrupted JSONL. After MAX_WARNINGS, emit one summary warning and suppress.
+  let warned = 0;
+  const MAX_WARNINGS = 25;
   try {
     streamLinesSync(filepath, (rawLine) => {
       lineNum++;
@@ -38,10 +42,18 @@ export function readJsonl(planningDir, filename) {
       try {
         results.push(JSON.parse(trimmed));
       } catch (err) {
-        // CLAUDE.md §5: never log raw err.message — sanitize first.
-        console.warn(
-          `WARNING: ${filename} line ${lineNum}: parse error — ${sanitizeError(err)}`
-        );
+        if (warned < MAX_WARNINGS) {
+          // CLAUDE.md §5: never log raw err.message — sanitize first.
+          console.warn(
+            `WARNING: ${filename} line ${lineNum}: parse error — ${sanitizeError(err)}`
+          );
+          warned++;
+        } else if (warned === MAX_WARNINGS) {
+          console.warn(
+            `WARNING: ${filename}: too many parse errors; suppressing further warnings`
+          );
+          warned++;
+        }
       }
     });
     return results;

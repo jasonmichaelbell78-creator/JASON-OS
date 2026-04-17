@@ -121,8 +121,21 @@ function saveJson(filePath, data) {
   const bakPath = `${filePath}.bak`;
   let safeToWrite = false;
   try {
+    // PR #3 R2 (N2): pre-check parent dir against allowed roots BEFORE mkdirSync,
+    // so an attacker-controlled filePath can't cause directory creation outside .claude/.
+    const claudeDir = path.resolve(__dirname, "..", "..");
+    const allowedRoots = [path.resolve(claudeDir, "state"), path.resolve(claudeDir, "hooks")];
+    const absDir = path.dirname(path.resolve(filePath));
+    const norm = (x) => (process.platform === "win32" ? x.toLowerCase() : x);
+    const isUnder = (dir, root) => {
+      const dirN = norm(dir);
+      const rootN = norm(root);
+      return dirN === rootN || dirN.startsWith(rootN + path.sep);
+    };
+    if (!allowedRoots.some((r) => isUnder(absDir, r))) return false;
+
     // Ensure parent dir exists before isSafeToWrite (which needs realpathSync)
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.mkdirSync(absDir, { recursive: true });
     safeToWrite = isSafeToWrite(filePath) && isSafeToWrite(tmpPath) && isSafeToWrite(bakPath);
     if (!safeToWrite) return false;
     safeWriteFileSync(tmpPath, JSON.stringify(data, null, 2));

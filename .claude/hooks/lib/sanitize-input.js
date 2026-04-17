@@ -29,16 +29,20 @@ const SECRET_PATTERNS = [
  * @returns {string} Sanitized string
  */
 function sanitizeInput(value, maxLength = 500) {
-  if (!value) return value;
+  // PR #3 R2 (N3): coerce non-string inputs to string to prevent TypeError on
+  // truthy non-string values (numbers, objects). null/undefined → empty string.
+  if (value == null) return "";
+  const input = typeof value === "string" ? value : String(value);
+  if (!input) return input;
 
   // Remove control characters except newlines (\n=10), tabs (\t=9), and carriage return (\r=13)
   // Using character code filtering instead of regex to avoid no-control-regex lint error
   let sanitized = "";
-  for (let i = 0; i < value.length && i < maxLength * 2; i++) {
-    const code = value.charCodeAt(i);
+  for (let i = 0; i < input.length && i < maxLength * 2; i++) {
+    const code = input.charCodeAt(i);
     // Allow printable ASCII (32-126), tab (9), newline (10), carriage return (13)
     if ((code >= 32 && code <= 126) || code === 9 || code === 10 || code === 13) {
-      sanitized += value[i];
+      sanitized += input[i];
     }
   }
 

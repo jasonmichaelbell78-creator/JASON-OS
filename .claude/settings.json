@@ -68,7 +68,7 @@
         ]
       },
       {
-        "matcher": "^(?i)read$",
+        "matcher": "^[Rr]ead$",
         "hooks": [
           {
             "type": "command",
@@ -78,7 +78,7 @@
         ]
       },
       {
-        "matcher": "^(?i)(write|edit)$",
+        "matcher": "^([Ww]rite|[Ee]dit)$",
         "hooks": [
           {
             "type": "command",

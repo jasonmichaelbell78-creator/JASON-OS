@@ -21,6 +21,21 @@ try {
 } catch {
   sanitizeError = (e) => (e instanceof Error ? e.constructor.name : "unknown error");
 }
+// PR #3 R1 (M4): route file I/O through safe-fs helpers (symlink-guarded
+// writes, EXDEV-aware rename, BOM-stripping reads) per CLAUDE.md §5.
+let safeAppendFileSync, safeWriteFileSync, readUtf8Sync, safeRenameSync;
+try {
+  ({ safeAppendFileSync, safeWriteFileSync, readUtf8Sync, safeRenameSync } = require(
+    path.join(__dirname, "..", "..", "..", "scripts", "lib", "safe-fs")
+  ));
+} catch {
+  // Fallback shim: direct fs (preserves prior behavior if safe-fs unavailable).
+  // The local isSafeToWrite check below still gates writes against symlinks.
+  safeAppendFileSync = (p, d, o) => fs.appendFileSync(p, d, o);
+  safeWriteFileSync = (p, d, o) => fs.writeFileSync(p, d, o);
+  readUtf8Sync = (p) => fs.readFileSync(p, "utf8");
+  safeRenameSync = (s, d) => fs.renameSync(s, d);
+}
 let isSafeToWrite;
 try {
   ({ isSafeToWrite } = require("./symlink-guard"));
@@ -61,9 +76,74 @@ try {
   };
 }
 
+/** Best-effort rm — never throws. */
+function silentRm(p) {
+  try {
+    fs.rmSync(p, { force: true });
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * PR #3 R1 (M3): Atomic backup-swap with rollback.
+ *
+ * Mirrors backupSwap() in state-utils.js. Used by rotateJsonl (and by other
+ * rotation paths that overwrite an existing state file) instead of the prior
+ * rmSync+renameSync sequence, which created a window where the destination
+ * could be missing if rename failed — unacceptable for state files used in
+ * compaction recovery.
+ *
+ * Protocol:
+ *   1. Caller has already written `tmpPath`.
+ *   2. If `filePath` exists, rename it to `bakPath` (copyFileSync fallback
+ *      on rename failure so we never lose the original).
+ *   3. Rename `tmpPath` → `filePath`. On failure, restore from `bakPath`.
+ *   4. On success, remove `bakPath`.
+ *
+ * Throws on unrecoverable failure; caller is responsible for tmp cleanup.
+ */
+function backupSwap(filePath, tmpPath, bakPath) {
+  silentRm(bakPath);
+  if (fs.existsSync(filePath)) {
+    try {
+      safeRenameSync(filePath, bakPath);
+    } catch {
+      // Don't delete original on backup failure; best-effort copy instead.
+      try {
+        fs.copyFileSync(filePath, bakPath);
+      } catch {
+        /* best effort */
+      }
+    }
+  }
+  try {
+    safeRenameSync(tmpPath, filePath);
+  } catch (err) {
+    // Restore backup if rename failed to prevent data loss.
+    if (fs.existsSync(bakPath) && !fs.existsSync(filePath)) {
+      try {
+        safeRenameSync(bakPath, filePath);
+      } catch {
+        /* best effort */
+      }
+    }
+    throw err;
+  }
+  silentRm(bakPath);
+}
+
 /**
  * Rotate a JSONL file to keep only the newest N entries.
  * Reads all lines, keeps the last `keepCount`, writes back atomically.
+ *
+ * PR #3 R1 (M2/M3): Replaced the prior `rmSync(filePath) + renameSync(tmp)`
+ * sequence with a backup-swap. `renameSync` overwrites atomically on POSIX
+ * and Windows; the explicit pre-rename rmSync created a window where the
+ * destination could vanish if rename failed. Backup-swap goes further by
+ * preserving the prior contents in `${filePath}.bak` until the swap is
+ * confirmed, allowing rollback on rename failure. State files survive
+ * compaction recovery; permanent loss is unacceptable.
  *
  * @param {string} filePath - Absolute path to JSONL file
  * @param {number} maxEntries - Trigger rotation when line count exceeds this
@@ -73,8 +153,10 @@ try {
 function rotateJsonl(filePath, maxEntries, keepCount) {
   const keepRaw = keepCount || Math.floor(maxEntries * 0.6);
   const keep = Math.max(1, keepRaw); // Prevent truncation to 0 (Review #289)
+  const tmpPath = `${filePath}.tmp`;
+  const bakPath = `${filePath}.bak`;
   try {
-    const content = fs.readFileSync(filePath, "utf-8");
+    const content = readUtf8Sync(filePath);
     const lines = content.split("\n").filter((l) => l.trim().length > 0);
 
     if (lines.length <= maxEntries) {
@@ -82,19 +164,14 @@ function rotateJsonl(filePath, maxEntries, keepCount) {
     }
 
     const kept = lines.slice(-keep);
-    const tmpPath = `${filePath}.tmp`;
-    if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath))
+    if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath) || !isSafeToWrite(bakPath))
       return { rotated: false, before: lines.length, after: lines.length };
-    fs.writeFileSync(tmpPath, kept.join("\n") + "\n", "utf-8");
-    try {
-      fs.rmSync(filePath, { force: true });
-    } catch {
-      // best-effort remove before rename
-    }
-    fs.renameSync(tmpPath, filePath);
+    safeWriteFileSync(tmpPath, kept.join("\n") + "\n", "utf-8");
+    backupSwap(filePath, tmpPath, bakPath);
 
     return { rotated: true, before: lines.length, after: kept.length };
   } catch {
+    silentRm(tmpPath);
     return { rotated: false, before: 0, after: 0 };
   }
 }
@@ -107,20 +184,37 @@ function rotateJsonl(filePath, maxEntries, keepCount) {
  * @param {number} maxEntries - Maximum entries to keep in the array
  * @returns {{ pruned: boolean, before: number, after: number }}
  */
+// PR #3 R1 (M10): keys that walk into Object.prototype must be refused.
+// Without this guard, a caller passing keyPath="__proto__.polluted" (or
+// similar via attacker-controlled config) would mutate Object.prototype
+// and corrupt every object in the process. We refuse the mutation entirely
+// and return the no-op shape, matching the function's existing error paths.
+const PROTO_POLLUTION_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 function pruneJsonKey(filePath, keyPath, maxEntries) {
+  const tmpPath = `${filePath}.tmp`;
+  const bakPath = `${filePath}.bak`;
   try {
-    const content = fs.readFileSync(filePath, "utf-8");
+    const content = readUtf8Sync(filePath);
     const data = JSON.parse(content);
 
     // Navigate dot-separated path
     const keys = keyPath.split(".");
     let parent = data;
     for (let i = 0; i < keys.length - 1; i++) {
+      // PR #3 R1 (M10): proto-pollution guard on intermediate keys.
+      if (PROTO_POLLUTION_KEYS.has(keys[i])) {
+        return { pruned: false, before: 0, after: 0 };
+      }
       if (!parent || typeof parent !== "object") return { pruned: false, before: 0, after: 0 };
       parent = parent[keys[i]];
     }
 
     const lastKey = keys[keys.length - 1];
+    // PR #3 R1 (M10): proto-pollution guard on final key.
+    if (PROTO_POLLUTION_KEYS.has(lastKey)) {
+      return { pruned: false, before: 0, after: 0 };
+    }
     const arr = parent?.[lastKey];
     if (!Array.isArray(arr)) return { pruned: false, before: 0, after: 0 };
 
@@ -129,19 +223,14 @@ function pruneJsonKey(filePath, keyPath, maxEntries) {
 
     parent[lastKey] = arr.slice(-maxEntries);
 
-    const tmpPath = `${filePath}.tmp`;
-    if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath))
+    if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath) || !isSafeToWrite(bakPath))
       return { pruned: false, before, after: before };
-    fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf-8");
-    try {
-      fs.rmSync(filePath, { force: true });
-    } catch {
-      // best-effort remove before rename
-    }
-    fs.renameSync(tmpPath, filePath);
+    safeWriteFileSync(tmpPath, JSON.stringify(data, null, 2), "utf-8");
+    backupSwap(filePath, tmpPath, bakPath);
 
     return { pruned: true, before, after: parent[lastKey].length };
   } catch {
+    silentRm(tmpPath);
     return { pruned: false, before: 0, after: 0 };
   }
 }
@@ -155,8 +244,10 @@ function pruneJsonKey(filePath, keyPath, maxEntries) {
  * @returns {{ expired: boolean, before: number, after: number }}
  */
 function expireByAge(filePath, maxDays) {
+  const tmpPath = `${filePath}.tmp`;
+  const bakPath = `${filePath}.bak`;
   try {
-    const content = fs.readFileSync(filePath, "utf-8");
+    const content = readUtf8Sync(filePath);
     const data = JSON.parse(content);
 
     if (!data || typeof data !== "object" || Array.isArray(data)) {
@@ -180,19 +271,14 @@ function expireByAge(filePath, maxDays) {
     const after = Object.keys(kept).length;
     if (after === before) return { expired: false, before, after };
 
-    const tmpPath = `${filePath}.tmp`;
-    if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath))
+    if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath) || !isSafeToWrite(bakPath))
       return { expired: false, before, after: before };
-    fs.writeFileSync(tmpPath, JSON.stringify(kept, null, 2), "utf-8");
-    try {
-      fs.rmSync(filePath, { force: true });
-    } catch {
-      // best-effort remove before rename
-    }
-    fs.renameSync(tmpPath, filePath);
+    safeWriteFileSync(tmpPath, JSON.stringify(kept, null, 2), "utf-8");
+    backupSwap(filePath, tmpPath, bakPath);
 
     return { expired: true, before, after };
   } catch {
+    silentRm(tmpPath);
     return { expired: false, before: 0, after: 0 };
   }
 }
@@ -207,8 +293,10 @@ function expireByAge(filePath, maxDays) {
  */
 function expireJsonlByAge(filePath, maxDays, timestampField) {
   const field = timestampField || "timestamp";
+  const tmpPath = `${filePath}.tmp`;
+  const bakPath = `${filePath}.bak`;
   try {
-    const content = fs.readFileSync(filePath, "utf-8");
+    const content = readUtf8Sync(filePath);
     const lines = content.split("\n").filter((l) => l.trim().length > 0);
     const cutoff = Date.now() - maxDays * 24 * 60 * 60 * 1000;
     const before = lines.length;
@@ -223,19 +311,14 @@ function expireJsonlByAge(filePath, maxDays, timestampField) {
     const after = kept.length;
     if (after === before) return { expired: false, before, after };
 
-    const tmpPath = `${filePath}.tmp`;
-    if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath))
+    if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath) || !isSafeToWrite(bakPath))
       return { expired: false, before, after: before };
-    fs.writeFileSync(tmpPath, kept.join("\n") + "\n", "utf-8");
-    try {
-      fs.rmSync(filePath, { force: true });
-    } catch {
-      // best-effort remove before rename
-    }
-    fs.renameSync(tmpPath, filePath);
+    safeWriteFileSync(tmpPath, kept.join("\n") + "\n", "utf-8");
+    backupSwap(filePath, tmpPath, bakPath);
 
     return { expired: true, before, after };
   } catch {
+    silentRm(tmpPath);
     return { expired: false, before: 0, after: 0 };
   }
 }
@@ -264,7 +347,7 @@ function archiveRotateJsonl(filePath, maxEntries, keepCount) {
     }
 
     return withLock(filePath, () => {
-      const content = fs.readFileSync(filePath, "utf-8");
+      const content = readUtf8Sync(filePath);
       const lines = content.split("\n").filter((l) => l.trim().length > 0);
 
       if (lines.length <= maxEntries) {
@@ -276,7 +359,7 @@ function archiveRotateJsonl(filePath, maxEntries, keepCount) {
       const ackPath = filePath.replace(/\.jsonl$/, "").replace(/-log$/, "") + "-ack.json";
       let lastCleared = null;
       try {
-        const ackRaw = fs.readFileSync(ackPath, "utf-8");
+        const ackRaw = readUtf8Sync(ackPath);
         const ack = JSON.parse(ackRaw);
         if (ack.lastCleared) {
           const lastClearedDate = new Date(ack.lastCleared);
@@ -322,22 +405,23 @@ function archiveRotateJsonl(filePath, maxEntries, keepCount) {
       if (evicted.length > 0) {
         const archiveData = evicted.join("\n") + "\n";
         if (isSafeToWrite(path.resolve(archivePath))) {
-          fs.appendFileSync(archivePath, archiveData, "utf-8");
+          safeAppendFileSync(archivePath, archiveData, "utf-8");
         }
       }
 
-      // Atomic write for active file (existing pattern)
+      // Atomic write for active file: PR #3 R1 (M3) backup-swap pattern.
       const tmpPath = `${filePath}.tmp`;
-      if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath)) {
+      const bakPath = `${filePath}.bak`;
+      if (!isSafeToWrite(filePath) || !isSafeToWrite(tmpPath) || !isSafeToWrite(bakPath)) {
         return { rotated: false, before: lines.length, after: lines.length, archived: 0 };
       }
-      fs.writeFileSync(tmpPath, kept.join("\n") + "\n", "utf-8");
       try {
-        fs.rmSync(filePath, { force: true });
-      } catch {
-        // best-effort remove before rename
+        safeWriteFileSync(tmpPath, kept.join("\n") + "\n", "utf-8");
+        backupSwap(filePath, tmpPath, bakPath);
+      } catch (swapErr) {
+        silentRm(tmpPath);
+        throw swapErr;
       }
-      fs.renameSync(tmpPath, filePath);
 
       return { rotated: true, before: lines.length, after: kept.length, archived: evicted.length };
     });

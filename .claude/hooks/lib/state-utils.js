@@ -11,6 +11,20 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+// PR #3 R1 (M4): route file I/O through safe-fs helpers per CLAUDE.md §5.
+let safeWriteFileSync, safeRenameSync, readUtf8Sync;
+try {
+  ({ safeWriteFileSync, safeRenameSync, readUtf8Sync } = require(
+    path.join(__dirname, "..", "..", "..", "scripts", "lib", "safe-fs")
+  ));
+} catch {
+  // Fallback shim: direct fs (preserves prior behavior if safe-fs unavailable).
+  // The isSafeToWrite check below still gates writes against symlinks.
+  safeWriteFileSync = (p, d, o) => fs.writeFileSync(p, d, o);
+  safeRenameSync = (s, d) => fs.renameSync(s, d);
+  readUtf8Sync = (p) => fs.readFileSync(p, "utf8");
+}
+
 let isSafeToWrite;
 try {
   ({ isSafeToWrite } = require("./symlink-guard"));
@@ -50,7 +64,7 @@ try {
  */
 function loadJson(filePath) {
   try {
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    return JSON.parse(readUtf8Sync(filePath));
   } catch {
     return null;
   }
@@ -70,7 +84,7 @@ function backupSwap(filePath, tmpPath, bakPath) {
   silentRm(bakPath);
   if (fs.existsSync(filePath)) {
     try {
-      fs.renameSync(filePath, bakPath);
+      safeRenameSync(filePath, bakPath);
     } catch {
       // Don't delete original on backup failure; best-effort copy instead
       try {
@@ -81,12 +95,12 @@ function backupSwap(filePath, tmpPath, bakPath) {
     }
   }
   try {
-    fs.renameSync(tmpPath, filePath);
+    safeRenameSync(tmpPath, filePath);
   } catch (err) {
     // Restore backup if rename failed to prevent data loss
     if (fs.existsSync(bakPath) && !fs.existsSync(filePath)) {
       try {
-        fs.renameSync(bakPath, filePath);
+        safeRenameSync(bakPath, filePath);
       } catch {
         /* best effort */
       }
@@ -111,14 +125,14 @@ function saveJson(filePath, data) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     safeToWrite = isSafeToWrite(filePath) && isSafeToWrite(tmpPath) && isSafeToWrite(bakPath);
     if (!safeToWrite) return false;
-    fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2));
+    safeWriteFileSync(tmpPath, JSON.stringify(data, null, 2));
     backupSwap(filePath, tmpPath, bakPath);
     return true;
   } catch {
     // Rollback: restore backup if dest was moved but tmp rename failed
     try {
       if (fs.existsSync(bakPath) && !fs.existsSync(filePath)) {
-        fs.renameSync(bakPath, filePath);
+        safeRenameSync(bakPath, filePath);
       }
     } catch {
       /* ignore */
@@ -126,7 +140,7 @@ function saveJson(filePath, data) {
     // Fallback: direct write if rename fails (Windows cross-drive)
     if (!safeToWrite) return false;
     try {
-      fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+      safeWriteFileSync(filePath, JSON.stringify(data, null, 2));
       silentRm(tmpPath);
       silentRm(bakPath);
       return true;

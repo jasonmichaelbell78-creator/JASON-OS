@@ -23,10 +23,22 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 let isSafeToWrite, gitExec, projectDir, sanitizeInput, sanitizeError;
+let safeAppendFileSync, safeAtomicWriteSync, readUtf8Sync;
 try {
   ({ isSafeToWrite } = require("./lib/symlink-guard"));
 } catch {
   isSafeToWrite = () => false;
+}
+try {
+  ({ safeAppendFileSync, safeAtomicWriteSync, readUtf8Sync } = require(
+    path.join(__dirname, "..", "..", "scripts", "lib", "safe-fs")
+  ));
+} catch {
+  // Fallback: direct fs (preserves prior behavior if safe-fs unavailable).
+  // Symlink-guard checks remain via the local isSafeToWrite import above.
+  safeAppendFileSync = (p, d, o) => fs.appendFileSync(p, d, o);
+  safeAtomicWriteSync = (p, d, o) => fs.writeFileSync(p, d, o);
+  readUtf8Sync = (p) => fs.readFileSync(p, "utf8");
 }
 try {
   ({ sanitizeError } = require(
@@ -87,7 +99,7 @@ function extractCommand(payload) {
  */
 function loadLastHead() {
   try {
-    const data = JSON.parse(fs.readFileSync(TRACKER_STATE, "utf8"));
+    const data = JSON.parse(readUtf8Sync(TRACKER_STATE));
     return typeof data.lastHead === "string" ? data.lastHead : "";
   } catch {
     return "";
@@ -95,44 +107,29 @@ function loadLastHead() {
 }
 
 /**
- * Save current HEAD hash for next comparison
+ * Save current HEAD hash for next comparison.
+ *
+ * PR #3 R1 (M2): Uses safeAtomicWriteSync (tmp-then-rename) instead of the
+ * prior manual rmSync+renameSync sequence. renameSync overwrites atomically
+ * on POSIX and Windows; the explicit pre-rename rmSync created a window where
+ * the destination could be missing if rename failed, causing loadLastHead()
+ * to return "" and triggering redundant commit re-logging.
  */
 function saveLastHead(head) {
   try {
     const dir = path.dirname(TRACKER_STATE);
     fs.mkdirSync(dir, { recursive: true });
-    const tmpPath = `${TRACKER_STATE}.tmp`;
-    if (!isSafeToWrite(tmpPath)) {
+    if (!isSafeToWrite(TRACKER_STATE)) {
       console.warn("commit-tracker: refusing to write — symlink detected on tracker state");
       return;
     }
-    fs.writeFileSync(
-      tmpPath,
+    safeAtomicWriteSync(
+      TRACKER_STATE,
       JSON.stringify({ lastHead: head, updatedAt: new Date().toISOString() })
     );
-    if (!isSafeToWrite(TRACKER_STATE)) {
-      console.warn("commit-tracker: refusing to rename — symlink detected on tracker state");
-      try {
-        fs.unlinkSync(tmpPath);
-      } catch {
-        /* cleanup */
-      }
-      return;
-    }
-    try {
-      fs.rmSync(TRACKER_STATE, { force: true });
-    } catch {
-      // best-effort; destination may not exist
-    }
-    fs.renameSync(tmpPath, TRACKER_STATE);
   } catch (err) {
     // Non-critical — worst case we re-log the same commit next time
     console.warn(`commit-tracker: failed to save HEAD state: ${sanitizeError(err)}`);
-    try {
-      fs.rmSync(`${TRACKER_STATE}.tmp`, { force: true });
-    } catch {
-      // cleanup failure is non-critical
-    }
   }
 }
 
@@ -142,7 +139,7 @@ function saveLastHead(head) {
 function getSessionCounter() {
   try {
     const contextPath = path.join(projectDir, "SESSION_CONTEXT.md");
-    const content = fs.readFileSync(contextPath, "utf8");
+    const content = readUtf8Sync(contextPath);
     // Resilient: optional bold markers, flexible spacing, "Count"/"Counter" (P001 fix)
     const match = content.match(/\*{0,2}Current Session Count(?:er)?\*{0,2}[\s:]*(\d+)/i);
     return match ? parseInt(match[1], 10) : null;
@@ -162,7 +159,7 @@ function appendCommitLog(entry) {
       console.warn("commit-tracker: refusing to write — symlink detected on commit log");
       return false;
     }
-    fs.appendFileSync(COMMIT_LOG, JSON.stringify(entry) + "\n");
+    safeAppendFileSync(COMMIT_LOG, JSON.stringify(entry) + "\n");
     return true;
   } catch {
     return false;
@@ -211,7 +208,7 @@ function logCommitFailure(command) {
         stats.size <= 256 * 1024 &&
         Date.now() - stats.mtimeMs < 60000
       ) {
-        const content = fs.readFileSync(hookLogPath, "utf8").trim();
+        const content = readUtf8Sync(hookLogPath).trim();
         hookOutputExcerpt = content.split("\n").slice(0, 5).join("\n");
         // Sanitize sensitive content from hook output — PR #444 R1 fix #12
         // Strip ANSI escape sequences and control characters
@@ -247,7 +244,7 @@ function logCommitFailure(command) {
       session: getSessionCounter(),
       hook_output_excerpt: sanitizeInput(hookOutputExcerpt.slice(0, 500)),
     };
-    fs.appendFileSync(commitFailuresLog, JSON.stringify(entry) + "\n");
+    safeAppendFileSync(commitFailuresLog, JSON.stringify(entry) + "\n");
 
     // D5b: Rotation — keep 50 entries max
     try {
@@ -279,6 +276,24 @@ function runMidSessionAlerts() {
 }
 
 /**
+ * PR #3 R1 (M9): Redact common secret patterns from commit message text
+ * before persisting to the commit-log JSONL. Mirrors the redaction pattern
+ * already in place in logCommitFailure / reportCommitFailure for consistency.
+ *
+ * Patterns covered: GitHub PATs (ghp_, github_pat_), GitLab PATs (glpat-),
+ * OpenAI-style keys (sk-), HTTP Bearer tokens, and key=value style assignments
+ * for token / password / secret.
+ */
+function redactCommitMessage(raw) {
+  const truncated = String(raw ?? "").slice(0, 200);
+  const sanitized = sanitizeInput(truncated);
+  return sanitized
+    .replace(/(?:ghp_|github_pat_|glpat-|sk-)\S+/gi, "[REDACTED]")
+    .replace(/Bearer\s+\S+/gi, "[REDACTED]")
+    .replace(/(token|password|secret)\s*=\s*\S+/gi, "$1=[REDACTED]");
+}
+
+/**
  * Capture commit metadata from git log and diff-tree.
  * Returns a structured entry for the commit log.
  */
@@ -306,11 +321,20 @@ function captureCommitMetadata(currentHead) {
     .split("\n")
     .filter((f) => f.length > 0);
 
+  // PR #3 R1 (M9):
+  // - `author`: persisted as-is. This is the git committer name (`%an`),
+  //   equivalent to `git log` output that any clone of the repo can already
+  //   produce. Redacting would break the audit value of the commit log
+  //   without adding meaningful privacy protection.
+  // - `message`: capped at 200 chars + sanitizeInput (control chars stripped)
+  //   + secret-pattern redaction. A developer can paste a token into a
+  //   commit message by mistake; persisting it unredacted to the JSONL
+  //   would compound the leak.
   return {
     timestamp: new Date().toISOString(),
     hash: parts[0] || currentHead,
     shortHash: parts[1] || currentHead.slice(0, 7),
-    message: parts[2] || "",
+    message: redactCommitMessage(parts[2] || ""),
     author: parts[3] || "",
     authorDate: parts[4] || "",
     branch: branch,
@@ -400,6 +424,12 @@ function resolveGitDir() {
    * Containment check: resolved git dir must be within the project tree
    * or a reasonable ancestor (worktrees may be siblings).
    * Falls back to default .git path on containment failure.
+   *
+   * PR #3 R1 (m3): After containment, also verify the resolved path looks
+   * like a git directory. Without this heuristic, an attacker-supplied
+   * GIT_DIR env var could point at a non-git path inside the allowed tree
+   * (e.g. cwd itself, or a sibling worktree's source dir), and we would
+   * subsequently read `hook-output.log` from there.
    */
   function validateGitDir(resolved) {
     try {
@@ -412,14 +442,24 @@ function resolveGitDir() {
       const cwdAbs = norm(path.resolve(cwd));
       const cwdParent = norm(path.dirname(path.resolve(cwd)));
       // Allow: inside cwd, equal to cwd, or inside cwd's parent (worktree layouts)
-      if (
+      const withinAllowedTree =
         gitDir === cwdAbs ||
         gitDir.startsWith(cwdAbs + path.sep) ||
         gitDir === cwdParent ||
-        gitDir.startsWith(cwdParent + path.sep)
-      ) {
-        return abs;
-      }
+        gitDir.startsWith(cwdParent + path.sep);
+      if (!withinAllowedTree) return dotGitPath;
+
+      // PR #3 R1 (m3): require resolved path to look like a git directory.
+      const sep = path.sep;
+      const absNorm = abs;
+      const looksLikeGitDir =
+        absNorm.endsWith(`${sep}.git`) ||
+        absNorm.includes(`${sep}.git${sep}`) ||
+        absNorm.includes(`${sep}.git${sep}worktrees${sep}`) ||
+        path.basename(absNorm) === ".git";
+      if (!looksLikeGitDir) return dotGitPath;
+
+      return abs;
     } catch {
       // fall through
     }
@@ -435,7 +475,7 @@ function resolveGitDir() {
     if (fs.lstatSync(dotGitPath).isSymbolicLink()) return dotGitPath;
     const st = fs.statSync(dotGitPath);
     if (st.isFile()) {
-      const txt = fs.readFileSync(dotGitPath, "utf8").trim();
+      const txt = readUtf8Sync(dotGitPath).trim();
       const m = txt.match(/^gitdir:\s*(.+)\s*$/i);
       if (m && m[1]) {
         const resolved = m[1].trim();
@@ -491,7 +531,7 @@ function reportCommitFailure(payload) {
       if (fs.lstatSync(logFile).isSymbolicLink()) return;
       const stats = fs.statSync(logFile);
       if (stats.size === 0 || Date.now() - stats.mtimeMs > 60000) return;
-      content = fs.readFileSync(logFile, "utf8").trim();
+      content = readUtf8Sync(logFile).trim();
       if (!content) return;
     } catch {
       return;

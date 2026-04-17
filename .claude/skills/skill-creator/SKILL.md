@@ -6,6 +6,9 @@ description: >-
   skill packages (SKILL.md + companions) using deep-plan-style discovery with
   skill-specific question categories and convergence-loop verification of
   codebase claims.
+compatibility: agentskills-v1
+metadata:
+  version: 3.4
 ---
 
 # Skill Creator

@@ -4,6 +4,9 @@ description: >-
   Cross-session todo management with interactive menu, JSONL-backed persistence,
   and AI-powered context capture. Manages ideas, tasks, and insights that emerge
   during sessions so they survive across sessions. Independent of GSD.
+compatibility: agentskills-v1
+metadata:
+  version: 1.2
 ---
 
 # Todo — Cross-Session Task Management

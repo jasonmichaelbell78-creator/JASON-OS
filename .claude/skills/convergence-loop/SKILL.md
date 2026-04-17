@@ -4,6 +4,9 @@ description:
   Multi-pass verification of claims about reality using agent-based discovery,
   T20 tallies, and composable behaviors. Use when claims could waste effort if
   wrong — audits, discovery, doc-sync, plan verification.
+compatibility: agentskills-v1
+metadata:
+  version: 1.1
 ---
 
 # Convergence Loop

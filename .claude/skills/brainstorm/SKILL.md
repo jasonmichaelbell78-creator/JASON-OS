@@ -6,6 +6,9 @@ description: >-
   research-grade agents, and contrarian challenge to move from seed ideas to
   chosen directions with structured BRAINSTORM.md output that feeds directly
   into /deep-plan or /deep-research.
+compatibility: agentskills-v1
+metadata:
+  version: 1.0
 ---
 
 <!-- prettier-ignore-start -->

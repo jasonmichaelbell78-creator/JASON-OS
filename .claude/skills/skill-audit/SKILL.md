@@ -7,6 +7,9 @@ description: >-
   decisions. Includes self-audit verification that all decisions were actually
   implemented. Uses convergence loops in its own discovery phase. Produces a
   decision record and updated skill files.
+compatibility: agentskills-v1
+metadata:
+  version: 3.0
 ---
 
 <!-- prettier-ignore-start -->

@@ -3,6 +3,9 @@ name: session-begin
 description: >-
   Pre-flight checklist for work sessions — loads context, runs health scripts,
   surfaces warnings, and gates on acknowledgment before work begins.
+compatibility: agentskills-v1
+metadata:
+  version: 2.0
 ---
 
 # Session Begin Pre-Flight

@@ -6,6 +6,9 @@ description: >-
   runs mandatory contrarian/OTB challenges, gap-pursuit verification, and
   cross-model verification via Gemini CLI, and produces structured output with
   downstream adapters, research index, and management commands.
+compatibility: agentskills-v1
+metadata:
+  version: 2.0
 ---
 
 <!-- prettier-ignore-start -->

@@ -6,6 +6,9 @@ description: >-
   step-by-step implementation plan with audit checkpoints and convergence-loop
   verification of diagnosis and plan claims for user approval before any code is
   written.
+compatibility: agentskills-v1
+metadata:
+  version: 3.0
 ---
 
 <!-- prettier-ignore-start -->

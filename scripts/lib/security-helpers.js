@@ -182,7 +182,12 @@ function safeGitAdd(repoRoot, filePath) {
   // Validate path is within repo (Pattern #41)
   const validPath = validatePathInDir(repoRoot, filePath);
 
-  // Use -- terminator to prevent option injection (Pattern #31)
+  // Use -- terminator to prevent option injection (Pattern #31).
+  // SonarCloud S4036 (PATH search for "git"): accepted. This helper is
+  // invoked only from local Claude Code hooks running in the operator's
+  // own user environment. PATH is part of the operator's shell config,
+  // not attacker-controlled. An attacker who can shadow `git` on PATH
+  // already owns the user account. No realistic threat model here.
   execFileSync("git", ["add", "--", validPath], { cwd: repoRoot });
 }
 
@@ -207,6 +212,9 @@ function safeGitCommit(repoRoot, message) {
       mode: 0o600,
     });
 
+    // SonarCloud S4036 (PATH search for "git"): accepted — same rationale
+    // as safeGitAdd above. Hook-only code running in operator user space;
+    // PATH not attacker-controlled.
     execFileSync("git", ["commit", "-F", msgFile], { cwd: repoRoot });
     return true;
   } catch (error) {
@@ -490,6 +498,16 @@ function maskEmail(email) {
 /**
  * Normalize a string to a URL-safe slug (lowercase, hyphens only).
  * Shared across CAS scripts for consistent source matching.
+ *
+ * SonarCloud S5852 (slow regex): accepted — NOT vulnerable to ReDoS.
+ * Both regexes are atomic with no shared-prefix alternation:
+ *   /[^a-z0-9]+/g     — negated character class + greedy +; no
+ *                       backtracking possible (each char matches or
+ *                       doesn't; no sub-pattern to retry).
+ *   /^-+|-+$/g        — two alternatives anchored to opposite ends of
+ *                       the string (^ vs $), with only a literal char
+ *                       repeated; no overlap, no catastrophic backtrack.
+ * Worst-case complexity is linear in input length. Safe.
  */
 function slugify(s) {
   return String(s)

@@ -1,8 +1,9 @@
 # Foundation — Resume Pointer
 
-**Status (2026-04-17, end of session 2):** Layer 0+ merged to main. Layer 0
-complete + audited + MI-6 deferrals migrated on `bootstrap-41726` (6 commits
-ahead of main). **Layer 1 prereq (hooks/lib copy) is next.**
+**Status (2026-04-17, end of session 1 via /session-end):** Layer 0+ merged
+to main. Layer 0 + MI-6 + Layer 1 prereq + **Layer 1 (5 items, audit PASS)**
+all complete on `bootstrap-41726` (~22 commits ahead of main post-session-end).
+**Step 4 pre-push mini-phase is the last firm work remaining.**
 
 This file exists so future-me can pick up the thread after a context clear
 without re-reading the full conversation history. Treat PLAN.md as the plan
@@ -14,12 +15,13 @@ of record; this is just the "where we are" bookmark.
 
 | Field | Value |
 |---|---|
-| Branch | `bootstrap-41726` (off `main` @ `1eb0479`; 6 commits ahead) |
+| Branch | `bootstrap-41726` (off `main` @ `1eb0479`; ~22 commits ahead post-session-end) |
 | Previous branch | `startup-41526` (squash-merged via PR #2, remote + local deleted) |
 | `main` tip | `1eb0479 feat(foundation): Layer 0+ complete + SonarCloud baseline cleanup (#2)` |
-| Deep-plan state | `.claude/state/deep-plan.jason-os-mvp.state.json` (gitignored) — `current_phase: phase-5-executing-layer-1-prereq-next` |
+| Deep-plan state | `.claude/state/deep-plan.jason-os-mvp.state.json` (gitignored) — `current_phase: phase-5-executing-step-4-pre-push-next` |
 | Resume skill | `/deep-plan jason-os-mvp` (recovers from state file + skips completed phases) |
-| `/todo` backlog | 13 active todos (T1-T13) — tracked in `.planning/todos.jsonl` + `.planning/TODOS.md`; T3-T13 tagged `#foundation-deferral` |
+| `/todo` backlog | 14 active todos (T1-T14) — tracked in `.planning/todos.jsonl` + `.planning/TODOS.md`; T3-T13 tagged `#foundation-deferral`; T14 session-end-commit.js format follow-up |
+| Remote | `git push origin bootstrap-41726` performed during session-end (2026-04-17) — picks up at home/elsewhere via `git fetch && git checkout bootstrap-41726` |
 
 ## What's done
 
@@ -59,55 +61,57 @@ SonarCloud baseline cleanup (10 findings):
 - S7637 fix: `sonarqube-scan-action` SHA-pinned to `0303d6b62e310685c0e34d0b9cde218036885c4d`
 - Action deprecation swap: `sonarcloud-github-action` → `sonarqube-scan-action`
 
-## What's next — Layer 1 prereq (in order)
+## What's next — Step 4 (last firm layer)
 
-1. **Layer 1 prereq — `hooks/lib` copy (D11)** — port 4 files from SoNash 41526:
-   - `.claude/hooks/lib/git-utils.js`
-   - `.claude/hooks/lib/state-utils.js`
-   - `.claude/hooks/lib/sanitize-input.js`
-   - `.claude/hooks/lib/rotate-state.js`
-   Port-agent dispatched (D17). Pre-analysis (MI-1) required — **caution:
-   0.1 surfaced plan-reality divergences (wrong path, missing transitive
-   dep). Port-agent MUST verify each source at claimed path on 41526 BEFORE
-   port + parse imports for additional deps.** Research claimed "zero SoNash
-   coupling" — verify. Commit target: `feat(hooks/lib): copy 4 prereq files
-   per D11`. Done-when: 4 new files in `.claude/hooks/lib/`; PORT_ANALYSIS.md
-   has 4 new rows.
+1. **Step 4 — Pre-push mini-phase** (~2-3h, last firm work):
+   - **4.1 `/pr-review` trimmed port** — SoNash 41526 `.claude/skills/pr-review/`
+     has ~71 sanitization hits (Firebase, TDMS, `/add-debt`, CodeRabbit,
+     Gemini refs per BOOTSTRAP_DEFERRED.md). Drop SoNash-specific; keep
+     8-step flow + Qodo + SonarCloud (generic). Port 4 companion reference
+     files too. Per-skill self-audit (MI-5).
+   - **4.2 `/pre-commit-fixer` port** — ~70% portable per research G5.
+     Strip SoNash-specific fix recipes (pattern-compliance, propagation);
+     keep generic (ESLint, Prettier, gitleaks, tsc). Adapt to husky
+     scaffold from Layer 0+ item 0h.
+   Commit targets: `feat(skills/pr-review): trimmed port for JASON-OS
+   Qodo+SonarCloud per D22 MI-4` + `feat(skills/pre-commit-fixer): port
+   per D22 Layer 4 item 16`. Port-agent dispatched per D17 (pr-review is
+   heavy — 71 hits). Audit checkpoint after.
 
-After Layer 1 prereq:
+After Step 4:
 
-2. **Layer 1 — Session Rhythm** (5 items): SESSION_CONTEXT.md bootstrap (1.1),
-   session-end port (1.2), pre-compaction-save wiring (1.3), compact-restore
-   wiring (1.4), commit-tracker wiring (1.5). Settings.json edits for 3 hook
-   wirings. Effort ~4-5h including pre-analysis. Audit checkpoint after.
+2. **Step 5: End-to-end validation session (D20)** — real small session
+   using Foundation features (`/session-begin`, commit-tracker first
+   activation, `/session-end` round-trip with T14 consideration);
+   feels-like-home check per CH-C-006; retro per D35.
 
-3. **Step 4: Pre-push mini-phase** — `/pr-review` trimmed port + `/pre-commit-fixer`
-   port before first PR out of Foundation work. Effort ~2-3h.
-
-4. **Step 5: End-to-end validation session (D20)** — real small session using
-   Foundation features; feels-like-home check per CH-C-006; retro per D35.
-
-5. **Gated Layers 2/3/4 (D34 re-approval per-layer)** — user decides at
+3. **Gated Layers 2/3/4 (D34 re-approval per-layer)** — user decides at
    Step 5's feels-like-home gate.
 
-6. **Step 6: Handoff** — `/brainstorm sync-mechanism` per MI-3.
+4. **Step 6: Handoff** — `/brainstorm sync-mechanism` per MI-3.
 
 ## Outstanding user actions
 
 None. (SonarCloud S7637 marked Fixed + Automatic Analysis disabled per user
 confirmation 2026-04-17 session start.)
 
-## To resume after context clear
+## To resume at home or another locale
 
-1. `/deep-plan jason-os-mvp` — skill recovers from the state file, skips all
-   completed phases, and surfaces the next concrete action (Layer 1 prereq
-   `hooks/lib` copy).
-2. If the skill doesn't pick up the state file, read `PLAN.md` (Layer 1
-   prereq section, ~line 443) and
+1. `git fetch && git checkout bootstrap-41726` (this branch was pushed at
+   session-end 2026-04-17).
+2. `/deep-plan jason-os-mvp` — skill recovers from the state file, skips all
+   completed phases, and surfaces the next concrete action (Step 4 pre-push
+   mini-phase — `/pr-review` trimmed port + `/pre-commit-fixer` port).
+3. If the skill doesn't pick up the state file, read `PLAN.md` (Step 4
+   section, ~line 630) and
    `.claude/state/deep-plan.jason-os-mvp.state.json`
    (`execution_progress.next_concrete_action`) manually.
-3. Run `/todo` to review the 13-item backlog (T1 polish, T2 registry,
-   T3-T13 foundation-deferrals).
+4. Run `/todo` to review the 14-item backlog (T1 polish, T2 registry,
+   T3-T13 foundation-deferrals, T14 session-end-commit format).
+5. Note: on first commit of the new session, `.claude/state/commit-log.jsonl`
+   should auto-appear — that confirms Layer 1 item 1.5 (commit-tracker)
+   activated after the session restart. If missing, investigate
+   settings.json `PostToolUse` wiring.
 
 ## References
 

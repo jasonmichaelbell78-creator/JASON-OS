@@ -16,11 +16,51 @@ and workflows extracted from SoNash and sanitized to work in any project.
 
 ## 1. Stack
 
-_TBD — stack not yet chosen. Add versions here once decided._
+**Project stack:** agnostic / per-user. JASON-OS does not impose a stack on
+downstream projects. The repo that consumes JASON-OS chooses its own language
+and tooling.
+
+**Claude Code infrastructure:** Node.js 22 (pinned via `.nvmrc`). All hooks,
+scripts under `scripts/`, `scripts/lib/`, and husky infrastructure are
+Node.js-only. This is the minimum required to run Claude Code hooks and the
+/todo skill; downstream projects are not required to use Node.js themselves.
+
+**Package manager:** `npm` (minimal `package.json` exists solely for husky +
+dev dependencies; no runtime deps).
 
 ## 2. Security Rules
 
-_TBD — populated when the stack and integration points are chosen._
+### Helpers at file-I/O boundaries
+
+All shell scripts, hooks, and any Node.js code touching file I/O, CLI args,
+or error output MUST use the project helpers in `scripts/lib/`:
+
+- `scripts/lib/sanitize-error.cjs` — never log raw `error.message`
+- `scripts/lib/security-helpers.js` — path traversal, input validation
+- `scripts/lib/safe-fs.js` — file reads with try/catch wrapping
+
+See §5 Anti-Patterns for the specific patterns to avoid.
+
+### CI security pipeline
+
+Every PR runs through the following security gates before merge:
+
+- **Gitleaks** (pre-commit + CI) — secrets detection
+- **Semgrep** (CI, `.github/workflows/semgrep.yml`) — static analysis
+- **CodeQL** (CI, `.github/workflows/codeql.yml`) — deep semantic analysis
+- **Dependency Review** (CI, `.github/workflows/dependency-review.yml`) —
+  new-dep vulnerability check on PRs
+- **Scorecard** (CI, `.github/workflows/scorecard.yml`) — supply chain
+  posture scoring
+- **SonarCloud** (CI, `.github/workflows/sonarcloud.yml` per Layer 0+ item
+  0g) — quality gate + security hotspots
+- **Qodo** (GitHub App per Layer 0+ item 0g) — AI PR review
+
+### Secrets
+
+No secrets in the repo. Secrets live only in GitHub Actions secrets or the
+operator's local env. `.env.local` pattern if any such file becomes needed;
+never committed.
 
 ## 3. Architecture
 

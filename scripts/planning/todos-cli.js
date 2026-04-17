@@ -43,7 +43,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
-import { safeWriteFileSync, withLock } from "../lib/safe-fs.js";
+import { safeAtomicWriteSync, withLock } from "../lib/safe-fs.js";
 import { sanitizeError } from "../lib/sanitize-error.cjs";
 import { renderTodos } from "./render-todos.js";
 
@@ -251,7 +251,11 @@ function main() {
         );
       }
 
-      safeWriteFileSync(TODOS_FILE, serializeJsonl(after));
+      // Atomic write (tmp + rename) so a crash mid-write cannot truncate the
+      // JSONL. withLock above still matters for cross-process coordination —
+      // atomicity protects against power loss / SIGKILL, locking serializes
+      // concurrent writers. M7, PR #3 R1.
+      safeAtomicWriteSync(TODOS_FILE, serializeJsonl(after));
       process.stdout.write(summary + "\n");
     });
   } catch (err) {

@@ -445,6 +445,10 @@ function main(payload) {
     },
   };
 
+  // Symlink-guarded write: state-utils.saveJson() calls isSafeToWrite() on
+  // the destination, tmp, and bak paths (lib/state-utils.js:112) and returns
+  // false without writing if any are symlinked. No additional in-file guard
+  // needed here — Qodo M8 (PR #3 R1) verified against state-utils.js.
   if (saveJson(HANDOFF_OUTPUT, handoff)) {
     logHandoffSummary(
       handoff,

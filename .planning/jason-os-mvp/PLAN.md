@@ -676,7 +676,12 @@ Foundation bootstrap initiated. Layer 0+/0/1 complete, ready for validation sess
 
 ---
 
-## Step 5 — End-to-End Validation Session (D20)
+## Step 5 — End-to-End Validation Session (D20) ✅ EXECUTED (Session 3, 2026-04-17)
+
+**Status:** Run. Session 3 executed the validation end-to-end on
+`bootstrap-41726` using live Foundation features. Retro recorded in
+`SESSION_CONTEXT.md` Session 3 Quick Status. Gate decision (D19 engage
+Layer 2/3/4 vs. direct Step 6) remains open for user.
 
 **Purpose:** Subjective feels-like-home verification (per CH-C-006).
 

@@ -1,0 +1,33 @@
+{
+  "version": "0.1-seed",
+  "patterns": [
+    {
+      "id": "error-sanitization",
+      "severity": "high",
+      "anti": "raw error.message in logs",
+      "preferred": "scripts/lib/sanitize-error.cjs",
+      "file_patterns": ["scripts/**/*.js", ".claude/hooks/**/*.js"]
+    },
+    {
+      "id": "path-traversal-check",
+      "severity": "critical",
+      "anti": "rel.startsWith('..')",
+      "preferred": "/^\\.\\.(?:[\\\\/]|$)/.test(rel)",
+      "file_patterns": ["scripts/**/*.js", ".claude/hooks/**/*.js"]
+    },
+    {
+      "id": "file-read-try-catch",
+      "severity": "high",
+      "anti": "readFileSync without try/catch after existsSync",
+      "preferred": "always wrap in try/catch — existsSync race condition",
+      "file_patterns": ["scripts/**/*.js", ".claude/hooks/**/*.js"]
+    },
+    {
+      "id": "exec-loop-global-flag",
+      "severity": "critical",
+      "anti": ".exec() loop without /g flag",
+      "preferred": "regex must use /g flag in exec() loops",
+      "file_patterns": ["scripts/**/*.js", ".claude/hooks/**/*.js"]
+    }
+  ]
+}

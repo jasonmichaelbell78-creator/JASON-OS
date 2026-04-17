@@ -74,20 +74,12 @@ const COMMIT_LOG = path.join(projectDir, ".claude", "state", "commit-log.jsonl")
 const COMMIT_COMMAND_REGEX = /\bgit\s+(commit|cherry-pick|merge|revert)\b/;
 
 /**
- * Fast path: extract bash command from hook arguments and check if it's a
- * commit-related command. Returns empty string if not a commit command.
+ * Extract bash command from PostToolUse hook payload (Claude Code stdin format).
  */
-function extractCommand() {
-  const arg = process.argv[2] || "";
-  if (!arg) return "";
-
-  try {
-    const parsed = JSON.parse(arg);
-    return typeof parsed.command === "string" ? parsed.command : "";
-  } catch {
-    // Not JSON — treat as raw string
-    return typeof arg === "string" ? arg : "";
-  }
+function extractCommand(payload) {
+  return payload && payload.tool_input && typeof payload.tool_input.command === "string"
+    ? payload.tool_input.command
+    : "";
 }
 
 /**
@@ -331,9 +323,9 @@ function captureCommitMetadata(currentHead) {
 /**
  * Main
  */
-function main() {
+function main(payload) {
   // FAST PATH: Check if command is commit-related (~1ms for non-commit commands)
-  const command = extractCommand();
+  const command = extractCommand(payload);
   if (!COMMIT_COMMAND_REGEX.test(command)) {
     console.log("ok");
     process.exit(0);
@@ -355,7 +347,7 @@ function main() {
     // DS-5: Log commit failures so alerts checker can track them
     logCommitFailure(command);
     // Surface pre-commit hook output so the user sees what failed
-    reportCommitFailure();
+    reportCommitFailure(payload);
     console.log("ok");
     process.exit(0);
   }
@@ -387,7 +379,7 @@ function main() {
   // --- Commit failure reporting (merged from commit-failure-reporter.js) ---
   // If the commit command failed, surface pre-commit hook output
   try {
-    reportCommitFailure();
+    reportCommitFailure(payload);
   } catch (err) {
     console.error("commit-tracker: reportCommitFailure failed:", sanitizeError(err));
   }
@@ -478,21 +470,17 @@ function redactSensitiveLine(line) {
  * Surfaces pre-commit hook output that would otherwise be invisible.
  * Merged from commit-failure-reporter.js to eliminate redundant process spawn.
  */
-function reportCommitFailure() {
+function reportCommitFailure(payload) {
   try {
-    const arg = process.argv[2] || "";
-    if (!arg) return;
+    if (!payload) return;
 
-    let exitCode = 0;
-    try {
-      const parsed = JSON.parse(arg);
-      const rawExitCode =
-        parsed.exit_code ?? (parsed.tool_output && parsed.tool_output.exit_code) ?? 0;
-      exitCode = Number(rawExitCode);
-      if (!Number.isFinite(exitCode)) exitCode = 0;
-    } catch {
-      return;
-    }
+    const rawExitCode =
+      (payload.tool_response && payload.tool_response.exit_code) ??
+      (payload.tool_output && payload.tool_output.exit_code) ??
+      payload.exit_code ??
+      0;
+    let exitCode = Number(rawExitCode);
+    if (!Number.isFinite(exitCode)) exitCode = 0;
 
     const gitDir = resolveGitDir();
     const logFile = path.join(gitDir, "hook-output.log");
@@ -526,4 +514,20 @@ function reportCommitFailure() {
   }
 }
 
-main();
+// Entry point: read PostToolUse payload from stdin (Claude Code hook protocol)
+let input = "";
+process.stdin.setEncoding("utf8");
+process.stdin.on("error", () => process.exit(0));
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+  if (input.length > 1024 * 1024) process.exit(0);
+});
+process.stdin.on("end", () => {
+  let payload = {};
+  try {
+    payload = JSON.parse(input);
+  } catch {
+    /* empty/invalid stdin — main() will bail at fast-path regex check */
+  }
+  main(payload);
+});

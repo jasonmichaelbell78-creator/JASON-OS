@@ -341,16 +341,11 @@ function gatherActiveAudits() {
 }
 
 /**
- * Detect compaction trigger from hook arguments
+ * Detect compaction trigger from PreCompact hook payload (Claude Code stdin format)
  */
-function getCompactionTrigger() {
-  const arg = process.argv[2] || "";
-  try {
-    const parsed = JSON.parse(arg);
-    return parsed.trigger || parsed.matcher || "unknown";
-  } catch {
-    return arg || "unknown";
-  }
+function getCompactionTrigger(payload) {
+  if (!payload) return "unknown";
+  return payload.trigger || payload.matcher || "unknown";
 }
 
 /**
@@ -413,8 +408,8 @@ function logHandoffSummary(handoff, taskCount, commitCount, contextTracking) {
 /**
  * Main
  */
-function main() {
-  const trigger = getCompactionTrigger();
+function main(payload) {
+  const trigger = getCompactionTrigger(payload);
   const sessionCounter = getSessionCounter();
   const taskStates = readAllTaskStates();
   const commitLogEntries = readRecentCommits(15);
@@ -463,4 +458,20 @@ function main() {
   process.exit(0);
 }
 
-main();
+// Entry point: read PreCompact payload from stdin (Claude Code hook protocol)
+let input = "";
+process.stdin.setEncoding("utf8");
+process.stdin.on("error", () => process.exit(0));
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+  if (input.length > 1024 * 1024) process.exit(0);
+});
+process.stdin.on("end", () => {
+  let payload = {};
+  try {
+    payload = JSON.parse(input);
+  } catch {
+    /* empty/invalid stdin — trigger will be "unknown" */
+  }
+  main(payload);
+});

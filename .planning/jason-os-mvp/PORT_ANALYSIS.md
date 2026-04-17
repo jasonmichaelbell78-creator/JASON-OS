@@ -89,9 +89,38 @@ audit checkpoint findings).
 
 ### Step 2 — SoNash `skill-audit` feature branch
 
-*(To be populated when Step 2 completes — see PLAN.md Step 2 and Layer 0+
-item `0f`. Recorded fields: branch name, tip SHA, files carried,
-confirmation-from-user date.)*
+**Confirmed:** 2026-04-17 (user).
+**Pull from:** SoNash branch `41526` (NOT `main`).
+**Tip commit on branch:** `03bd6b7e docs(skills): synthesize v2.0 propagation — /recall + 4 handlers + /session-end` (2026-04-17 working state).
+**Latest skill-audit-touching commit on branch:** `138661e0 fix(skill-audit): MAJOR review fixes — Qodo bugs, regex DoS, doc lint, CC`.
+**Files carried by branch for skill-audit refresh:** `.claude/skills/skill-audit/SKILL.md`, `.claude/skills/skill-audit/REFERENCE.md` (2 files).
+
+**Why 41526 over main:**
+
+- `git diff main..41526 -- .claude/skills/skill-audit/` = **empty** — skill-audit files are byte-identical between the two branches, so 41526 loses nothing for the `0f` refresh.
+- `41526` is *ahead of* main by 10 commits on **other** skills that Foundation later ports (session-end metrics pipeline, synthesize v2.0 propagation, post-todos-render fixes). Pulling from 41526 anchors downstream ports (Layer 1 item 1.2 session-end in particular) to newer baselines than main offers.
+- `main` is ahead by 1 commit: `e190f548` hono dep bump — unrelated to JASON-OS.
+- SoNash is already checked out on `41526` in this locale; no branch switch needed for the port-agent's `grep -r` scans.
+
+**Pre-port doc-hygiene observation** (to handle during Layer 0+ item `0f` pre-analysis, not now): SKILL.md frontmatter declares `Document Version: 3.0 (2026-03-06)` but commit `eb258803` was titled "Wave 3 SKILL.md v4.0 bump". Reconcile the version string during the port — likely a commit-message-vs-content mismatch to correct on import.
+
+**Process miss noted:** initial analysis misread `git merge-base --is-ancestor main 41526 → NO` as "41526 lacks the skill-audit commits." The ancestor check doesn't answer that — `branch --contains <sha>` does. Future port pre-analyses must use `--contains` directly, not ancestor inference, to avoid wrong-file-ported bugs.
+
+---
+
+### Deferred — SoNash synthesize + recall skills (forward-looking, not in Foundation scope)
+
+**Flag raised:** 2026-04-17 (user, during Step 2 confirmation).
+
+**What:** `synthesize` and `recall` skills in SoNash are being actively upgraded in uncommitted work (currently in a second locale — not dirty in the Windows locale's SoNash checkout as of Step 2). Neither skill is currently present in JASON-OS `.claude/skills/` (which holds 9 skills: brainstorm, checkpoint, convergence-loop, deep-plan, deep-research, session-begin, skill-audit, skill-creator, todo). Neither is in the Foundation firm layers or the gated Layers 2/3/4.
+
+**Why it matters now:** if JASON-OS later ports `synthesize` or `recall`, pulling them at the "current" SoNash tip would miss the in-flight upgrades. The port must wait for the upgrade work to commit upstream first.
+
+**Planned home for this deferral:** PLAN.md Post-Foundation Deferrals section (see "Skills / integrations" subsection in PLAN.md — entry added alongside this Step 2 commit). Migrates to `/todo` backlog via MI-6 once `/todo` is operational (Layer 0 item 0.1 lands).
+
+**Trigger to revisit:**
+1. SoNash upstream commits land for synthesize + recall (user will signal).
+2. JASON-OS scope expands to include either skill (post-Foundation; probably coupled to sync-mechanism research per MI-3, since synthesize specifically touches the propagation pipeline).
 
 ---
 

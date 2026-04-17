@@ -814,6 +814,7 @@ Each audit uses built-in `code-reviewer` agent or manual code-review pass on mod
 ### Skills / integrations
 - **Gemini CLI integration in PR review** (D23). **Trigger:** after Qodo + SonarCloud stabilized + user wants another reviewer voice. Requires Gemini OAuth flow (CLI v0.38.1 installed; auth pending).
 - **`pr-retro` skill port** (BOOTSTRAP_DEFERRED.md). **Trigger:** `pr-ecosystem-audit` skill exists (or `pr-retro` simplified to standalone retro).
+- **`synthesize` + `recall` skill ports from SoNash** (raised 2026-04-17 during Step 2). Neither exists in JASON-OS yet. SoNash has active uncommitted upgrade work on both (second-locale work). Not in Foundation firm or gated scope. **Trigger:** (a) SoNash upstream commits land for synthesize + recall — user will signal; AND (b) JASON-OS scope expands to include either skill (expected during or after sync-mechanism research per MI-3, since synthesize touches the propagation pipeline). See PORT_ANALYSIS.md "Deferred — SoNash synthesize + recall skills" section for the full record.
 
 ### Enforcement
 - **`runAnalyze` mandatory mode flip** (D6, D25). **Trigger:** ≥5 agents have PROACTIVELY clauses stable + workflow pattern stabilized (≥10 sessions using advisory mode).

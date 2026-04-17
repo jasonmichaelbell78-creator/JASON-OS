@@ -10,40 +10,47 @@ No
 2026-04-17
 
 ## Quick Status
-Session 1 closed. On `bootstrap-41726` (20 commits ahead of main after port
-work; ~22 ahead after this session-end commit + any Step 3 plan-state updates).
+Session 2 closing. **PR #3 merged via merge commit `67b88f8` — Foundation
+firm work COMPLETE.** Local `main` and `bootstrap-41726` both fast-forwarded
+to `67b88f8`, in sync with remote.
 
-**Firm layers complete and audited:**
-- Layer 0 items 0.1 (`/todo` 4-file port with plan-reality-divergence fix)
-  and 0.2 (`/add-debt` stub). Audit D29 PASS (`4eb0600`).
-- Step 3 MI-6 migration: 11 Post-Foundation Deferrals (T3–T13) migrated into
-  `/todo` backlog. Plus T1 (MODULE_TYPELESS polish) and T2 (SoNash file
-  registry) captured this session. PLAN.md deferrals section reduced to
-  pointer table.
-- Layer 1 prereq: 4 `hooks/lib/` files copied from SoNash 41526 (all
-  copy-as-is per G1; 614 LOC added; smoke-test OK).
-- Layer 1: `SESSION_CONTEXT.md` bootstrap + `session-end` port (heavy —
-  465→405 lines, Phase 3 stripped, Phase 2 Layer-2-gated) + 3 hook wirings
-  (pre-compaction-save / compact-restore / commit-tracker with settings.json
-  edits for PreCompact, SessionStart+compact, PostToolUse+git-commit-filter).
-  Audit D29 PASS (`5da1e2b`). commit-tracker activates on next session
-  restart (Claude Code reads settings.json at SessionStart).
+**What landed in Session 2 (between PR #2 squash-merge and PR #3 merge):**
+- Stdin/argv root-cause fix in `commit-tracker.js` + `pre-compaction-save.js`
+  (`4db5afb`) — both Layer 1 hooks were reading from `process.argv[2]` but
+  Claude Code passes context as JSON via stdin. Fix verified across 4
+  manual stdin scenarios; live in-Claude validation deferred to next
+  session restart (T15).
+- Step 4 pre-push mini-phase: `/pr-review` trimmed port (`22f1962`) +
+  `/pre-commit-fixer` port (`d2dfd40`) via 2 parallel `general-purpose`
+  port-agents. Step 4 audit PASS (3 minor polish fixes in `b7b85f8`).
+- PR #3 R1 review processing: 22 items, 17 fixed (3 parallel agents),
+  5 rejected (3 architectural + 2 false-positive territory). Live
+  validation that the just-ported `/pr-review` skill works end-to-end.
+- PR #3 R2 review processing: 14 items, 5 fixed in-session, 9 rejected
+  (4 R1 cross-round dedups + 2 false positives + 3 deliberate-design).
+- T14 closed (session-end-commit.js format mismatch fixed in M1).
+- T15 + T16 added to backlog (live hook validation; settings-guardian bug).
 
-**Gated/remaining scope:** Step 4 pre-push mini-phase (last firm work), Step 5
-end-to-end validation + retro, Gated Layers 2/3/4 (D34 re-approval), Step 6
-handoff to `/brainstorm sync-mechanism`.
+**Strategic position:** Foundation firm scope is DONE. Step 5 (end-to-end
+validation session — D20, user-driven, feels-like-home check per CH-C-006)
+is the next gate. After Step 5 retro, user decides per-layer engagement on
+gated Layers 2/3/4 (D34). Then Step 6 hands off to `/brainstorm
+sync-mechanism` per MI-3.
 
 ## Next Session Goals
-- Run `/session-begin` — verify counter increments 1 → 2, `SESSION_CONTEXT.md`
-  reads cleanly, commit-tracker.js activates on first commit of the new
-  session (`.claude/state/commit-log.jsonl` should appear).
-- Resume `/deep-plan jason-os-mvp` — skill recovers from state file, skips
-  completed phases, surfaces Step 4 pre-push mini-phase as next concrete
-  action (`/pr-review` trimmed port + `/pre-commit-fixer` port, ~2–3h).
-- If natural compaction occurs during the session, verify `compact-restore.js`
-  fires on resume (check for handoff re-injection).
-- After Step 4 lands: Step 5 end-to-end validation session — an actual work
-  session using the Foundation features, feels-like-home check per CH-C-006,
-  retro per D35.
-- Optional polish: T1 (MODULE_TYPELESS marker files) is a 2-line fix if the
-  Node noise on every ESM script run becomes bothersome.
+- Run `/session-begin` — counter bumps 2 → 3. Verify `commit-tracker.js`
+  fires under live Claude Code invocation now that the new merged settings
+  are loaded at session start (this is **T15** validation — the deferred
+  test from Session 2). `.claude/state/commit-log.jsonl` should append on
+  the first commit.
+- **Step 5 end-to-end validation session** — pick a small but real piece of
+  work and run a session entirely using Foundation features (`/session-begin`,
+  `/todo`, `/checkpoint`, `/pr-review` if applicable, `/session-end`).
+  Subjective feels-like-home check per CH-C-006 + retro per D35.
+- After Step 5: user decision on Layers 2/3/4 engagement (re-approval
+  required per D34 since D29 audits gated those layers).
+- Branching consideration: `bootstrap-41726` is now == `main` (both at
+  `67b88f8`); for new work, create a fresh branch (suggest date-stamped
+  per convention: `startup-41526` → `bootstrap-41726` → next).
+- Optional polish backlog: T1 (MODULE_TYPELESS), T16 (settings-guardian
+  fires-on-all-Write/Edit bug — workaround in place via Bash heredoc).

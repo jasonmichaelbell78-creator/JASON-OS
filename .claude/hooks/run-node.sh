@@ -135,4 +135,16 @@ NODE_BIN="$(resolve_node)" || {
   exit 127
 }
 
-exec "$NODE_BIN" "$SCRIPT_PATH" "$@"
+# On MINGW/Git-Bash, `exec` on a Windows .cmd wrapper fails with
+# "Exec format error" because the kernel can't interpret batch files.
+# Dispatch .cmd resolutions through cmd.exe /c so Windows-native node
+# installations remain usable; native ELF / Mach-O binaries use exec
+# directly as before.
+case "$NODE_BIN" in
+  *.cmd|*.CMD|*.bat|*.BAT)
+    exec cmd.exe /c "$NODE_BIN" "$SCRIPT_PATH" "$@"
+    ;;
+  *)
+    exec "$NODE_BIN" "$SCRIPT_PATH" "$@"
+    ;;
+esac

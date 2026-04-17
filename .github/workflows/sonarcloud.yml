@@ -33,10 +33,10 @@ jobs:
 
       - name: Analyze with SonarCloud
         # sonarqube-scan-action is the drop-in replacement for the deprecated
-        # sonarcloud-github-action. Using tag pin here; tighten to SHA pin
-        # after first green run on PR #2 (matches the hardening pattern on
-        # actions/checkout above).
-        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        # sonarcloud-github-action. SHA-pinned per SonarCloud S7637 hotspot
+        # advisory + general supply-chain hygiene (matches actions/checkout
+        # pinning above). Update SHA when bumping tag.
+        uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d # v5.0.0
         env:
           GITHUB_TOKEN: ${{ github.token }} # Required for PR decoration
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

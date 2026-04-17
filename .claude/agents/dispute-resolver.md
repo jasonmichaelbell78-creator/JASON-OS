@@ -3,7 +3,10 @@ name: dispute-resolver
 description: >-
   Dispute resolution agent for deep-research pipeline. Resolves conflicting
   claims using DRAGged 5-type classification, evidence-weight hierarchy, and
-  dissent records. Spawned by /deep-research during Phase 3.5.
+  dissent records. Spawned by /deep-research during Phase 3.5. Use PROACTIVELY
+  when two or more research findings directly contradict each other and the
+  contradiction affects a claim that will be cited in the final research
+  output.
 tools: Read, Grep, Glob
 disallowedTools: Agent
 model: sonnet

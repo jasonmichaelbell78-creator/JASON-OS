@@ -6,7 +6,9 @@ description: >-
   search queries, fetches and analyzes sources, extracts findings with
   confidence levels, and writes structured FINDINGS.md files. Receives a search
   profile (web, docs, codebase, academic) at spawn time that activates the
-  relevant tool strategy.
+  relevant tool strategy. Use PROACTIVELY when a domain question, technology
+  decision, or implementation approach requires evidence from external sources
+  before work begins.
 tools:
   Read, Write, Bash, Grep, Glob, WebSearch, WebFetch,
   mcp__context7__resolve-library-id, mcp__context7__query-docs

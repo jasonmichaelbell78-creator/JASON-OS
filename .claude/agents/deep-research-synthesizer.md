@@ -5,7 +5,9 @@ description: >-
   Combines findings from multiple searcher agents into a coherent research
   report with inline citations, confidence levels, and structured machine-
   parseable output. Spawned by the /deep-research skill after all searcher
-  agents complete.
+  agents complete. Use PROACTIVELY after multiple FINDINGS.md files have been
+  written to a research topic directory and need to be combined into a single
+  coherent output.
 tools: Read, Write, Bash
 color: purple
 ---

@@ -3,7 +3,9 @@ name: otb-challenger
 description: >-
   Out-of-the-box challenger for deep-research pipeline. Identifies unconsidered
   approaches, adjacent-domain solutions, and alternative framings. Spawned by
-  /deep-research during Phase 3.
+  /deep-research during Phase 3. Use PROACTIVELY when research has converged
+  on a single approach and no alternatives were considered — especially for
+  infrastructure, tooling, or architecture questions.
 tools: Read, Grep, Glob, WebSearch
 disallowedTools: Agent
 model: sonnet

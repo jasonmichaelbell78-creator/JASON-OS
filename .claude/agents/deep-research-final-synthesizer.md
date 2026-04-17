@@ -4,7 +4,8 @@ description: >-
   Final synthesis agent for deep-research pipeline. Produces versioned
   RESEARCH_OUTPUT.md with mode-aware behavior (post-verification,
   post-gap-pursuit, full-resynthesis). Spawned by /deep-research during Phase
-  3.97.
+  3.97. Use PROACTIVELY after verification and gap pursuit phases complete to
+  produce the final versioned RESEARCH_OUTPUT.md before deep-plan begins.
 tools: Read, Write, Bash, Grep, Glob
 disallowedTools: Agent
 model: sonnet

@@ -4,7 +4,9 @@ description: >-
   Gap pursuit agent for deep-research pipeline. Identifies missing
   sub-questions, low-confidence areas, and unresolved contradictions, then
   pursues them with profile-switched search strategies. Spawned by
-  /deep-research during Phase 3.95.
+  /deep-research during Phase 3.95. Use PROACTIVELY when synthesized research
+  contains MEDIUM or LOW confidence claims, unresolved contradictions, or
+  scope gaps that would undermine a planning decision.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch
 disallowedTools: Agent
 model: sonnet

@@ -4,6 +4,8 @@ description: >-
   Adversarial agent for deep-research pipeline. Challenges research findings
   using pre-mortem framing and steel-man critique. Produces structured
   challenges with severity levels. Spawned by /deep-research during Phase 3.
+  Use PROACTIVELY after initial synthesis when the research findings will drive
+  an irreversible architectural or tooling decision — not for routine findings.
 tools: Read, Grep, Glob, WebSearch
 disallowedTools: Agent
 model: sonnet

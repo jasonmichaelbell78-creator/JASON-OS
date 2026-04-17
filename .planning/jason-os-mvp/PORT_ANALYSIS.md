@@ -168,6 +168,18 @@ Round-trip verified: add → jsonl write + TODOS.md render → delete → clean 
 | 0.1-b | `41526:scripts/planning/render-todos.js` | `scripts/planning/render-todos.js` | none | `scripts/planning/todos-cli.js` (ported as 0.1-a) | `../lib/safe-fs.js`, `./lib/read-jsonl.js` — all resolve in JASON-OS | `copy-as-is` | 2026-04-17 | `c329f2e` |
 | 0.1-c | `41526:scripts/planning/lib/read-jsonl.js` | `scripts/planning/lib/read-jsonl.js` | none | `scripts/planning/render-todos.js` (ported as 0.1-b); SoNash `generate-decisions.js` + `generate-discovery-record.js` not in Foundation scope | `../../lib/safe-fs` (`streamLinesSync`) — resolves in JASON-OS | `copy-as-is` | 2026-04-17 | `c329f2e` |
 | 0.1-d | `41526:scripts/lib/todos-mutations.js` | `scripts/lib/todos-mutations.js` | `SonarCloud: 1` (comment-only reference to rule S3696; non-functional) | `scripts/planning/todos-cli.js` (ported as 0.1-a) | `./sanitize-error.cjs` (already `.cjs` in source; no rewrite) — resolves in JASON-OS | `copy-as-is` | 2026-04-17 | `c329f2e` |
+| L1p-a | `41526:.claude/hooks/lib/git-utils.js` | `.claude/hooks/lib/git-utils.js` | 0 regex hits | SoNash hooks consume; JASON-OS hooks will consume at Layer 1 wiring | node builtins only (`child_process`, `fs`, `path`) | `copy-as-is` | 2026-04-17 | `(see L1p commit)` |
+| L1p-b | `41526:.claude/hooks/lib/state-utils.js` | `.claude/hooks/lib/state-utils.js` | 0 regex hits | SoNash hooks consume; JASON-OS hooks will consume at Layer 1 wiring | node builtins only (`fs`, `path`) | `copy-as-is` | 2026-04-17 | `(see L1p commit)` |
+| L1p-c | `41526:.claude/hooks/lib/sanitize-input.js` | `.claude/hooks/lib/sanitize-input.js` | 0 regex hits | SoNash hooks consume; JASON-OS hooks will consume at Layer 1 wiring | **no imports** (pure module) | `copy-as-is` | 2026-04-17 | `(see L1p commit)` |
+| L1p-d | `41526:.claude/hooks/lib/rotate-state.js` | `.claude/hooks/lib/rotate-state.js` | 0 regex hits | SoNash hooks consume; JASON-OS hooks will consume at Layer 1 wiring | node builtins (`fs`, `path`) + `../../../scripts/lib/parse-jsonl-line` (`safeParseLine` — verified present in JASON-OS) | `copy-as-is` | 2026-04-17 | `(see L1p commit)` |
+
+**Notes on L1p-a..d (Layer 1 prereq, 2026-04-17):**
+
+- Research's "zero SoNash coupling" claim (G1) verified empirically — 0 extended-regex hits across all 4 files.
+- SoNash 41526 `.claude/hooks/lib/` contains one additional file not in scope: `inline-patterns.js`. Confirmed not referenced by any of the 4 ported files. Stays out of Foundation port scope; if needed later, re-port via a fresh PORT_ANALYSIS row.
+- `symlink-guard.js` remains JASON-OS's pre-existing bootstrap version (unchanged by this port).
+- Smoke-test: `require('./.claude/hooks/lib/<basename>.js')` succeeded for all 4; exported APIs match expectations (gitExec/projectDir; loadJson/saveJson; sanitizeInput/SECRET_PATTERNS; rotateJsonl/pruneJsonKey/expireByAge/expireJsonlByAge/archiveRotateJsonl).
+- Executed in main session (not port-agent dispatched) — pre-analysis was complete enough to make dispatch overhead exceed the work. Consistent with 0.2 precedent where greenfield stubs ran in-session.
 
 ---
 
@@ -354,7 +366,7 @@ At each PLAN.md audit checkpoint (D29), expected minimum row counts:
 |---|---|
 | After Layer 0+ | 1 (`0f` skill-audit refresh; 0g+0h+0i+0j not ports so no rows) |
 | After Layer 0 | 5 total (0f + 4 todos — plan said 3, reality was 4 per 0.1 path-correction; add-debt is a new stub, no row) |
-| After Layer 1 prereq | 8 total (+ 4 `hooks/lib/*`) |
+| After Layer 1 prereq | 9 total (+ 4 `hooks/lib/*` as L1p-a..d; row count invariant bumped from 8 to 9 to reflect Layer 0's +1 divergence) |
 | After Layer 1 | 12 total (+ session-end SKILL.md + session-end-commit.js + pre-compaction-save + compact-restore + commit-tracker = 5 more) — wait: 12? recount → 8 + 5 = 13; SESSION_CONTEXT.md is new-stub, no row. So minimum **13**. |
 | After Pre-push mini-phase | 17–20 total (+ pr-review SKILL.md + ~3 reference files + pre-commit-fixer SKILL.md + companions) |
 | After Layer 2 | +6 (if engaged) |

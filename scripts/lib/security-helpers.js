@@ -259,11 +259,12 @@ function sanitizeFilename(name, options = {}) {
  *   "--count": { type: "number", min: 1, max: 100 }
  * }
  */
-function parseCliArgs(args, schema) {
+/**
+ * Seed options dict with schema defaults (boolean=false, or explicit
+ * `default` value when defined).
+ */
+function initCliDefaults(schema) {
   const options = {};
-  const errors = [];
-
-  // Initialize defaults
   for (const [flag, def] of Object.entries(schema)) {
     if (def.type === "boolean") {
       options[flag] = false;
@@ -271,51 +272,73 @@ function parseCliArgs(args, schema) {
       options[flag] = def.default;
     }
   }
+  return options;
+}
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    const def = schema[arg];
+/**
+ * Parse + validate a number-typed CLI argument value against its schema
+ * (type=number, optional min/max). Returns {value} on success or {error}.
+ *
+ * @param {string} arg - The flag name (for error message phrasing).
+ * @param {string} next - The raw value string from argv.
+ * @param {{min?: number, max?: number}} def - Schema entry for this flag.
+ * @returns {{value: number}|{error: string}}
+ */
+function parseCliNumber(arg, next, def) {
+  const num = Number.parseInt(next, 10);
+  if (Number.isNaN(num)) return { error: `${arg} must be a number` };
+  if (def.min !== undefined && num < def.min) return { error: `${arg} must be >= ${def.min}` };
+  if (def.max !== undefined && num > def.max) return { error: `${arg} must be <= ${def.max}` };
+  return { value: num };
+}
 
-    if (!def) continue;
-
-    if (def.type === "boolean") {
-      options[arg] = true;
-    } else {
-      const next = args[++i]; // Consume next arg (the value)
-
-      // Validate value exists and isn't another flag
-      if (!next || next.startsWith("--")) {
-        errors.push(`Missing value for ${arg}`);
-        continue;
-      }
-
-      if (def.type === "number") {
-        const num = Number.parseInt(next, 10);
-        if (Number.isNaN(num)) {
-          errors.push(`${arg} must be a number`);
-          continue;
-        }
-        if (def.min !== undefined && num < def.min) {
-          errors.push(`${arg} must be >= ${def.min}`);
-          continue;
-        }
-        if (def.max !== undefined && num > def.max) {
-          errors.push(`${arg} must be <= ${def.max}`);
-          continue;
-        }
-        options[arg] = num;
-      } else {
-        options[arg] = next;
-      }
-    }
-  }
-
-  // Check required
+/**
+ * Walk the schema and return a list of error messages for any `required`
+ * flag that is still undefined after arg parsing.
+ */
+function validateRequiredCliArgs(schema, options) {
+  const errors = [];
   for (const [flag, def] of Object.entries(schema)) {
     if (def.required && options[flag] === undefined) {
       errors.push(`${flag} is required`);
     }
   }
+  return errors;
+}
+
+function parseCliArgs(args, schema) {
+  const options = initCliDefaults(schema);
+  const errors = [];
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    const def = schema[arg];
+    if (!def) continue;
+
+    if (def.type === "boolean") {
+      options[arg] = true;
+      continue;
+    }
+
+    const next = args[++i]; // Consume next arg (the value)
+    if (!next || next.startsWith("--")) {
+      errors.push(`Missing value for ${arg}`);
+      continue;
+    }
+
+    if (def.type === "number") {
+      const parsed = parseCliNumber(arg, next, def);
+      if (parsed.error) {
+        errors.push(parsed.error);
+        continue;
+      }
+      options[arg] = parsed.value;
+    } else {
+      options[arg] = next;
+    }
+  }
+
+  errors.push(...validateRequiredCliArgs(schema, options));
 
   if (errors.length > 0) {
     throw new Error(`CLI argument errors:\n  - ${errors.join("\n  - ")}`);

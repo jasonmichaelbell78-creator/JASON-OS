@@ -23,11 +23,13 @@ if [[ -z "$SCRIPT_REL" ]]; then
 fi
 shift
 
-# Path-traversal guard: reject absolute paths, `..` segments, and backslashes
-# so SCRIPT_REL can only address files under HOOKS_DIR.
+# Path-traversal guard: reject absolute paths, literal `..` path segments,
+# and backslashes so SCRIPT_REL can only address files under HOOKS_DIR.
+# Pattern precision: `*..*` would incorrectly reject legit filenames like
+# `script..name.js`; only path-separator-bounded `..` segments are traversal.
 case "$SCRIPT_REL" in
-  /*|*..*|*'\'*)
-    echo "run-node.sh: invalid script path (must be relative; no .. or \\): $SCRIPT_REL" >&2
+  /*|*\\*|../*|*/../*|*/..|..)
+    echo "run-node.sh: invalid script path (must be relative; no .. segments or \\): $SCRIPT_REL" >&2
     exit 2
     ;;
 esac
@@ -37,6 +39,21 @@ if [[ ! -f "$SCRIPT_PATH" ]]; then
   echo "run-node.sh: script not found: $SCRIPT_PATH" >&2
   exit 2
 fi
+
+# Defense-in-depth against symlink escape: canonicalize both HOOKS_DIR and
+# the resolved SCRIPT_PATH, then verify SCRIPT_PATH stays inside HOOKS_DIR.
+# Requires local write access to exploit (attacker-placed symlink), but the
+# guard is cheap and closes the case where SCRIPT_REL is clean but the file
+# it points to is a symlink escaping out of .claude/hooks/.
+HOOKS_DIR_REAL="$(cd -P "$HOOKS_DIR" && pwd)"
+SCRIPT_REAL="$(cd -P "$(dirname "$SCRIPT_PATH")" && pwd)/$(basename "$SCRIPT_PATH")"
+case "$SCRIPT_REAL" in
+  "$HOOKS_DIR_REAL"/*) ;;
+  *)
+    echo "run-node.sh: resolved script path escapes hooks dir: $SCRIPT_REAL" >&2
+    exit 2
+    ;;
+esac
 
 resolve_node() {
   # 1. Already on PATH

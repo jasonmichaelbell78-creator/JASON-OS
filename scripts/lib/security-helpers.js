@@ -293,8 +293,13 @@ function initCliDefaults(schema) {
  * @returns {{value: number}|{error: string}}
  */
 function parseCliNumber(arg, next, def) {
-  const num = Number.parseInt(next, 10);
-  if (Number.isNaN(num)) return { error: `${arg} must be a number` };
+  // Strict match: allow optional minus + digits only. Number.parseInt would
+  // silently accept "10px" → 10 or "10.5" → 10 (truncating), and the schema
+  // contract is integers, so reject anything non-integer upfront.
+  if (!/^-?\d+$/.test(next)) return { error: `${arg} must be a number` };
+  const num = Number(next);
+  // Guard against overflow silently producing NaN/Infinity on extreme inputs.
+  if (!Number.isSafeInteger(num)) return { error: `${arg} must be a number` };
   if (def.min !== undefined && num < def.min) return { error: `${arg} must be >= ${def.min}` };
   if (def.max !== undefined && num > def.max) return { error: `${arg} must be <= ${def.max}` };
   return { value: num };

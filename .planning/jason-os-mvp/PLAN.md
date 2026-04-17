@@ -344,7 +344,7 @@ never committed.
 
 ### Layer 0+ Audit Checkpoint (D29)
 
-After all 9 items land:
+After all 10 items land:
 1. Run built-in `code-reviewer` agent (or manual code-reviewer pass) on all modified files.
 2. Verify each done-when check.
 3. Confirm commits follow D18 bundling (Layer 0+ cosmetic items should be ~3-5 commits total; ports are their own commits).

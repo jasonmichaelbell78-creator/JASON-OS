@@ -110,6 +110,25 @@ function containsHookReference(obj, hookName) {
 }
 
 /**
+ * Check whether `filePath` targets `.claude/settings.json` or
+ * `.claude/settings.local.json` (the only files this hook guards).
+ * Normalizes Windows backslashes and tolerates absolute or relative paths.
+ *
+ * @param {unknown} filePath - The tool_input.file_path value
+ * @returns {boolean} true if filePath targets a guarded settings file
+ */
+function isGuardedSettingsPath(filePath) {
+  if (typeof filePath !== "string" || !filePath) return false;
+  const normalized = filePath.replaceAll("\\", "/");
+  return (
+    normalized.endsWith("/.claude/settings.json") ||
+    normalized.endsWith("/.claude/settings.local.json") ||
+    normalized === ".claude/settings.json" ||
+    normalized === ".claude/settings.local.json"
+  );
+}
+
+/**
  * Validate a Write operation (full content available).
  * Checks JSON validity and presence of critical hooks.
  *
@@ -181,6 +200,14 @@ process.stdin.on("end", () => {
     const data = JSON.parse(input);
     const toolName = (data.tool_name || "").toLowerCase();
     const toolInput = data.tool_input || {};
+
+    // Fix T16: the PreToolUse matcher fires on ALL Write/Edit calls — filter
+    // by file_path so this guardian only inspects .claude/settings*.json.
+    // Before this check, markdown/JS/any-content Writes were parsed as JSON
+    // and blocked with a misleading "Invalid JSON in settings.json" error.
+    if (!isGuardedSettingsPath(toolInput.file_path)) {
+      process.exit(0);
+    }
 
     if (toolName === "write") {
       const content = typeof toolInput.content === "string" ? toolInput.content : "";

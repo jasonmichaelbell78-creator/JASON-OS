@@ -1,0 +1,37 @@
+# JASON-OS line-ending policy.
+#
+# Normalize text files to LF on checkin (stored LF in the repo), and let git
+# decide the working-tree ending per autocrlf. This eliminates the
+# "warning: in the working copy of 'X', LF will be replaced by CRLF the next
+# time Git touches it" noise that hits every commit on Windows checkouts.
+#
+# `text=auto eol=lf` = "this is text, store as LF, normalize on checkin".
+# Binary files get `binary` or explicit markers so they are never munged.
+
+* text=auto eol=lf
+
+# Shell / Node / config — always LF (so hooks and CLI tools don't choke on
+# CRLF shebangs even on Windows working trees).
+*.sh        text eol=lf
+*.js        text eol=lf
+*.cjs       text eol=lf
+*.mjs       text eol=lf
+*.ts        text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+
+# Markdown / plain text — text, let eol=lf default apply.
+*.md        text
+*.txt       text
+
+# Known binary types (never diff, never munge).
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.zip       binary
+*.gz        binary
+*.exe       binary

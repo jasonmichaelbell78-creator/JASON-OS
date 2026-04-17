@@ -638,7 +638,7 @@ Verification method:    Evidence-based (grep + diff, deterministic)
 Decision verification:  [N/M PASS | K PARTIAL | J MISSING]
 Process compliance:     [N/M checks passed]
 Structural validation:  [PASS/FAIL]
-skills:validate:        [PASS/FAIL]
+Manual structural check: [PASS/FAIL]
 
 [List each PARTIAL or MISSING with resolution]
 ```

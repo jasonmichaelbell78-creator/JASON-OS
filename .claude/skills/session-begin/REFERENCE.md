@@ -25,7 +25,6 @@ Quick reference:
 | Exploring unfamiliar code    | `Explore` agent             |
 | Multi-step implementation    | `Plan` agent                |
 | PR code review feedback      | `/pr-review` skill          |
-| Retro on a merged PR         | `/pr-retro` skill           |
 | Multi-step task tracking     | Use tasks to track progress |
 
 ---

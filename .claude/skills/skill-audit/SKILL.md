@@ -9,12 +9,12 @@ description: >-
   decision record and updated skill files.
 compatibility: agentskills-v1
 metadata:
-  version: 3.0
+  version: 3.1
 ---
 
 <!-- prettier-ignore-start -->
-**Document Version:** 3.0
-**Last Updated:** 2026-03-06
+**Document Version:** 3.1
+**Last Updated:** 2026-04-17
 **Status:** ACTIVE
 <!-- prettier-ignore-end -->
 
@@ -24,6 +24,22 @@ Interactive, category-by-category behavioral quality audit for individual
 skills. Surfaces gaps in intent fidelity, workflow sequencing, prompt
 engineering, integration, guard rails, and user experience — then resolves each
 gap through guided decisions with the user.
+
+**JASON-OS v0.1 scope note:** `npm run skills:validate` is not wired in
+JASON-OS (T6). Wherever this skill instructs you to run it, do the manual
+structural check below instead:
+
+1. **Frontmatter** — valid YAML with `name`, `description`, `compatibility`,
+   and `metadata.version` fields.
+2. **Size** — SKILL.md under 300 lines (extract surplus to REFERENCE.md or
+   companion docs).
+3. **Cross-references** — every linked file (REFERENCE.md, examples/, peer
+   skills via `/skill-name`, scripts via `scripts/...`) actually exists in
+   the repo.
+4. **No dangling refs** — no pointer to SoNash-specific scripts, skills, or
+   infrastructure that isn't in JASON-OS.
+
+Restore the automated `skills:validate` ref when/if the script is ported.
 
 ## Critical Rules (MUST follow)
 
@@ -58,7 +74,7 @@ gap through guided decisions with the user.
 
 - Auditing the skill ecosystem as a whole — use `/skill-ecosystem-audit`
 - Creating a new skill from scratch — use `/skill-creator`
-- Quick structural validation — use `npm run skills:validate`
+- Quick structural validation — do the manual check from the scope note above
 
 ## Routing Guide
 
@@ -66,7 +82,7 @@ gap through guided decisions with the user.
 - "Create a new skill" → `/skill-creator`
 - "Update an existing skill" → `/skill-creator` (or `/skill-audit` first)
 - "Check all skills for issues" → `/skill-ecosystem-audit`
-- "Quick structural check" → `npm run skills:validate`
+- "Quick structural check" → manual structural check (see scope note above)
 
 ---
 
@@ -406,12 +422,13 @@ single/batch).**
 7. Extract to REFERENCE.md if needed (SHOULD)
 8. Update companion files as needed (SHOULD)
 9. Apply skill-creator updates if crosscheck found gaps (SHOULD)
-10. Run `npm run skills:validate` (MUST)
+10. Run the manual structural check from the scope note (MUST)
 
 **For multi-file skills:** Audit root SKILL.md, note sub-command coverage gaps.
 Do not run separate audits per sub-command.
 
-**Done when:** All accepted decisions applied, `skills:validate` passes.
+**Done when:** All accepted decisions applied and the manual structural check
+passes.
 **Update state file.**
 
 ---
@@ -490,7 +507,8 @@ Verify the skill-audit process was followed. See REFERENCE.md checklist.
 
 ### 5.4 Structural Validation (MUST)
 
-Run `npm run skills:validate`, check line count, verify cross-references.
+Do the manual structural check from the scope note: frontmatter validity,
+line count, cross-references, no dangling SoNash refs.
 
 ### 5.5 Self-Audit Report → Completion Summary (MUST)
 
@@ -550,7 +568,7 @@ Files modified: [list] | Skill-creator gaps: [N]
 ## Integration
 
 - **Neighbors:** `/skill-creator` (create/update), `/skill-ecosystem-audit`
-  (ecosystem-wide), `npm run skills:validate` (structural)
+  (ecosystem-wide), manual structural check (see scope note)
 - **Input:** Target skill name or path
 - **Output:** Updated skill files + decision record in state file (the state
   file IS the persistent decision record)

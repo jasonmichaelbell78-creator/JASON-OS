@@ -429,28 +429,30 @@ function guardLockSymlink(lockPath) {
  * Returns `true` if the lock holder is still alive (lock is valid),
  * `false` if the lock is stale and safe to break.
  *
+ * Same-host: PID check is authoritative regardless of age — a crashed lock
+ * holder is immediately recognized as stale instead of waiting out the 60s
+ * age threshold. Different-host (or missing PID): falls back to age heuristic
+ * since a foreign PID number is not meaningful on this machine.
+ *
  * Handles NaN/invalid timestamps by treating them as stale.
- * On same-host locks, verifies the PID is still running before breaking.
  *
  * @param {object} existing - Parsed lock file contents
  * @returns {boolean} true if lock holder is alive
  */
 function isLockHolderAlive(existing) {
-  const ts = Number(existing && existing.timestamp);
-  const ageMs = Number.isFinite(ts) ? Date.now() - ts : LOCK_STALE_MS + 1;
-  if (ageMs <= LOCK_STALE_MS) return true; // not stale yet
-
-  // Stale by age — check if same host and PID still alive
-  const sameHost = String(existing.hostname || "") === os.hostname();
+  const sameHost = String(existing && existing.hostname) === os.hostname();
   if (sameHost && typeof existing.pid === "number") {
     try {
       process.kill(existing.pid, 0); // signal 0 = existence check
-      return true; // process still running despite old timestamp
+      return true; // process still running
     } catch {
-      // Process doesn't exist — confirmed stale
+      return false; // process gone — stale regardless of age
     }
   }
-  return false; // stale: old + either different host or dead process
+  // Different host (or missing PID): fall back to age-based heuristic
+  const ts = Number(existing && existing.timestamp);
+  const ageMs = Number.isFinite(ts) ? Date.now() - ts : LOCK_STALE_MS + 1;
+  return ageMs <= LOCK_STALE_MS;
 }
 
 /**

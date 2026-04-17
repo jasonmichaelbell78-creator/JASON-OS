@@ -1,0 +1,6 @@
+{
+  "name": "jason-os-planning-scripts",
+  "description": "Scoped ESM boundary for planning scripts (todos-cli, render-todos, lib/read-jsonl). Silences MODULE_TYPELESS_PACKAGE_JSON warnings on every Node invocation. The root package.json stays untyped because other scripts/ code is CommonJS (require-based).",
+  "type": "module",
+  "private": true
+}

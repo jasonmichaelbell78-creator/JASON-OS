@@ -76,6 +76,17 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/run-node.sh pre-compaction-save.js",
+            "continueOnError": true
+          }
+        ]
+      }
     ]
   }
 }

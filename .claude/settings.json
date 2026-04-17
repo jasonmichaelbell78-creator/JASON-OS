@@ -97,6 +97,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(?i)bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit *)",
+            "command": "bash .claude/hooks/run-node.sh commit-tracker.js",
+            "continueOnError": true
+          }
+        ]
+      }
     ]
   }
 }

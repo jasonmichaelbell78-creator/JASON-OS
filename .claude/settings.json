@@ -43,6 +43,16 @@
             "continueOnError": true
           }
         ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/run-node.sh compact-restore.js",
+            "continueOnError": true
+          }
+        ]
       }
     ],
     "PreToolUse": [

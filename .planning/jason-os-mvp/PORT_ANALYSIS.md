@@ -252,6 +252,98 @@ from commit `ea69efa`. Hotspots:
 2. scripts/lib/security-helpers.js safeGitAdd execFileSync (S4036 Low)
 3. scripts/lib/security-helpers.js safeGitCommit execFileSync (S4036 Low)
 
+**Status (2026-04-17 session):** User confirmed completed — SonarCloud S7637
+Marked Fixed + Automatic Analysis disabled / GitHub Actions mode set.
+
+---
+
+### Layer 0 Audit — PASS (2026-04-17)
+
+**Method:** Manual code-reviewer pass (JASON-OS still lacks `code-reviewer`
+agent — Layer 4 candidate). Three steps per PLAN.md D29: (1) review
+modified files, (2) verify each done-when, (3) confirm D18 bundling.
+
+**Done-when verification:**
+
+| # | Done-when | Result |
+|---|---|---|
+| 0.1 | `/todo` invokable end-to-end; test item persists across session | PASS — smoke test round-trip in `c329f2e`; integrity check under T1+T2 state confirms 2 todos, last id T2 |
+| 0.2 | `/add-debt` skill invokable; /deep-research Phase 5 routing no longer errors | PASS (invokability) — skill appears in Skill-tool registry; frontmatter valid; Phase 5 integration deferred to next `/deep-research` run (stub is appendonly, cannot error the Phase 5 call path) |
+
+**Code-review notes (manual pass on 5 new/modified files):**
+
+- **`scripts/planning/todos-cli.js` (270 lines):** ESM entrypoint; sanitize-error
+  import rewritten `.js` → `.cjs` (line 47) per resolution A. All other bytes
+  match SoNash 41526. Dispatch table maps 10 subcommands; parseArgs uses simple
+  argv tokenization. Lock acquired before mutation via `withLock` from safe-fs.
+  Exit-code hygiene correct (0 / 1 user / 2 fatal).
+- **`scripts/planning/render-todos.js` (177 lines):** Pure render; no mutation.
+  Reads JSONL via `./lib/read-jsonl.js` (new dep); writes TODOS.md via
+  `safeWriteFileSync`. Sort order priority → status — matches /todo SKILL.md
+  spec.
+- **`scripts/planning/lib/read-jsonl.js` (67 lines):** Streaming read via
+  `streamLinesSync` (no 2 MiB whole-file ceiling). Handles CRLF, comments,
+  empty lines, warn-but-continue parse errors. createRequire bridges ESM
+  consumer to safe-fs CJS export.
+- **`scripts/lib/todos-mutations.js` (391 lines):** Pure helpers — validation,
+  regression guard, op* dispatchers. CJS require of sanitize-error.cjs
+  already correct at source; no rewrite needed. SonarCloud comment-only
+  reference (line 346) about rule S3696 preserved intact (non-functional).
+- **`.claude/skills/add-debt/SKILL.md` (93 lines):** Frontmatter complete
+  (name, description, compatibility: agentskills-v1, metadata.short-description +
+  version: 0.1-stub). Body follows house style from checkpoint/todo skills —
+  When to use / When NOT to use / Steps / Upgrade trigger / Guard rails /
+  Storage / Version History. Line count well under 300-line SKILL_STANDARDS cap.
+
+**Sanitization coverage:**
+
+- Extended regex hits in ported files: 2 total (both comment-only)
+  - `todos-cli.js:6` — `/add-debt` (doc pattern reference, non-functional)
+  - `todos-mutations.js:346` — `SonarCloud` (rule-ID doc reference, non-functional)
+- No firebase/firestore/TDMS/MASTER_DEBT/CodeRabbit/Gemini hits.
+- `npm run` SoNash script references: none in ported files (previously
+  documented concern for pr-review port is deferred to Step 4).
+
+**D18 bundling check:** PASS.
+- `c329f2e` — 0.1 port bundle (4 scripts as one logical unit; D18 explicitly
+  groups "each port = 1 commit" and "bundles may group multiple scripts under
+  one commit" — /todo stack is one unit).
+- `99b6136` — ledger backfill (deliberate split to unblock commit-SHA column).
+- `711fa03` — 0.2 add-debt stub (its own unit).
+- `9a504d3` — initial /todo backlog (T1 + T2, separate scope from 0.2).
+
+**Reachability check:** All 5 downstream dep paths resolve:
+`scripts/lib/safe-fs.js` / `scripts/lib/sanitize-error.cjs` /
+`scripts/planning/render-todos.js` / `scripts/lib/todos-mutations.js` /
+`scripts/planning/lib/read-jsonl.js`.
+
+**settings.json validation:** valid JSON, untouched by Layer 0 (no hook
+wiring in this layer).
+
+**Issues surfaced during audit:**
+
+1. *Plan-reality divergence on 0.1 (3 scripts → 4 files)* — Plan said
+   `scripts/planning/todos-mutations.js`; actual path is `scripts/lib/`.
+   Also missed `scripts/planning/lib/read-jsonl.js` entirely. Documented
+   in 0.1 port details notes section + captured in deep-plan state file.
+   Not a defect — pre-analysis (MI-1) caught it before port.
+2. *MODULE_TYPELESS_PACKAGE_JSON cosmetic warnings* — Node emits on every
+   ESM script run because JASON-OS `package.json` lacks `"type":"module"`.
+   Tracked as T1 in `/todo` backlog (P3 polish). SoNash carries
+   `scripts/planning/lib/package.json` marker; JASON-OS should too.
+3. *Phase 5 integration path for /add-debt unvalidated* — next `/deep-research`
+   run will exercise it; stub is append-only, cannot error the call path.
+4. *Still-deferred since Layer 0+*: `code-reviewer` agent port, advisory
+   `npm run skills:validate` refs in skill-audit, `_shared/` dead links.
+   Unchanged from Layer 0+ audit record.
+
+**Row count invariant (updated 2026-04-17):** PLAN.md expected "After Layer 0 |
+4 total (0f + 3 todos; add-debt is a new stub, no row)". Reality: **5 total**
+(0f + 4 todos; add-debt still no row). Divergence driven by issue #1 above.
+Row count invariants section below updated.
+
+**Verdict: PASS. Layer 0 closed. MI-6 migration (Step 3) unblocked.**
+
 ---
 
 ## Row Count Invariants (for audit checkpoints)
@@ -261,7 +353,7 @@ At each PLAN.md audit checkpoint (D29), expected minimum row counts:
 | Checkpoint | Minimum rows |
 |---|---|
 | After Layer 0+ | 1 (`0f` skill-audit refresh; 0g+0h+0i+0j not ports so no rows) |
-| After Layer 0 | 4 total (0f + 3 todos; add-debt is a new stub, no row) |
+| After Layer 0 | 5 total (0f + 4 todos — plan said 3, reality was 4 per 0.1 path-correction; add-debt is a new stub, no row) |
 | After Layer 1 prereq | 8 total (+ 4 `hooks/lib/*`) |
 | After Layer 1 | 12 total (+ session-end SKILL.md + session-end-commit.js + pre-compaction-save + compact-restore + commit-tracker = 5 more) — wait: 12? recount → 8 + 5 = 13; SESSION_CONTEXT.md is new-stub, no row. So minimum **13**. |
 | After Pre-push mini-phase | 17–20 total (+ pr-review SKILL.md + ~3 reference files + pre-commit-fixer SKILL.md + companions) |

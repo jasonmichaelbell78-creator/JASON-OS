@@ -510,19 +510,6 @@ audits). Save to state file `learnings` field.
 **On next startup** (MUST): If previous audit state exists for the same skill,
 surface auto-learnings and user feedback from the previous run.
 
-**Invocation tracking** (MUST):
-
-> **Context MUST include** `{"target":"SKILL_NAME","decisions":N}` — substitute
-> the actual skill name and decision count. Empty context breaks audit tracking.
-
-```bash
-# single / batch mode:
-cd scripts/reviews && npx tsx write-invocation.ts --data '{"skill":"skill-audit","type":"skill","success":true,"schema_version":1,"completeness":"stub","origin":{"type":"manual"},"context":{"target":"SKILL_NAME","decisions":N,"score":SCORE,"mode":"single"}}'
-
-# multi mode — includes batch_id + skills_in_batch:
-cd scripts/reviews && npx tsx write-invocation.ts --data '{"skill":"skill-audit","type":"skill","success":true,"schema_version":1,"completeness":"stub","origin":{"type":"manual"},"context":{"mode":"multi","batch_id":"BATCH_ID","skills_in_batch":["a","b","c"],"decisions":N}}'
-```
-
 **Closure summary:**
 
 ```

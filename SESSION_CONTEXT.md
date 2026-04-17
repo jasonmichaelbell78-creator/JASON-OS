@@ -10,47 +10,77 @@ No
 2026-04-17
 
 ## Quick Status
-Session 2 closing. **PR #3 merged via merge commit `67b88f8` — Foundation
-firm work COMPLETE.** Local `main` and `bootstrap-41726` both fast-forwarded
-to `67b88f8`, in sync with remote.
+Session 3 closing. **Step 5 end-to-end validation session EXECUTED** — ran a
+real work session entirely using Foundation features (`/session-begin`,
+`/todo`, `/session-end`). 9 Session 3 commits on `bootstrap-41726`, none
+pushed yet (PR #4 opens after push).
 
-**What landed in Session 2 (between PR #2 squash-merge and PR #3 merge):**
-- Stdin/argv root-cause fix in `commit-tracker.js` + `pre-compaction-save.js`
-  (`4db5afb`) — both Layer 1 hooks were reading from `process.argv[2]` but
-  Claude Code passes context as JSON via stdin. Fix verified across 4
-  manual stdin scenarios; live in-Claude validation deferred to next
-  session restart (T15).
-- Step 4 pre-push mini-phase: `/pr-review` trimmed port (`22f1962`) +
-  `/pre-commit-fixer` port (`d2dfd40`) via 2 parallel `general-purpose`
-  port-agents. Step 4 audit PASS (3 minor polish fixes in `b7b85f8`).
-- PR #3 R1 review processing: 22 items, 17 fixed (3 parallel agents),
-  5 rejected (3 architectural + 2 false-positive territory). Live
-  validation that the just-ported `/pr-review` skill works end-to-end.
-- PR #3 R2 review processing: 14 items, 5 fixed in-session, 9 rejected
-  (4 R1 cross-round dedups + 2 false positives + 3 deliberate-design).
-- T14 closed (session-end-commit.js format mismatch fixed in M1).
-- T15 + T16 added to backlog (live hook validation; settings-guardian bug).
+**What landed in Session 3:**
+- **T15 PASSED** — live-validated `commit-tracker.js` fires under Claude
+  Code on first Session 3 commit (`4de18cb`, recorded `"session":3` in
+  `commit-log.jsonl`). Confirms Session 2's stdin/argv fix (`4db5afb`).
+- **T16 FIXED** (`e3ee7d4`) — `settings-guardian.js` now path-filters
+  `tool_input.file_path`; previously JSON-parsed ALL Write/Edit content and
+  blocked non-settings writes with misleading "Invalid JSON in
+  settings.json." 10-case stdin test matrix PASS.
+- **session-begin skill trimmed** (`ecb0c3c`) — 247 → 164 lines. DEFERRED
+  markers for unwired SoNash infra (health scripts, override logs,
+  tech-debt index, consolidation). Pre-flight no longer lies about
+  "Running 10 health scripts" when none exist.
+- **T14 closed** (`3edb2bd`) — stale entry; fix was already live in
+  `3fe30f0` (M1 / PR #3 R1).
+- **T1 FIXED** (`63ea480`) — scoped `scripts/planning/package.json` with
+  `{"type": "module"}`. Silences MODULE_TYPELESS_PACKAGE_JSON warnings on
+  every Node invocation without forcing ESM on the root package.json.
+- **safe-fs stale-lock UX** (`aa9869a`) — `isLockHolderAlive` now
+  PID-checks same-host locks first; a crashed CLI breaks the lock
+  immediately instead of waiting out the 60s age threshold. 5-case test
+  matrix PASS.
+- **T6 closed** (`ca9f4a6`) — skill-audit rewrite: scope note at top with
+  4-item manual structural check; 6 operational `npm run skills:validate`
+  refs rewritten to point at it. REFERENCE.md self-audit field renamed.
+- **`.gitattributes`** (`62da6e8`) — codifies LF policy so git stops
+  warning "LF will be replaced by CRLF" on every commit.
 
-**Strategic position:** Foundation firm scope is DONE. Step 5 (end-to-end
-validation session — D20, user-driven, feels-like-home check per CH-C-006)
-is the next gate. After Step 5 retro, user decides per-layer engagement on
-gated Layers 2/3/4 (D34). Then Step 6 hands off to `/brainstorm
-sync-mechanism` per MI-3.
+**Step 5 feels-like-home retro (D35, for user read):**
+- **Plan got right:** `/session-begin` + `/todo` + commit-tracker fired
+  cleanly. Discover→fix→validate→commit cycle for T16 was ~15 min. Session
+  counter flow (bump → announce → commit → verify in log) is tight.
+- **Plan missed:** T16 was a live blocker that forced work-item reordering
+  — session-begin pre-flight bloat and stale-lock 60s wait were also
+  real UX warts not foreseen. All three got fixed in-session.
+- **Do differently:** Trim ported skills at port-time, not at first-run
+  time. Consider the scope-note-with-inline-DEFERRED-markers pattern as
+  the canonical JASON-OS idiom for SoNash imports (applied to
+  session-begin and skill-audit this session).
+
+**Backlog:** 16 → 11 active. 5 closures in Session 3 (T1, T6, T14, T15,
+T16). T16 was added in Session 2 as pending and closed here.
+
+**Strategic position:** Step 5 has executed. Subjectively this session
+felt-like-home. **User decision gate:** declare Foundation firm complete
+and either (a) engage gated Layers 2/3/4 (D34 re-approval), or (b) jump
+to Step 6 handoff via `/brainstorm sync-mechanism` (MI-3). Before either,
+push `bootstrap-41726` and open PR #4 for the 9 Session 3 commits.
 
 ## Next Session Goals
-- Run `/session-begin` — counter bumps 2 → 3. Verify `commit-tracker.js`
-  fires under live Claude Code invocation now that the new merged settings
-  are loaded at session start (this is **T15** validation — the deferred
-  test from Session 2). `.claude/state/commit-log.jsonl` should append on
-  the first commit.
-- **Step 5 end-to-end validation session** — pick a small but real piece of
-  work and run a session entirely using Foundation features (`/session-begin`,
-  `/todo`, `/checkpoint`, `/pr-review` if applicable, `/session-end`).
-  Subjective feels-like-home check per CH-C-006 + retro per D35.
-- After Step 5: user decision on Layers 2/3/4 engagement (re-approval
-  required per D34 since D29 audits gated those layers).
-- Branching consideration: `bootstrap-41726` is now == `main` (both at
-  `67b88f8`); for new work, create a fresh branch (suggest date-stamped
-  per convention: `startup-41526` → `bootstrap-41726` → next).
-- Optional polish backlog: T1 (MODULE_TYPELESS), T16 (settings-guardian
-  fires-on-all-Write/Edit bug — workaround in place via Bash heredoc).
+- **Push Session 3 + open PR #4** — 9 commits on `bootstrap-41726`. Once
+  merged, `main` lands everything from Session 3 (skill trims, hook fix,
+  polish, gitattributes).
+- **Step 5 gate decision (user-only)** — declare Foundation firm
+  COMPLETE? If yes: user picks Layer 2 / Layer 3 / Layer 4 engagement per
+  D34 re-approval, or skips direct to Step 6 handoff.
+- **If Layers 2/3/4 engaged:** run the relevant layer per PLAN.md
+  (Layer 2 = 5 hooks ~3–4h; Layer 3 = 4 nav docs ~3–4h; Layer 4 = 3
+  quality skills ~2–3h). Each layer is D29-audited at completion.
+- **Step 6 when ready:** `/brainstorm sync-mechanism` per MI-3 —
+  backwards-sync SoNash → JASON-OS first, then forward prep.
+- **Outstanding user-action (unchanged):** m1 — batch-mark 5 SonarCloud
+  `S4036` PATH hotspots in `scripts/session-end-commit.js` as
+  Reviewed-Safe with single justification.
+- **Backlog polish (optional):** 10 pending todos all valid (big ports
+  T2/T4/T5/T9/T13, gated T3/T7/T8/T10, composite T11/T12). None are
+  quick-wins inside Foundation scope.
+- **Branching:** `bootstrap-41726` is now 9 commits ahead of `main`.
+  After PR #4 merges, next session should cut a fresh date-stamped
+  branch off the new `main` tip.

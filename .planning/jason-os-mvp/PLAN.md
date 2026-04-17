@@ -373,7 +373,7 @@ After all 9 items land:
 - `scripts/planning/render-todos.js`
 - `scripts/planning/todos-mutations.js`
 
-**Hard deps already present in JASON-OS** (verified in research): `scripts/lib/safe-fs.js`, `scripts/lib/sanitize-error.js`, `scripts/lib/parse-jsonl-line.js`. MI-1 pre-analysis must re-verify for current state.
+**Hard deps already present in JASON-OS** (verified in research): `scripts/lib/safe-fs.js`, `scripts/lib/sanitize-error.cjs` (CJS wrapper for hook/CJS consumers; `.js` is the ESM canonical), `scripts/lib/parse-jsonl-line.js`. MI-1 pre-analysis must re-verify for current state.
 
 **Port-agent steps:**
 1. Run pre-analysis on all 3 source files → 3 rows in `PORT_ANALYSIS.md`.
@@ -481,7 +481,7 @@ When real debt tracking system is needed, migrate to full TDMS-style schema.
 0
 
 ## Uncommitted Work
-(none)
+No
 
 ## Last Updated
 2026-04-16

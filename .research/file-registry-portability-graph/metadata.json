@@ -5,23 +5,27 @@
   "depth": "L1",
   "questionType": "tool-technology-comparison + feasibility",
   "domain": "developer-tooling + knowledge-management + portability",
-  "agentCount": 9,
+  "agentCount": 14,
+  "agentBreakdown": "8 searchers (D1-D8) + 1 synthesizer + 2 verifiers (V1-V2) + 1 contrarian + 1 OTB + 1 cross-model (Gemini)",
   "searchRounds": 8,
   "sourceCount": 106,
-  "claimCount": 120,
+  "claimCount": 116,
+  "claimCountNote": "116 records enumerated in claims.jsonl (C-001..C-116). RESEARCH_OUTPUT.md Section 10.5 post-challenge v1.1 narrative total is 120 = 116 + 4 UNVERIFIED challenger additions discussed in Section 10 but not individually enumerated as JSONL records.",
   "confidenceDistribution": {
-    "HIGH": 61,
-    "MEDIUM": 44,
-    "LOW": 8,
-    "UNVERIFIED": 7
+    "HIGH": 65,
+    "MEDIUM": 45,
+    "LOW": 6,
+    "UNVERIFIED": 0
   },
+  "schemaVersion": "sonash-pre-canonical-v0",
+  "schemaNote": "claims.jsonl uses fields {id, text, confidence, source_url, source_agent, sub_question} and sources.jsonl uses {id, url, title, trust_level, domain, agent}. This predates the canonical deep-research JSONL schema documented in .claude/skills/deep-research/REFERENCE.md (claim/evidence/sourceIds/trustLevel/craapScore). Bundle ported copy-as-is from SoNash for audit integrity; field mapping: text→claim, source_url→sourceUrl (can be derived from sources.jsonl via source_agent lookup), trust_level→trustLevel. Converting 222 records is deferred until a JSONL consumer exists in JASON-OS (tracked as debt entry).",
   "topThemes": [
     "No composite tool satisfies all five criteria simultaneously — custom thin build required",
     "@optave/codegraph (March 2026) is the best single primitive covering graph + watch + multi-repo",
     "Portability classification schema (scope: universal/user/project/machine/ephemeral) is novel and immediately actionable",
     "KuzuDB abandoned Oct 2025 — affects CodeGraphContext and any custom build using KuzuDB on Windows",
     "MCP protocol cannot push change events between turns — watcher daemon + SQLite + MCP poll is the viable architecture",
-    "44 JASON-OS memory files are auto-classifiable by filename prefix heuristic with HIGH confidence"
+    "80+ JASON-OS memory files are auto-classifiable by filename prefix heuristic with HIGH confidence (V1 verification corrected the v1.0 count of 44; memory tree grew 44→80+ in the 18 days preceding 2026-04-17)"
   ],
   "status": "complete-post-challenge-v1.1",
   "recommendation": "Option D — minimum-viable JSONL + PostToolUse hook + scope-tags",

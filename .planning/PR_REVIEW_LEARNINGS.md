@@ -95,3 +95,132 @@
 - **Validate critical claims before triage.** Both R2 trivials (Semgrep + SonarCloud) were false positives caught by 5-second grep checks. Cheap, mandatory, prevents pointless agent dispatch.
 - **R2 volume drops sharply when R1 is thorough.** R1 = 22 items. R2 = 14 items, of which 9 are auto-reject categories (4 dedups + 2 false positives + 3 deliberate). Net R2 work: 5 fixes. Signal-to-noise drop is the diminishing-returns indicator the skill's Step 7.5 watches for at R4+.
 - **In-session beats agent dispatch for low-volume rounds.** R1 (15 fixes) earned 3 parallel agents. R2 (5 fixes across 5 small files) was faster done in-session — agent dispatch overhead would have exceeded the work.
+
+#### Review #3: Session 4 — R-frpg research + 4.3 team port + D19 closure (PR #5) — Round 1 (2026-04-18)
+
+**Source:** Mixed — Qodo + Gemini Code Assist
+**PR/Branch:** #5 / `bootstrap-41726`
+**Items:** 7 total (Critical: 0, Major: 2, Minor: 5, Trivial: 0)
+
+**Patterns Identified:**
+
+1. **"Copy-as-is" research ports inherit upstream data inconsistencies.**
+   The R-frpg port picked up 3 distinct SoNash-side inconsistencies that hadn't
+   been caught because the MI-1 pre-analysis regex scans for sanitization
+   keywords, not cross-file consistency: (a) `metadata.json agentCount: 9`
+   contradicts RESEARCH_OUTPUT.md line 15's enumeration of 14 agents;
+   (b) `metadata.json claimCount: 120` disagrees with the actual 116 records
+   in claims.jsonl; (c) `topThemes` still cited "44 JASON-OS memory files"
+   despite Section 10.1 V1 verification correcting this to 80+. All three
+   were inherited silently through copy-as-is.
+   - Root cause: MI-1 regex catches project-coupling keywords (sonash, firebase,
+     TDMS) but has no check for intra-bundle consistency.
+   - Prevention: future copy-as-is research ports should run a consistency
+     sweep as part of pre-analysis — at minimum, verify
+     `metadata.json.claimCount == wc -l claims.jsonl` and cross-check
+     agentCount against the agent enumeration in RESEARCH_OUTPUT.md's
+     intro block.
+
+2. **JSONL schema divergence between research bundles was silent until
+   externally flagged.** R-frpg's claims.jsonl uses `{id, text, confidence,
+   source_url, source_agent, sub_question}`; the canonical deep-research
+   REFERENCE.md documents `{id, claim, evidence, sourceIds, category,
+   subQuestionId, routing, confidence}`. The repo already had two schemas
+   coexisting (jason-os-mvp bundle uses canonical; R-frpg uses SoNash
+   pre-canonical) but nothing surfaced this until Qodo ran.
+   - Root cause: no consumer of the canonical schema exists yet in JASON-OS,
+     so divergence had no observable effect.
+   - Prevention: annotate non-canonical bundles with `schemaVersion` +
+     `schemaNote` fields documenting the field mapping. This is the
+     "document-or-convert" middle path Qodo's own remediation prompt offered
+     for cases where full record conversion is too risky.
+
+3. **Propagation sweep surfaces peer-bundle hygiene issues.** Grepping for
+   `C:/Users/jason/` across the repo surfaced 6 instances in
+   `.research/jason-os-mvp/` (sources.jsonl, G1-session-rhythm-infra.md,
+   GV1-codebase-claims.md) — out of this PR's scope but same
+   absolute-local-path anti-pattern.
+   - Root cause: original research capture did not sanitize local paths in
+     audit-evidence records.
+   - Prevention: different category from PORT_ANALYSIS.md's single "Source:"
+     line (which was prose, easily generalized). Research audit records
+     encode "I looked at file X at path Y" — sanitizing would erase evidence
+     of what was actually checked. Options: (a) accept as-is, (b) rewrite
+     to repo-relative where possible (most could be `./.claude/hooks/lib/`
+     style), (c) sidecar note. Flag as follow-up.
+
+**Resolution:**
+
+- Fixed: 7 items
+- Deferred: 0 items
+- Rejected: 0 items
+
+**Fixes applied:**
+
+- **Item 1 (Qodo, MAJOR — claims count):** `metadata.json` claimCount 120→116,
+  confidenceDistribution recomputed from claims.jsonl (HIGH: 65, MEDIUM: 45,
+  LOW: 6, UNVERIFIED: 0 — matches actual records), added `claimCountNote`
+  explaining the 4-claim v1.1 narrative delta is discussed in Section 10 but
+  not individually enumerated as JSONL records.
+- **Item 2 (Qodo, MAJOR — schema mismatch):** Light-touch fix per Qodo's
+  own "avoid silent divergence" middle path. Added `schemaVersion:
+  "sonash-pre-canonical-v0"` + `schemaNote` to metadata.json documenting
+  the field mapping to the canonical schema. Did NOT convert 222 records
+  (risk > reward — no consumer, would break audit integrity).
+- **Item 3 (Qodo, MINOR — local path leak):** `PORT_ANALYSIS.md` replaced
+  absolute `C:/Users/jason/Workspace/dev-projects/sonash-v0/...` with
+  `<local SoNash checkout>/...` generic placeholder.
+- **G1 (Gemini, MINOR — team header stale):** `research-plan-team.md`
+  example header "state management migration" → "cross-project sync
+  mechanism" to match sanitized body.
+- **G2 (Gemini, MINOR — agentCount):** `metadata.json` agentCount 9→14 +
+  added `agentBreakdown` field enumerating the team.
+- **G3 (Gemini, MINOR — memory count in topThemes):** `metadata.json`
+  topTheme "44 JASON-OS memory files" → "80+" with inline note about
+  V1 correction.
+- **G4 (Gemini, MINOR — memory count in PORT_ANALYSIS):** Downstream utility
+  bullet "44 JASON-OS memory files" → "80+" with V1-correction note.
+
+**Scope decision — historical research text NOT modified:** "44 JASON-OS
+memory files" still appears in `RESEARCH_OUTPUT.md` §1/§5/§6 (superseded
+v1.0 sections), `claims.jsonl` C-071 (v1.0 claim record), and
+`challenges/contrarian-1.md`. These are historical audit trail — the
+research captures its own v1.0→v1.1 correction arc in Section 10.1.
+Rewriting would erase evidence of the research process.
+
+**Provenance header updated:** `RESEARCH_OUTPUT.md` provenance block now
+documents BOTH the initial port (copy-as-is with single provenance block)
+AND the R1 review metadata edits. Keeps the audit trail honest about what
+was modified when.
+
+**Pending user action:** None new. (m1 SonarCloud Mark-as-Safe from R1 of
+PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
+
+**Key Learnings:**
+
+- **MI-1 pre-analysis needs a cross-file consistency sub-step.** Sanitization
+  regex alone caught zero of the 3 metadata-vs-reality discrepancies in R-frpg.
+  Worth adding: `jq '.claimCount' metadata.json == $(wc -l < claims.jsonl)`
+  style assertions as a pre-analysis gate for future research bundle ports.
+  Candidate for Layer 3 `validate-claude-folder` (T21) scope expansion or a
+  new research-bundle-validator skill.
+- **"Silent divergence" is a real anti-pattern for shared schemas with no
+  current consumer.** The R-frpg schema mismatch had zero operational impact
+  (nothing parses the JSONLs) but created a future-trap. `schemaVersion`
+  markers with explicit deltas are the cheap way to prevent "discovered 6
+  months later when someone builds a parser."
+- **Qodo's own remediation prompt frequently offers a middle path.** For
+  Item 2, Qodo explicitly suggested "document/encode that this bundle is an
+  external-schema exception, but avoid silent divergence" as an alternative
+  to full record conversion. Reading the remediation prompt tail, not just
+  the summary, often surfaces lower-risk options.
+- **Propagation sweep scope decision matters.** Same anti-pattern in a peer
+  research bundle may be out of this PR's scope AND in a different category
+  (audit evidence vs prose). Don't blanket-propagate across categories;
+  document the decision in the learning log so future reviewers don't
+  re-debate.
+- **Research bundle ports should include an intra-bundle consistency check
+  in the port notes.** The PORT_ANALYSIS.md row for R-frpg noted "16 files,
+  384K, 49 regex hits" but didn't verify metadata.json fields against the
+  actual bundle state. Add a consistency assertion line to the standard
+  PORT_ANALYSIS row for future research ports.

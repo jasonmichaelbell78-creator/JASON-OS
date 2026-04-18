@@ -3,9 +3,17 @@
 > Copy-as-is per MI-1 pre-analysis: 49 regex hits across 9 files, all
 > substantive (JASON-OS is the subject of the research; SoNash refs are
 > audit-trail; Gemini refs are the cross-model verifier, not the `/pr-review`
-> integration). No content modifications beyond this header — sections below
-> preserved byte-for-byte for audit integrity. Logged under
-> `.planning/jason-os-mvp/PORT_ANALYSIS.md` rows R1–R16.
+> integration). Initial port: this provenance block is the only modification;
+> all 15 other files byte-for-byte identical to source.
+>
+> **R1 review fixes (PR #5, 2026-04-18):** `metadata.json` corrected for 3
+> stale/inconsistent fields inherited from SoNash source (agentCount 9→14,
+> claimCount 120→116 with explanatory note, "44 JASON-OS memory files"→"80+"),
+> and annotated with `schemaVersion` + `schemaNote` fields documenting the
+> delta from the canonical deep-research REFERENCE.md JSONL schema. Sections
+> below in THIS file (RESEARCH_OUTPUT.md) remain preserved byte-for-byte.
+> Logged under `.planning/jason-os-mvp/PORT_ANALYSIS.md` row R-frpg notes
+> block.
 
 # File Registry + Portability Graph — Research Output
 

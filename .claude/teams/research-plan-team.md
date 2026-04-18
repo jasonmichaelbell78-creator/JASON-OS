@@ -211,7 +211,7 @@ TeamCreate("research-plan-team")
       tools: ["Read", "Grep", "Glob", "Bash"]
 ```
 
-### Task Assignment Example (deep-research on "state management migration")
+### Task Assignment Example (deep-research on "cross-project sync mechanism")
 
 ```
 # Phase 1: Research

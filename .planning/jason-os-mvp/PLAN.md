@@ -719,9 +719,11 @@ Capture in state file `process_feedback` field.
 
 ## Layer 2 — Ambient Intelligence (GATED — D5, D19)
 
-**Engagement trigger:** User confirms "Yes, add Layer 2" after validation session.
+**D19 status (2026-04-18):** Gate closed with **SKIP** for this layer. Re-engagement requires a **fresh D34 staged approval** — the original gating discipline is preserved, not loosened. Trigger conditions tracked as `/todo` **T18**. Not opportunistic: each engagement is a deliberate decision, not drift.
 
-**Re-approval required:** Yes (D34 staged approval).
+**Engagement trigger:** User confirms "Yes, add Layer 2" — historically at the Step 5 gate; post-D19 at any point when T18's trigger conditions fire (honor-only guardrail violation recurs, multi-user context emerges, Step 6 plan depends on governance-logger capture).
+
+**Re-approval required:** Yes (D34 staged approval, unchanged).
 
 **Effort:** ~3-4h including pre-analysis.
 
@@ -741,7 +743,11 @@ Each sub-step follows the standard port-agent flow: pre-analysis → PORT_ANALYS
 
 ## Layer 3 — Navigation Documents (GATED — D5, D19)
 
-**Engagement trigger:** User confirms "Yes, add Layer 3" after Layer 2 lands (or after validation if skipping 2).
+**D19 status (2026-04-18):** Gate closed with **SKIP** for this layer. Re-engagement requires a **fresh D34 staged approval**. Trigger conditions tracked as `/todo` **T19**. **IMPORTANT schema-reroll warning:** item **3.3 SKILL_INDEX.md** MUST NOT run before Step 6 — its 6-col schema (`portability_status`, `source_version`, `last_synced`) is a subset of what the R-frpg research file-registry.jsonl defines. Running 3.3 pre-Step-6 = picking the schema twice.
+
+**Engagement trigger:** User confirms "Yes, add Layer 3" — per T19, 3.1/3.2/3.4 engage when onboarding a second operator or context-switching away for 30+ days; 3.3 engages **after** Step 6 sync-mechanism brainstorm produces the canonical registry schema.
+
+**Re-approval required:** Yes (D34 staged approval, unchanged).
 
 **Effort:** ~3-4h.
 
@@ -756,15 +762,19 @@ Each sub-step follows the standard port-agent flow: pre-analysis → PORT_ANALYS
 
 ## Layer 4 — Quality Skills (GATED — D5, D19)
 
-**Engagement trigger:** User confirms.
+**D19 status (2026-04-18):** Gate closed with **PARTIAL engagement** — 4.3 ported (commit `7f69435`); 4.1 and 4.2 SKIPPED. Re-engagement of 4.1 or 4.2 requires a **fresh D34 staged approval**. Trigger conditions tracked as `/todo` **T20** (4.1) and **T21** (4.2).
 
-**Effort:** ~2-3h (note: `pre-commit-fixer` already ported in Step 4).
+**Engagement trigger:** 4.3 — executed 2026-04-18 for direct Step 6 leverage. 4.1 — per T20, engage on first gnarly bug/test-failure where I catch myself guessing instead of tracing root cause. 4.2 — per T21, engage on first `.claude/` drift issue OR when Layer 3.2/3.4 engages (whichever first, since 4.2's checks #3/#4 depend on COMMAND_REFERENCE.md + HOOKS.md).
 
-- **4.1** `systematic-debugging` port (Value: 9/10 per research, portable).
-- **4.2** `validate-claude-folder` port (Value: 8/10 per research, portable).
-- **4.3** `research-plan-team.md` port (`.claude/teams/`, ~20-30 min adapt from SoNash).
+**Re-approval required:** Yes (D34 staged approval, unchanged).
 
-**Audit checkpoint:** after Layer 4.
+**Effort:** ~2-3h firm (note: `pre-commit-fixer` already ported in Step 4; `research-plan-team` ported 2026-04-18 as Layer 4.3). Remaining if all engaged: ~1h.
+
+- **4.1** `systematic-debugging` port (Value: 9/10 per research, portable). **SKIPPED — T20.**
+- **4.2** `validate-claude-folder` port (Value: 8/10 per research, portable). **SKIPPED — T21.**
+- **4.3** `research-plan-team.md` port (`.claude/teams/`, ~20-30 min adapt from SoNash). **PORTED 2026-04-18 (`7f69435`).**
+
+**Audit checkpoint:** after Layer 4 (partial-layer audit covered in 4.3 port notes in PORT_ANALYSIS.md; full audit deferred until 4.1+4.2 engage).
 
 ---
 
@@ -784,6 +794,14 @@ Each sub-step follows the standard port-agent flow: pre-analysis → PORT_ANALYS
 - Must be easily expandable (per MI-3).
 - Anti-goal: security risk in bidirectional auto-sync (per CH-C-010).
 - Open question: pattern cognition & propagation subsystem (D37) pairs here — sync-of-fixes and sync-of-config may share mechanism.
+- **Research seed — `.research/file-registry-portability-graph/` (R-frpg, ported 2026-04-18):** L1-depth deep-research (120 claims, 106 sources, cross-model-verified via Gemini CLI). Binding recommendation (Section 10): **Option D — minimum-viable JSONL + PostToolUse hook + scope-tags**. Read this before running the brainstorm; it supplies:
+  - **T0 action** (pre-staged separately): `scope:` frontmatter on user memory files per D7 auto-detection heuristics. 5-value enum: `universal | user | project | machine | ephemeral`.
+  - **T1 action** (brainstorm input): `~/.claude/file-registry.jsonl` + PostToolUse append hook (~50 lines new, not extending SoNash's 800-line post-write-validator). Records per `Write`/`Edit`/`MultiEdit` with scope, tags, upstream/downstream, project root, SHA-256.
+  - **T2 action** (brainstorm input): `scripts/cas/detect-portable-copies.js` — git-blob-SHA inverted index across registered project roots for retroactive cross-project copy + divergence detection (~50 lines).
+  - **Deferred (explicit OQ-1/2/3/4 triggers in research):** `@optave/codegraph` adoption (needs empirical `.md`/`.yaml` node verification); graph-traversal queries; capability-graph; chezmoi propagation.
+  - **Why Option D over Option B:** 5 pros in §10.3 table; the decisive one is abandonment-risk — Option B's 5 manual mechanisms were the exact antipattern that caused the T0 action to be deferred 18 days in the original research context.
+
+**Team config:** `/brainstorm sync-mechanism` → `/deep-research` pipeline should spawn `.claude/teams/research-plan-team.md` (researcher + planner + verifier, ~4× solo cost; justified for this 3+ sub-question topic per the team's own cost rubric). Ported 2026-04-18 to fulfill this Step 6 need.
 
 **Done when:** `/brainstorm sync-mechanism` executed; Foundation plan is archived.
 

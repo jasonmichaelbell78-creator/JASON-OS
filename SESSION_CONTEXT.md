@@ -83,14 +83,21 @@ push `bootstrap-41726` and open PR #4 for the 9 Session 3 commits.
     for the `/deep-research` phase of the pipeline (~4× solo cost, 3-agent
     coordination: researcher + planner + verifier).
   - PLAN.md Step 6 section updated 2026-04-18 with full seed block.
-- **Skipped per D19 closure (opportunistic, not gated):**
-  - Layer 2 (5 hooks) — wire when honor-only guardrails start biting.
-  - Layer 3 (4 nav docs) — defer 3.3 SKILL_INDEX.md past Step 6 to avoid
-    schema-reroll (research overlaps the 6-col schema).
-  - Layer 4.1 (`systematic-debugging`) — port when first gnarly bug forces
-    systematic investigation.
-  - Layer 4.2 (`validate-claude-folder`) — port when first `.claude/` drift
-    issue bites.
+- **Skipped per D19 closure — still GATED; re-engagement requires fresh
+  D34 approval** (not opportunistic, not open-access). Trigger conditions
+  filed as `/todo` entries:
+  - **T18** — Layer 2 (5 hooks, ~3-4h). Trigger: honor-only guardrail
+    violation recurs, multi-user context emerges, or Step 6 plan depends
+    on governance-logger capture.
+  - **T19** — Layer 3 (4 nav docs, ~3-4h). Trigger: onboarding second
+    operator, 30+ day context gap, or (for 3.3 only) AFTER Step 6
+    sync-mechanism produces canonical registry schema — 3.3 before Step 6
+    means picking schema twice.
+  - **T20** — Layer 4.1 `systematic-debugging` (~30 min). Trigger: first
+    gnarly bug where I catch myself guessing instead of tracing root cause.
+  - **T21** — Layer 4.2 `validate-claude-folder` (~30 min). Trigger: first
+    `.claude/` drift issue OR Layer 3.2/3.4 engages (checks #3/#4 depend
+    on COMMAND_REFERENCE.md + HOOKS.md).
 - **Outstanding user-action (unchanged):** m1 — batch-mark 5 SonarCloud
   `S4036` PATH hotspots in `scripts/session-end-commit.js` as
   Reviewed-Safe with single justification.

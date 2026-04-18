@@ -28,6 +28,12 @@ Node.js-only. This is the minimum required to run Claude Code hooks and the
 **Package manager:** `npm` (minimal `package.json` exists solely for husky +
 dev dependencies; no runtime deps).
 
+**Optional toolchain — statusline:** Go (1.26+) required only to rebuild the
+statusline binary in `tools/statusline/` (`bash tools/statusline/build.sh`).
+The installed binary lives at `~/.claude/statusline/jason-statusline-v2.exe`
+and is machine-specific (gitignored). Operators who don't rebuild it don't
+need Go installed.
+
 ## 2. Security Rules
 
 ### Helpers at file-I/O boundaries

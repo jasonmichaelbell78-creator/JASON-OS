@@ -1,0 +1,125 @@
+package main
+
+import (
+	"encoding/json"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+)
+
+// RateLimitBucket holds usage and reset info for a single rate-limit window.
+type RateLimitBucket struct {
+	UsedPercentage *float64        `json:"used_percentage"`
+	ResetsAt       json.RawMessage `json:"resets_at"`
+}
+
+// FlexModel handles model as either a string ("claude-opus-4-6") or an object ({id, display_name}).
+// Claude Code >=2.1.89 sends a string; older versions sent an object.
+type FlexModel struct {
+	ID          string
+	DisplayName string
+}
+
+func (m *FlexModel) UnmarshalJSON(data []byte) error {
+	if len(data) == 0 || string(data) == "null" {
+		m.ID = ""
+		m.DisplayName = ""
+		return nil
+	}
+	// Try string first (new format)
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		m.ID = s
+		m.DisplayName = s
+		return nil
+	}
+	// Fall back to object (old format)
+	var obj struct {
+		ID          string `json:"id"`
+		DisplayName string `json:"display_name"`
+	}
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return err
+	}
+	m.ID = obj.ID
+	m.DisplayName = obj.DisplayName
+	return nil
+}
+
+// StdinData matches Claude Code's statusline JSON schema.
+type StdinData struct {
+	Model     FlexModel `json:"model"`
+	SessionID string    `json:"session_id"`
+	Workspace struct {
+		CurrentDir string `json:"current_dir"`
+		ProjectDir string `json:"project_dir"`
+	} `json:"workspace"`
+	ContextWindow struct {
+		UsedPercentage      *float64 `json:"used_percentage"`
+		RemainingPercentage *float64 `json:"remaining_percentage"`
+		ContextWindowSize   int      `json:"context_window_size"`
+	} `json:"context_window"`
+	Cost struct {
+		TotalCostUSD      float64 `json:"total_cost_usd"`
+		TotalDurationMs   int64   `json:"total_duration_ms"`
+		TotalLinesAdded   int     `json:"total_lines_added"`
+		TotalLinesRemoved int     `json:"total_lines_removed"`
+	} `json:"cost"`
+	RateLimits struct {
+		FiveHour RateLimitBucket `json:"five_hour"`
+		SevenDay RateLimitBucket `json:"seven_day"`
+	} `json:"rate_limits"`
+	OutputStyle struct {
+		Name string `json:"name"`
+	} `json:"output_style"`
+}
+
+func main() {
+	// Set Windows UTF-8 code page for proper Unicode output
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command("chcp.com", "65001")
+		cmd.Stdout = nil
+		cmd.Stderr = nil
+		cmd.Run()
+	}
+
+	// Determine config directory (same directory as source config.toml)
+	exe, err := os.Executable()
+	configDir := "."
+	if err == nil {
+		configDir = filepath.Dir(exe)
+	}
+	// If running from source dir (go run), use working directory
+	if _, err := os.Stat(filepath.Join(configDir, "config.toml")); err != nil {
+		if wd, wdErr := os.Getwd(); wdErr == nil {
+			if _, err := os.Stat(filepath.Join(wd, "config.toml")); err == nil {
+				configDir = wd
+			}
+		}
+	}
+
+	cfg := loadConfig(configDir)
+
+	// Read stdin
+	input, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return // silent fail
+	}
+
+	var data StdinData
+	if err := json.Unmarshal(input, &data); err != nil {
+		return // silent fail on bad JSON
+	}
+
+	// Build widgets
+	widgets := buildAllWidgets(&data, &cfg)
+
+	// Render output (writes directly to stdout per-line with flush)
+	renderLines(widgets, &cfg)
+
+	// Refresh API-backed caches synchronously after render
+	// (goroutine approach failed — process exits before goroutine completes)
+	refreshCacheIfStale(&cfg)
+}

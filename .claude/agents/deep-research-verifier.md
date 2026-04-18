@@ -7,7 +7,7 @@ description: >-
   during Phase 2.5 and Phase 3.9. Use PROACTIVELY when research output
   contains HIGH-stakes claims about codebase state, API behavior, or
   architectural decisions that will drive implementation.
-tools: Read, Bash, Grep, Glob, WebSearch, WebFetch
+tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch
 disallowedTools: Agent
 model: sonnet
 maxTurns: 30

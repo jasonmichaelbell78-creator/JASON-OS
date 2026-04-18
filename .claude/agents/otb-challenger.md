@@ -6,7 +6,7 @@ description: >-
   /deep-research during Phase 3. Use PROACTIVELY when research has converged
   on a single approach and no alternatives were considered — especially for
   infrastructure, tooling, or architecture questions.
-tools: Read, Grep, Glob, WebSearch
+tools: Read, Write, Grep, Glob, WebSearch
 disallowedTools: Agent
 model: sonnet
 maxTurns: 25

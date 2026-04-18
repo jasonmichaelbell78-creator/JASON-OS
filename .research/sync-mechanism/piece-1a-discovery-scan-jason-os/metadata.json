@@ -1,0 +1,107 @@
+{
+  "topic": "What exists in JASON-OS that needs classification for bidirectional sync with SoNash?",
+  "topic_slug": "piece-1a-discovery-scan-jason-os",
+  "date": "2026-04-18",
+  "session": 5,
+  "branch": "sync-mechanism-41826",
+  "depth": "L1",
+  "agent_count_phase_1": 13,
+  "agent_count_phase_2": 3,
+  "agent_count_total": 16,
+  "claim_count": 90,
+  "source_count": 33,
+  "unit_count_approximate": 190,
+  "unit_count_by_category": {
+    "skills": 13,
+    "agents": 8,
+    "teams": 1,
+    "commands": 0,
+    "hooks": 8,
+    "hook_lib_helpers": 5,
+    "canonical_memories": 12,
+    "user_home_memories": 62,
+    "scripts": 13,
+    "tool_files": 13,
+    "research_sessions": 4,
+    "planning_artifacts": 13,
+    "ci_workflows": 7,
+    "root_docs": 3,
+    "configs": 10
+  },
+  "edge_count": 204,
+  "edge_confidence": {
+    "HIGH": 178,
+    "MEDIUM": 24,
+    "LOW": 2
+  },
+  "composite_count": 15,
+  "composite_breakdown": {
+    "workflows": 8,
+    "processes": 6,
+    "memory_systems": 1
+  },
+  "schema_candidate_count": 73,
+  "schema_mvp_field_count": 12,
+  "schema_deferred_count": 61,
+  "hub_tier1_units": [
+    "scripts/lib/safe-fs.js",
+    "scripts/lib/sanitize-error.cjs",
+    "skills/convergence-loop",
+    "skills/deep-research"
+  ],
+  "gaps_high_severity": [
+    "scripts/log-override.js",
+    "init_skill.py",
+    ".claude/statusline-command.sh"
+  ],
+  "gaps_medium_severity": [
+    "scripts/health/lib/mid-session-alerts.js",
+    "scripts/skills/skill-audit/self-audit.js",
+    "docs/agent_docs/SKILL_AGENT_POLICY.md",
+    "/create-audit skill"
+  ],
+  "canonical_memory_gap": {
+    "total_user_home": 62,
+    "has_canonical": 10,
+    "gap_count": 52,
+    "gap_rate_percent": 84
+  },
+  "hasDebtCandidates": false,
+  "confidence_distribution": {
+    "HIGH": 72,
+    "MEDIUM": 12,
+    "LOW": 6,
+    "UNVERIFIED": 0
+  },
+  "consumer_hints": {
+    "piece_2_schema_design": "Use D13 MVP schema (12 fields) as starting point. Add data_contracts[] as 13th field for composite-type entries. Decide source_scope vs runtime_scope split before finalizing. Canonical-memory promotion workflow is most acute gap requiring schema support.",
+    "piece_1b_sonash_scan": "Apply all Section 7 learnings before dispatching SoNash agents. Key adjustments: byte-weighted skill splits, 4 memory agents, 2-3 hook agents, team-file HTML-comment parser, add lineage+deferred_sections+module_system+originSessionId+data_contracts to Wave 1 JSONL spec before dispatch.",
+    "schema_mvp": "12 fields: name, path, type, scope, portability, status, purpose, dependencies, lineage, supersedes, superseded_by, sanitize_fields, notes. These 12 address every primary sync decision across all unit types.",
+    "critical_findings": "5 critical findings in Section 5: content bleed, 50-file canonical gap, source_scope/runtime_scope split, data_contracts omission, cache-dir naming convention.",
+    "sonash_learnings": "Section 7 of RESEARCH_OUTPUT.md is the primary input to piece-1b dispatch planning. Contains 6 subsections: agent sizing, schema adjustments, file-type observations, classification heuristics, dependency extraction techniques, SoNash-specific expectations."
+  },
+  "downstream": [
+    "piece-1b-discovery-scan-sonash",
+    "piece-2-schema-design"
+  ],
+  "upstream_dependencies": [
+    "research/file-registry-portability-graph (R-frpg) — scope enum + Option D are binding inputs to Piece 2",
+    "research/jason-os-mvp — PORT_ANALYSIS.md is the direct ancestor of the file-registry concept",
+    "research/sync-mechanism/BRAINSTORM.md — 5-piece architecture committed"
+  ],
+  "output_files": [
+    ".research/sync-mechanism/piece-1a-discovery-scan-jason-os/RESEARCH_OUTPUT.md",
+    ".research/sync-mechanism/piece-1a-discovery-scan-jason-os/claims.jsonl",
+    ".research/sync-mechanism/piece-1a-discovery-scan-jason-os/sources.jsonl",
+    ".research/sync-mechanism/piece-1a-discovery-scan-jason-os/metadata.json"
+  ],
+  "scan_completeness": {
+    "all_16_agents_read": true,
+    "scan_scope_gaps": [
+      "scripts/skills/ directory (per-skill self-audit scripts not inventoried)",
+      "docs/ directory (referenced by skill-creator but not in D9 scope)"
+    ],
+    "wave_1_complete": true,
+    "wave_2_complete": true
+  }
+}

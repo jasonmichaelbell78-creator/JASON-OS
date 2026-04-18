@@ -784,6 +784,14 @@ Each sub-step follows the standard port-agent flow: pre-analysis → PORT_ANALYS
 - Must be easily expandable (per MI-3).
 - Anti-goal: security risk in bidirectional auto-sync (per CH-C-010).
 - Open question: pattern cognition & propagation subsystem (D37) pairs here — sync-of-fixes and sync-of-config may share mechanism.
+- **Research seed — `.research/file-registry-portability-graph/` (R-frpg, ported 2026-04-18):** L1-depth deep-research (120 claims, 106 sources, cross-model-verified via Gemini CLI). Binding recommendation (Section 10): **Option D — minimum-viable JSONL + PostToolUse hook + scope-tags**. Read this before running the brainstorm; it supplies:
+  - **T0 action** (pre-staged separately): `scope:` frontmatter on user memory files per D7 auto-detection heuristics. 5-value enum: `universal | user | project | machine | ephemeral`.
+  - **T1 action** (brainstorm input): `~/.claude/file-registry.jsonl` + PostToolUse append hook (~50 lines new, not extending SoNash's 800-line post-write-validator). Records per `Write`/`Edit`/`MultiEdit` with scope, tags, upstream/downstream, project root, SHA-256.
+  - **T2 action** (brainstorm input): `scripts/cas/detect-portable-copies.js` — git-blob-SHA inverted index across registered project roots for retroactive cross-project copy + divergence detection (~50 lines).
+  - **Deferred (explicit OQ-1/2/3/4 triggers in research):** `@optave/codegraph` adoption (needs empirical `.md`/`.yaml` node verification); graph-traversal queries; capability-graph; chezmoi propagation.
+  - **Why Option D over Option B:** 5 pros in §10.3 table; the decisive one is abandonment-risk — Option B's 5 manual mechanisms were the exact antipattern that caused the T0 action to be deferred 18 days in the original research context.
+
+**Team config:** `/brainstorm sync-mechanism` → `/deep-research` pipeline should spawn `.claude/teams/research-plan-team.md` (researcher + planner + verifier, ~4× solo cost; justified for this 3+ sub-question topic per the team's own cost rubric). Ported 2026-04-18 to fulfill this Step 6 need.
 
 **Done when:** `/brainstorm sync-mechanism` executed; Foundation plan is archived.
 

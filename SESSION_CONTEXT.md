@@ -10,6 +10,17 @@ No
 2026-04-18
 
 ## Quick Status
+Session 4 active. **D19 gate CLOSED 2026-04-18** — Foundation firm declared
+complete; partial Layer 4 engagement (4.3 `research-plan-team` only); Layers
+2, 3, 4.1, 4.2 skipped (opportunistic later). Research port R-frpg landed.
+Next up: **Step 6 handoff** via `/brainstorm sync-mechanism` with ported
+research + team config as seed inputs.
+
+**PR #4 already merged to main** (commit `39bab5b` on 2026-04-17) — Session 3
+Quick Status below is retained for history but superseded by this block.
+
+---
+
 Session 3 closing. **Step 5 end-to-end validation session EXECUTED** — ran a
 real work session entirely using Foundation features (`/session-begin`,
 `/todo`, `/session-end`). 9 Session 3 commits on `bootstrap-41726`, none
@@ -64,23 +75,27 @@ to Step 6 handoff via `/brainstorm sync-mechanism` (MI-3). Before either,
 push `bootstrap-41726` and open PR #4 for the 9 Session 3 commits.
 
 ## Next Session Goals
-- **Push Session 3 + open PR #4** — 9 commits on `bootstrap-41726`. Once
-  merged, `main` lands everything from Session 3 (skill trims, hook fix,
-  polish, gitattributes).
-- **Step 5 gate decision (user-only)** — declare Foundation firm
-  COMPLETE? If yes: user picks Layer 2 / Layer 3 / Layer 4 engagement per
-  D34 re-approval, or skips direct to Step 6 handoff.
-- **If Layers 2/3/4 engaged:** run the relevant layer per PLAN.md
-  (Layer 2 = 5 hooks ~3–4h; Layer 3 = 4 nav docs ~3–4h; Layer 4 = 3
-  quality skills ~2–3h). Each layer is D29-audited at completion.
-- **Step 6 when ready:** `/brainstorm sync-mechanism` per MI-3 —
-  backwards-sync SoNash → JASON-OS first, then forward prep.
+- **Step 6 — `/brainstorm sync-mechanism`** (MI-3). Seed inputs pre-staged:
+  - `.research/file-registry-portability-graph/` (R-frpg) — binding
+    recommendation Option D (JSONL + PostToolUse hook + scope-tags);
+    T0 defers to brainstorm; T1+T2 are the concrete implementation seed.
+  - `.claude/teams/research-plan-team.md` (4.3 port) — spawn this team
+    for the `/deep-research` phase of the pipeline (~4× solo cost, 3-agent
+    coordination: researcher + planner + verifier).
+  - PLAN.md Step 6 section updated 2026-04-18 with full seed block.
+- **Skipped per D19 closure (opportunistic, not gated):**
+  - Layer 2 (5 hooks) — wire when honor-only guardrails start biting.
+  - Layer 3 (4 nav docs) — defer 3.3 SKILL_INDEX.md past Step 6 to avoid
+    schema-reroll (research overlaps the 6-col schema).
+  - Layer 4.1 (`systematic-debugging`) — port when first gnarly bug forces
+    systematic investigation.
+  - Layer 4.2 (`validate-claude-folder`) — port when first `.claude/` drift
+    issue bites.
 - **Outstanding user-action (unchanged):** m1 — batch-mark 5 SonarCloud
   `S4036` PATH hotspots in `scripts/session-end-commit.js` as
   Reviewed-Safe with single justification.
-- **Backlog polish (optional):** 10 pending todos all valid (big ports
-  T2/T4/T5/T9/T13, gated T3/T7/T8/T10, composite T11/T12). None are
-  quick-wins inside Foundation scope.
-- **Branching:** `bootstrap-41726` is now 9 commits ahead of `main`.
-  After PR #4 merges, next session should cut a fresh date-stamped
-  branch off the new `main` tip.
+- **Branching hygiene:** `bootstrap-41726` now carries 3 additional
+  commits past the PR #4 merge (Session 3 session-end docs + Session 4
+  research+team ports). Consider cutting a fresh date-stamped branch off
+  current `main` before starting Step 6 brainstorm, or stay on this
+  branch and open PR #5 after the brainstorm outputs land.

@@ -181,6 +181,7 @@ Round-trip verified: add → jsonl write + TODOS.md render → delete → clean 
 | 4.1-b | `41526:.claude/skills/pr-review/reference/PRE_CHECKS.md` | `.claude/skills/pr-review/reference/PRE_CHECKS.md` | Source: SonarCloud: 1 (S5852/S4036 rule refs), MASTER_DEBT: 1 (check #9). Target: SoNash: 1 (lineage), SonarCloud: 1 (generic local-scan example, KEEP); 0 MASTER_DEBT/TDMS/Qodo/CodeRabbit/Gemini/SoNash-npm-script hits | Referenced from SKILL.md Step 1 | None (markdown-only) | `sanitize-then-copy` (282→252L; dropped check #9 dual-file MASTER_DEBT JSONL + per-PR retro evidence rewritten generic) | 2026-04-17 | `22f1962` |
 | 4.1-c | `41526:.claude/skills/pr-review/reference/PARALLEL_AGENT_STRATEGY.md` | `.claude/skills/pr-review/reference/PARALLEL_AGENT_STRATEGY.md` | Source: 0 hits. Target: SoNash: 1 (lineage); 0 functional hits | Referenced from SKILL.md Step 3 | None (markdown-only) | `sanitize-then-copy` (light — 68→80L; added v0 note about absent code-reviewer agent) | 2026-04-17 | `22f1962` |
 | 4.2 | `41526:.claude/skills/pre-commit-fixer/SKILL.md` | `.claude/skills/pre-commit-fixer/SKILL.md` | Source: 12 SoNash-specific recipe categories. Target: 0 forbidden hits; 9 `/add-debt` refs retained (KEEP — stub exists); 5 generic recipes kept (ESLint, Prettier, gitleaks, tsc, lint-staged) | CLAUDE.md guardrail #9 (manual trigger); `/add-debt` (deferral routing) | `.husky/pre-commit` (hook target, gitleaks-only in Foundation), `.husky/_shared.sh` (SKIP_CHECKS/SKIP_REASON contract referenced) | `sanitize-then-copy` (265→287L; 12 SoNash recipe categories dropped, 5 generic kept, adapted to husky 0h scaffold) | 2026-04-17 | `d2dfd40` |
+| R-frpg | `.research/file-registry-portability-graph/` (16-file bundle; enumerated in notes below) | `.research/file-registry-portability-graph/` (mirror layout: RESEARCH_OUTPUT.md + metadata.json + claims.jsonl + sources.jsonl + 2 `challenges/*.md` + 10 `findings/*.md`) | 49 hits across 9 files (0 in the other 7) — all substantive content (research subject is JASON-OS portability; "SoNash" refs are audit-trail; "Gemini" refs are the cross-model verifier, not `/pr-review` integration; 0 hits on firebase/firestore/TDMS/MASTER_DEBT/SoNash-npm-scripts/write-invocation/session-end-commit/hasDebtCandidates/pr-ecosystem-audit). Full per-file counts in notes. | None — research is a standalone reference artifact (no consumer in the Foundation port; feeds future `/brainstorm sync-mechanism` per MI-3) | None — markdown/JSON/JSONL only, no code imports | `copy-as-is` (with one provenance header prepended to `RESEARCH_OUTPUT.md` only) | 2026-04-18 | _pending_ |
 
 **Notes on 1.2 port (Layer 1 item 1.2, 2026-04-17):**
 
@@ -218,6 +219,42 @@ Round-trip verified: add → jsonl write + TODOS.md render → delete → clean 
   - 4.2 SKILL.md substituted `subagent_type: "general-purpose"` for upstream's `"debugger"` / `"code-reviewer"` — those subagent types don't exist in the JASON-OS default agent set yet. Verify intent or file as a `/todo`.
   - 4.1 dropped Step 0 high-churn watchlist (`.claude/config/high-churn-watchlist.json`) and the D26 retro-pattern check (`.claude/state/retros.jsonl`) — both depend on infrastructure JASON-OS doesn't ship in v0; future additions if needed.
   - 4.1 Step 6 path defaults to `.planning/PR_REVIEW_LEARNINGS.md` (didn't pre-exist; skill creates on first use).
+
+---
+
+**Notes on R-frpg port (research bundle, 2026-04-18):**
+
+- **Scope:** Off-PLAN ad-hoc port (not in PLAN.md Layers 0+/0/1 or Step 4). User-requested to pre-stage research that feeds Step 6 MI-3 `/brainstorm sync-mechanism` and touches the portability-scope work the research itself identifies as immediately actionable.
+- **Source:** `C:/Users/jason/Workspace/dev-projects/sonash-v0/.research/file-registry-portability-graph/` (16 files, 384K). Note: PLAN.md's `jbell` path is stale for this locale; actual SoNash checkout is under `jason/Workspace/dev-projects/`.
+- **Target layout:** Mirror of source — same 16 files under `.research/file-registry-portability-graph/` at JASON-OS root.
+- **Pre-analysis regex hits** (extended D21 regex, case-insensitive):
+
+  | File | Hits |
+  |---|---|
+  | `RESEARCH_OUTPUT.md` | 19 |
+  | `metadata.json` | 1 |
+  | `claims.jsonl` | 4 |
+  | `sources.jsonl` | 0 |
+  | `challenges/contrarian-1.md` | 0 |
+  | `challenges/otb-1.md` | 4 |
+  | `findings/D1-code-graph-indexers.md` | 0 |
+  | `findings/D2-codebase-rag-tools.md` | 0 |
+  | `findings/D3-build-system-graphs.md` | 0 |
+  | `findings/D4-dev-portal-catalogs.md` | 0 |
+  | `findings/D5-doc-kg-tools.md` | 2 |
+  | `findings/D6-change-detection-infra.md` | 8 |
+  | `findings/D7-portability-classification.md` | 5 |
+  | `findings/D8-composite-hybrid-systems.md` | 0 |
+  | `findings/V1-codebase-verification.md` | 3 |
+  | `findings/V2-external-verification.md` | 3 |
+  | **Total** | **49** |
+
+- **Why copy-as-is (not sanitize-then-copy)** despite 49 hits: manual spot-check of hit contexts across all 9 non-zero files confirms every hit is one of (a) the research describing JASON-OS as its own subject, (b) "SoNash" appearing as audit-trail/source-project context, or (c) "Gemini" referring to the cross-model verifier used in the research pipeline (NOT the `/pr-review` Gemini integration excluded per D23). No hit represents a runtime coupling that would break JASON-OS. Research docs are historical records; stripping these would erase audit integrity without any behavioral benefit.
+- **Content modifications:** Exactly one — a 9-line provenance block prepended to the top of `RESEARCH_OUTPUT.md` documenting the port. All other 15 files are byte-for-byte identical to source. No file body text modified.
+- **SonarCloud exclusion:** `.research/**` is already in the `sonar-project.properties` exclusion list (0g), so these files do not trigger quality-gate scans.
+- **Downstream utility:** The research's Section 10 recommendation (Option D — minimum-viable JSONL + PostToolUse hook + scope-tags) is immediately actionable in JASON-OS and likely informs Step 6 sync-mechanism brainstorm and any future portability-scope subsystem. The 5-value `scope:` enum (universal/user/project/machine/ephemeral) from D7 applies directly to the 44 JASON-OS memory files referenced in the research.
+- **Off-PLAN tracking:** R-frpg does not affect the "Row Count Invariants" table below (which tracks PLAN.md layer ports only). Future research ports would use `R-<slug>` IDs.
+- **Commit SHA:** Backfilled after commit lands.
 
 ---
 

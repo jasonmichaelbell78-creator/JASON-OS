@@ -240,7 +240,7 @@ Addresses contrarian HIGH #1 (migration vs steady-state schema tension) by segre
 | Count | Category |
 |---|---|
 | 26 | Universal file-level columns |
-| 6 | Section record fields |
+| 7 | Section record fields (D18's 6 + D19's `last_known_lines` identifier) |
 | 41 | Per-type extension fields (across 9 type-groups) |
 | 3 | Composite-specific fields |
 | 5 | Migration-metadata fields |

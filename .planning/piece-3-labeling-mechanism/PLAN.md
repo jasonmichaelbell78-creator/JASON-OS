@@ -64,11 +64,12 @@ Per DECISIONS.md CL claim 11 finding — ajv is currently installed but flagged
 `extraneous` (not declared in package.json).
 
 ```sh
-npm install --save-dev ajv
+npm install --save-dev ajv node-notifier
 ```
 
-**Done when:** `package.json` has `"ajv": "^8.x"` under `devDependencies`;
-`npm ls ajv` shows no extraneous flag.
+**Done when:** `package.json` has `"ajv": "^8.x"` and `"node-notifier": "^10.x"`
+under `devDependencies`; `npm ls` shows no extraneous flags. (`ajv` already
+landed in PR #7 R1; `node-notifier` is the execution-phase addition for S5.)
 
 ### S0.2: Create tooling directory structure
 
@@ -140,8 +141,10 @@ truth for derivation logic.
   - `detectType(filePath) → typeEnum` — file extension + directory + any
     existing frontmatter
   - `parseExistingFrontmatter(filePath) → object | null` — handles YAML
-    (skills/agents/memories), HTML-comment (team files per Piece 1a §5.2),
-    `**Lineage:**` markdown body (pr-review pattern per CL claim 12)
+    (skills/agents/memories), team roster format (prettier-ignore fenced
+    Markdown table with bold headers per EXAMPLES.md Example 4 — NOT the
+    HTML-comment pattern Piece 1a §5.2 originally guessed), `**Lineage:**`
+    markdown body (pr-review pattern per CL claim 12)
   - `detectSectionsHeuristic(content) → sectionRecord[]` — D6 heuristic
     (headings + scope keywords)
   - `detectCompositesHeuristic(files) → compositeRecord[]` — D13 heuristic
@@ -284,9 +287,13 @@ Implements D15 path 3 — OS-level desktop notification on failures.
 **Behavior:**
 
 1. Fires on Notification event with label-system matcher
-2. Sends OS-level desktop notification using Node.js built-in mechanism
-   (preferred: `node-notifier` as devDependency; fallback: OS-specific shell
-   command)
+2. Sends OS-level desktop notification via `node-notifier` (devDependency
+   declared in S0.1 — Node.js has no core desktop-notification API, so the
+   library is required, not optional). Fallback path: platform-specific shell
+   command (PowerShell toast on Windows, `osascript` on macOS, `notify-send`
+   on Linux). If neither path is available, the hook writes a clearly-marked
+   warning to stderr (sanitized via `sanitize-error.cjs`) so the failure
+   surfaces via D15 path 1 instead of silently no-op'ing.
 3. Notification content: failure type + file path + truncated error message
 4. Never blocks anything
 
@@ -635,7 +642,8 @@ Prepare artifacts for eventual Piece 5.5 without writing to SoNash.
 2. **Settings.json delta:** new `hooks.PostToolUse`, `hooks.UserPromptSubmit`,
    `hooks.Notification` entries to add in SoNash
 3. **Pre-commit delta:** Check 2 block to add to SoNash's `.husky/pre-commit`
-4. **package.json delta:** ajv devDep to add
+4. **package.json delta:** `ajv` + `node-notifier` devDeps to add (SoNash may
+   already have its own ajv dep; check before adding)
 5. **Back-fill run instructions:** exact command + expected agent count
    based on SoNash's 5× larger surface
 6. **Expected effort:** 1 session for bootstrap install, 1–2 sessions for

@@ -1046,7 +1046,7 @@ name:             CLAUDE.md
 path:             CLAUDE.md
 type:             doc
 purpose:          Core AI context + rules file loaded on every turn.
-source_scope:     project            # NOTE: "mixed" is NOT a valid enum value — the 5-value enum is universal/user/project/machine/ephemeral. File-level picks the dominant/default scope; per-section overrides capture the mixing (see sections[] below). Real schema validation would reject "mixed".
+source_scope:     project            # file-level picks the dominant/default scope from the 5-value enum (universal/user/project/machine/ephemeral). Mixed content is expressed via `sections[]` below — `mixed` is not a valid enum value and would be rejected by `schema-v1.json`.
 runtime_scope:    user               # injected into every Claude conversation in this repo
 portability:      sanitize-then-portable
 status:           active
@@ -1143,10 +1143,13 @@ migration_metadata: null
 
 **Notes:**
 
-- File-level `source_scope: mixed` is a schema shorthand — authoritative
-  per-section scope lives in `sections[]`. Piece 3 labeling will decide
-  whether the file-level field accepts `mixed` as an explicit value or
-  whether tooling derives it.
+- Mixed-scope content is expressed via `sections[]` — authoritative
+  per-section scope overrides the file-level field. The file-level
+  `source_scope` stays within the 5-value enum
+  (universal/user/project/machine/ephemeral); `mixed` is not a valid enum
+  value and is rejected by `schema-v1.json`. Tooling MAY derive a
+  presentation label like "mixed" for display, but it is never stored in
+  the record.
 - This one file is worth Example 14 alone because it's the best-case
   illustration of sections[] being necessary (D17 rationale).
 

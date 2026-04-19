@@ -294,3 +294,53 @@ func TestCacheStale(t *testing.T) {
 		t.Error("future fetchedAt should not be stale")
 	}
 }
+
+func TestRecordFailureEmptyBackoff(t *testing.T) {
+	// Guards against Qodo bug #3: empty retry_backoff must not panic.
+	entry := &BackoffEntry{}
+	recordFailure(entry, []int{})
+	if entry.Failures != 1 {
+		t.Errorf("Failures = %d, want 1", entry.Failures)
+	}
+	if entry.NextRetryAt == "" {
+		t.Error("NextRetryAt should be set to default wait, not empty")
+	}
+}
+
+func TestRecordFailurePopulatedBackoff(t *testing.T) {
+	entry := &BackoffEntry{}
+	backoff := []int{1, 5, 15}
+	recordFailure(entry, backoff)
+	if entry.Failures != 1 {
+		t.Errorf("Failures = %d, want 1", entry.Failures)
+	}
+	// Second failure should use index 1 (5 min).
+	recordFailure(entry, backoff)
+	if entry.Failures != 2 {
+		t.Errorf("Failures = %d, want 2", entry.Failures)
+	}
+	// Overflow — should clamp to last index.
+	recordFailure(entry, backoff)
+	recordFailure(entry, backoff)
+	if entry.Failures != 4 {
+		t.Errorf("Failures = %d, want 4", entry.Failures)
+	}
+	if entry.NextRetryAt == "" {
+		t.Error("NextRetryAt should be set after overflow")
+	}
+}
+
+func TestTemperatureUnitSuffix(t *testing.T) {
+	cases := map[string]string{
+		"imperial": "\u00b0F",
+		"metric":   "\u00b0C",
+		"standard": "K",
+		"":         "K",
+		"bogus":    "K",
+	}
+	for units, want := range cases {
+		if got := temperatureUnitSuffix(units); got != want {
+			t.Errorf("temperatureUnitSuffix(%q) = %q, want %q", units, got, want)
+		}
+	}
+}

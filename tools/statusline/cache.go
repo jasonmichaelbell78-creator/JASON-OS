@@ -139,13 +139,20 @@ func shouldRetry(entry BackoffEntry) bool {
 	return time.Now().After(t)
 }
 
+// defaultBackoffMinutes is used when retry_backoff is misconfigured (empty slice).
+// 5 minutes is a safe, bounded default that avoids spamming upstream APIs.
+const defaultBackoffMinutes = 5
+
 func recordFailure(entry *BackoffEntry, backoffMinutes []int) {
 	entry.Failures++
-	idx := entry.Failures - 1
-	if idx >= len(backoffMinutes) {
-		idx = len(backoffMinutes) - 1
+	wait := time.Duration(defaultBackoffMinutes) * time.Minute
+	if len(backoffMinutes) > 0 {
+		idx := entry.Failures - 1
+		if idx >= len(backoffMinutes) {
+			idx = len(backoffMinutes) - 1
+		}
+		wait = time.Duration(backoffMinutes[idx]) * time.Minute
 	}
-	wait := time.Duration(backoffMinutes[idx]) * time.Minute
 	entry.NextRetryAt = time.Now().Add(wait).Format(time.RFC3339)
 }
 
@@ -404,6 +411,19 @@ func weatherIcon(icon string) string {
 
 // --- API-backed widget functions ---
 
+// temperatureUnitSuffix maps the configured weather.units value to its display suffix.
+// OpenWeatherMap accepts "imperial" (°F), "metric" (°C), and "standard" (K, default).
+func temperatureUnitSuffix(units string) string {
+	switch units {
+	case "imperial":
+		return "\u00b0F"
+	case "metric":
+		return "\u00b0C"
+	default:
+		return "K"
+	}
+}
+
 func widgetWeatherCurrent(cfg *Config) WidgetResult {
 	var cache WeatherCache
 	if err := readCacheFile(cacheFileWeather, &cache); err != nil {
@@ -413,7 +433,8 @@ func widgetWeatherCurrent(cfg *Config) WidgetResult {
 	if isCacheStale(cache.FetchedAt, cfg.Cache.FetchIntervalMinutes*2) {
 		stale = cfg.Cache.StaleIndicator
 	}
-	text := fmt.Sprintf("%.0f\u00b0F %s%s", cache.Temp, cache.Condition, stale)
+	suffix := temperatureUnitSuffix(cfg.Weather.Units)
+	text := fmt.Sprintf("%.0f%s %s%s", cache.Temp, suffix, cache.Condition, stale)
 	return WidgetResult{Text: text, Color: colorDim}
 }
 
@@ -426,7 +447,8 @@ func widgetWeatherForecast(cfg *Config) WidgetResult {
 	if isCacheStale(cache.FetchedAt, cfg.Cache.FetchIntervalMinutes*2) {
 		stale = cfg.Cache.StaleIndicator
 	}
-	text := fmt.Sprintf("H:%.0f L:%.0f%s", cache.High, cache.Low, stale)
+	suffix := temperatureUnitSuffix(cfg.Weather.Units)
+	text := fmt.Sprintf("H:%.0f%s L:%.0f%s%s", cache.High, suffix, cache.Low, suffix, stale)
 	return WidgetResult{Text: text, Color: colorDim}
 }
 

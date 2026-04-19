@@ -60,6 +60,11 @@ echo ""
 echo "Installing to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
 cp "$BINARY_NAME" "$INSTALL_DIR/"
+# `go build` already produces an executable, but set +x defensively on POSIX
+# so a restrictive umask on the build host can't leave a non-executable install.
+if [[ "$(go env GOOS)" != "windows" ]]; then
+  chmod +x "$INSTALL_DIR/$BINARY_NAME"
+fi
 
 # 5. Check for local config
 if [[ ! -f "$SCRIPT_DIR/config.local.toml" ]]; then
@@ -79,7 +84,7 @@ fi
 echo ""
 echo "Test render..."
 pwd_json="$(pwd | sed 's/\\/\\\\/g; s/"/\\"/g')"
-echo '{"model":{"display_name":"Opus 4.7"},"context_window":{"used_percentage":42,"remaining_percentage":58},"workspace":{"current_dir":"'"$pwd_json"'","project_dir":"'"$pwd_json"'"},"cost":{"total_duration_ms":5000000,"total_lines_added":124,"total_lines_removed":38},"session_id":"build-test"}' | "$INSTALL_DIR/$BINARY_NAME"
+printf '{"model":{"display_name":"Opus 4.7"},"context_window":{"used_percentage":42,"remaining_percentage":58},"workspace":{"current_dir":"%s","project_dir":"%s"},"cost":{"total_duration_ms":5000000,"total_lines_added":124,"total_lines_removed":38},"session_id":"build-test"}' "$pwd_json" "$pwd_json" | "$INSTALL_DIR/$BINARY_NAME"
 echo ""
 
 # 8. Summary

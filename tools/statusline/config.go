@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -102,19 +104,25 @@ func defaultConfig() Config {
 }
 
 // loadConfig reads config.toml from the binary's directory, then merges
-// config.local.toml on top if it exists.
+// config.local.toml on top if it exists. Missing files are treated as
+// "use defaults"; decode failures on existing files surface to stderr so
+// a mangled config can't silently fall back to defaults.
 func loadConfig(dir string) Config {
 	cfg := defaultConfig()
-
-	shared := filepath.Join(dir, "config.toml")
-	if _, err := os.Stat(shared); err == nil {
-		toml.DecodeFile(shared, &cfg)
-	}
-
-	local := filepath.Join(dir, "config.local.toml")
-	if _, err := os.Stat(local); err == nil {
-		toml.DecodeFile(local, &cfg)
-	}
-
+	decodeIfPresent(filepath.Join(dir, "config.toml"), &cfg)
+	decodeIfPresent(filepath.Join(dir, "config.local.toml"), &cfg)
 	return cfg
+}
+
+// decodeIfPresent calls toml.DecodeFile directly and distinguishes expected
+// "file absent" (silent) from a real decode error (logged to stderr).
+// Avoids the os.Stat-then-DecodeFile TOCTOU pattern and prevents silent
+// fall-through when a config file exists but is malformed.
+func decodeIfPresent(path string, cfg *Config) {
+	if _, err := toml.DecodeFile(path, cfg); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return
+		}
+		fmt.Fprintf(os.Stderr, "jason-statusline: failed to decode %s: %v\n", path, err)
+	}
 }

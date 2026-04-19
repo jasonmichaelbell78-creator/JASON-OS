@@ -317,3 +317,100 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
   reviewers add value here.
 - User memory `feedback_sonarcloud_mark_as_safe` applies — code changes alone
   don't clear To-Review hotspots; user must click through the UI.
+
+---
+
+#### Review #5: PR #7 R1 — Piece 2 schema + Piece 3 plan (2026-04-19)
+
+**Source:** Mixed (Gemini Code Assist + Qodo Code Review/Suggestions/Compliance + Semgrep)
+**PR/Branch:** #7 `piece-3-labeling-mechanism` → main
+**Items:** 13 total (Critical: 1, Major: 5, Minor: 6, Rejected/Deferred: 1)
+
+**Patterns Identified:**
+
+1. **Schema-validation contract drift** — `file_record.required` in
+   `schema-v1.json` disagreed with the equivalent "required" markers in
+   `SCHEMA.md §3.3` for five array fields (dependencies / external_services /
+   tool_deps / mcp_dependencies / required_secrets) — Gemini G1.
+   - Root cause: the initial required-set was defined early in discovery
+     and not revisited when per-type extension decisions lifted these to
+     structured-array columns.
+   - Prevention: Piece 3 Step S2 validator library should cross-check
+     `SCHEMA.md` prose against `schema-v1.json` and flag divergence.
+
+2. **`composite` type missing from enum** despite being used in
+   `EXAMPLES.md` Example 18 — Gemini G2 + `additionalProperties: false`
+   would have rejected the example in strict validation.
+   - Root cause: enum_type was compiled from the 24-value file list without
+     adding the single-value composite type used only in `composites.jsonl`.
+   - Prevention: type enum must be exercised against BOTH catalog
+     examples during validation-harness construction.
+
+3. **Ajv strict-mode surfaces legitimate schema-design limitations.**
+   Enabling `strict: true` exposed 40 strictRequired warnings stemming from
+   per-type `allOf/then` blocks referencing properties defined at the
+   top-level of `file_record`. Addressed via `strictRequired: false` as a
+   scoped exemption; proper fix (draft-2019-09 + `unevaluatedProperties`)
+   filed as D1 in `.planning/DEBT_LOG.md`.
+
+4. **Documented anti-pattern literal triggers hook-filter.** PLAN.md's
+   initial Write was blocked because the document quoted CLAUDE.md §5's
+   anti-pattern verbatim — the pre-tool security hook pattern-matched on
+   the literal token without distinguishing doc-reference from actual code.
+   Rephrased to avoid the match. Logged earlier in session-end-learnings
+   #9.
+
+5. **CLAUDE.md §5 compliance drift in new harness code.** `.validate-test.cjs`
+   used `console.log(e.message)` and unwrapped `fs.readFileSync` — both
+   direct §5 violations — even though the same file conformance rules
+   governed its authorship. Qodo QF1/QF2 caught both. Routed through
+   `scripts/lib/sanitize-error.cjs` and wrapped in try/catch.
+
+**Resolution:**
+
+- **Fixed: 11 items.** QF2 (sanitize errors), QF1/Q5 (try/catch schema
+  read), QF3 (ajv devDep + `schema:validate` npm script), G1 (required
+  fields), G2 (composite type + `not-composite` discriminator), Q1 (team
+  parsing reference), G3 (strict: true + strictRequired: false), Q2
+  (`structuredClone` validate.errors), G5/Q4 (`node-notifier` as devDep +
+  corrected Node.js built-in claim), Q3 (EXAMPLES.md scope-enum
+  contradiction), S1 (nosemgrep suppression with inline justification).
+- **Deferred: 1 item.** G4 (per-type field pollution) → debt D1. Proper
+  fix requires draft-2019-09 bump; current schema passes all tests.
+- **Rejected: 1 item.** Q6 (records alias object, importance 3/10) —
+  `oneOf` at schema root already handles dispatch cleanly; the alias
+  adds indirection without functional benefit.
+
+**Key Learnings:**
+
+- **Multi-source convergence on CLAUDE.md §5 violations.** QF1, QF2, Q5,
+  and Gemini's strict-mode recommendations all independently surfaced
+  gaps in the same harness file. When 3+ reviewers agree on one file's
+  issues, the file is worth extra scrutiny — not just agent-driven
+  authorship compliance but also follow-up review.
+- **Ajv strict-mode trade-off.** `strict: true` is the right posture for
+  a dev harness validating the repo's own schema, but `strictRequired`
+  specifically produces noise when the schema uses `allOf/then` for
+  per-type required fields referencing top-level properties. Draft-07 has
+  no way to "flatten" this check; draft-2019-09 with `unevaluatedProperties`
+  does. Scoped exemption (`strictRequired: false`) is the right
+  middle-ground until v1.1.
+- **Doc-reference-to-anti-pattern hook traps.** Writing documentation
+  that QUOTES anti-patterns verbatim can trigger the same hooks meant to
+  block the anti-pattern in code. Either (a) paraphrase the anti-pattern
+  instead of quoting, or (b) refine the hook's pattern matcher to
+  whitelist doc-file paths.
+- **Qodo's ⚪ unreviewed markers ≠ actionable items.** Qodo's compliance
+  framework emitted 4 "⚪ Unreviewed: diff not visible" entries for
+  Robust/Secure Error Handling, Secure Logging, and Input Validation.
+  These aren't fixable items (no specific defect to address) — the CRITICAL
+  QF2 and MAJOR QF1 items were the concrete findings. The ⚪ markers were
+  effectively cleared as a side-effect of those fixes.
+- **Pre-existing file patterns matter during propagation sweep.** The
+  sweep for raw `error.message` usage surfaced `read-jsonl.js` and
+  `session-end-commit.js`, but both use the project-approved
+  `getErrorMessage()` helper pattern (accepted in prior Review #217 R3/R4).
+  That's not the same anti-pattern as `.validate-test.cjs`'s direct
+  `console.log(e.message)` dump, so they weren't counted as propagation
+  targets. Rule: propagation identifies the _pattern_, not the _token_ —
+  context-check before fanning out.

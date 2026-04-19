@@ -150,3 +150,26 @@ porting or rebuilding these.
    `(sonash|SoNash|firebase|Firebase|firestore|httpsCallable|sonarcloud|SonarCloud|MASTER_DEBT|TDMS|tdms|/add-debt|Qodo|qodo|CodeRabbit|coderabbit|Gemini)`
 3. For each hit, classify: cosmetic swap / structural rewrite / drop.
 4. Copy + sanitize in the same session. Don't batch-copy then batch-sanitize.
+
+---
+
+## Sync-Mechanism Project Progress Pointer
+
+Separate from bootstrap deferrals — this section tracks the sync-mechanism
+multi-piece project (per `.research/sync-mechanism/BRAINSTORM.md`).
+
+| Piece | Status | Artifacts |
+|---|---|---|
+| 1a Discovery (JASON-OS) | ✅ Complete | `.research/sync-mechanism/piece-1a-discovery-scan-jason-os/` |
+| 1b Discovery (SoNash)   | ✅ Complete | `.research/sync-mechanism/piece-1b-discovery-scan-sonash/` |
+| 2 Schema design         | ✅ Complete | `.claude/sync/schema/` (SCHEMA.md + enums.json + schema-v1.json + EVOLUTION.md + EXAMPLES.md). Plan + decisions at `.planning/piece-2-schema-design/`. |
+| 3 Labeling mechanism    | ⏳ Next — `/deep-plan piece-3-labeling-mechanism` | — |
+| 3.5 Mass back-fill      | After Piece 3 | — |
+| 4 Registry              | After 3.5 | — |
+| 5 Sync engine           | After 4 | — |
+
+**Schema reference entrypoints (for Piece 3):**
+- `.claude/sync/schema/SCHEMA.md` — master spec, the canonical reference
+- `.claude/sync/schema/schema-v1.json` — JSON-Schema validation
+- `.claude/sync/schema/EXAMPLES.md` — 20 worked records across file types
+- `.planning/piece-2-schema-design/DECISIONS.md` — rationale for every choice

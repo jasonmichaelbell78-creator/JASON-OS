@@ -1,0 +1,97 @@
+{
+  "topic": "What exists in SoNash that needs classification for bidirectional sync with JASON-OS?",
+  "depth": "L1",
+  "questionType": "Investigative + Relational",
+  "domain": "Claude Code OS / Cross-repo sync architecture",
+  "session": 7,
+  "startedAt": "2026-04-18T00:00:00.000Z",
+  "completedAt": "2026-04-18T00:00:00.000Z",
+  "agentCount": 52,
+  "wave1Agents": 19,
+  "wave2Agents": 5,
+  "searchRounds": 0,
+  "sourceCount": 33,
+  "claimCount": 60,
+  "missingFindingsFiles": [],
+  "missingFilesNotes": "Initial synthesizer flagged D20c + D21c as missing; post-dispute D-003 confirmed both files present on disk. No missing findings files.",
+  "nofileOutOfScopePassed": true,
+  "censusVerdict": "PASS",
+  "securityFlagsCount": 3,
+  "securityFlagsNote": "Initially reported 4 per synthesizer; dispute D-002 corrected to 3 formal flags (D17b authoritative). config.local.toml OpenWeatherMap key is a precautionary observation (gitignored, never committed per D13 verification), not a formal security flag.",
+  "securityFlags": [
+    {"file": "firebase-service-account.json", "severity": "CRITICAL", "type": "live-rsa-private-key", "gitignored": true},
+    {"file": ".env.local", "severity": "HIGH", "type": "live-pat-tokens", "gitignored": true},
+    {"file": ".env.production", "severity": "MEDIUM", "type": "live-firebase-api-key", "gitignored": true}
+  ],
+  "precautionaryObservations": [
+    {"file": "config.local.toml", "type": "live-openweathermap-key", "gitignored": true, "committedEver": false, "action": "rotation-recommended-as-hygiene"}
+  ],
+  "schemaCorrectionsCount": 5,
+  "schemaCorrections": [
+    {"id": "CORR-1", "priority": "HIGH", "description": "Team parser format: HTML-comment WRONG; actual = prettier-ignore + bold + table"},
+    {"id": "CORR-2", "priority": "HIGH", "description": "hook event enum missing UserPromptSubmit and PostToolUseFailure"},
+    {"id": "CORR-3", "priority": "MEDIUM", "description": "Section 3A missing 4 frontmatter fields: supports_parallel, fallback_available, estimated_time_parallel, estimated_time_sequential"},
+    {"id": "CORR-4", "priority": "MEDIUM", "description": "type enum missing shared-doc-lib and database"},
+    {"id": "CORR-5", "priority": "MEDIUM", "description": "portability enum missing not-portable-systemic-dep; status enum missing generated"}
+  ],
+  "bidirectionalBackPortCandidates": 3,
+  "backPortCandidates": [
+    {"item": "session-begin", "direction": "JASON-OS→SoNash", "reason": "JASON-OS v2.1 > SoNash v2.0 — only version inversion in scan"},
+    {"item": "session-end-commit.js", "direction": "JASON-OS→SoNash", "reason": "JASON-OS implementation canonically better"},
+    {"item": "deep-research T23 safety net", "direction": "JASON-OS→SoNash", "reason": "Windows 0-byte bug platform concern adopted in JASON-OS Phase 2.5"}
+  ],
+  "netNewSchemaFields": 72,
+  "mvpSchemaFields": 21,
+  "compositeCount": 26,
+  "compositeCountNote": "Initial synthesizer reported 27; dispute D-005 corrected to 26 (D21b heading was within-source error). Full-scope coordinated-port universe = 51 units: 26 composites + 13 processes + 12 GSD agents.",
+  "fullPortUniverseCount": 51,
+  "dependencyEdges": 884,
+  "dependencyNodes": 519,
+  "redundancyClusters": 18,
+  "redundancyUnits": 114,
+  "memoryEdges": 168,
+  "operationallyWrongCanonicals": 3,
+  "confidenceDistribution": {
+    "HIGH": 59,
+    "MEDIUM": 1,
+    "LOW": 0,
+    "UNVERIFIED": 0
+  },
+  "postVerificationVerdictDistribution": {
+    "VERIFIED": 56,
+    "REFUTED": 1,
+    "UNVERIFIABLE": 2,
+    "CONFLICTED": 1,
+    "totalClaims": 60,
+    "verifiedPct": 93,
+    "changedByVerification": 7,
+    "changedPct": 11.7,
+    "reSynthThresholdHit": false
+  },
+  "verificationPhases": {
+    "phase2_5_verifier_v1": "PASS — 30 claims, 377 lines output",
+    "phase2_5_verifier_v2": "PASS — 30 claims, 24811 bytes output",
+    "phase3_contrarian": "5 HIGH / 4 MED / 1 LOW",
+    "phase3_otb": "8 alternatives, 3 HIGH-impact",
+    "phase3_5_disputes_resolved": 5,
+    "phase3_9_resynthesis": "INLINE (below 20% threshold)",
+    "phase3_95_gap_scan": "PASS — all actionable gaps are Piece 2 decisions; gap agents SKIPPED",
+    "phase3_96_gap_verify": "SKIPPED (no gap agents spawned)",
+    "phase3_97_final_resynth": "SKIPPED (no gap agents spawned)"
+  },
+  "selfAuditResult": "PASS — all sub-questions answered, mandatory header present, security flags surfaced, schema corrections confirmed, post-verification corrections applied inline",
+  "consumerHints": {
+    "hasStackClaims": true,
+    "hasPitfallClaims": true,
+    "hasDebtCandidates": true,
+    "hasMemoryCandidates": true,
+    "lowConfidenceCount": 0,
+    "hasSecurityFlags": true,
+    "hasSchemaCorrections": true,
+    "hasBackPortCandidates": true,
+    "requiresCensusVerification": false,
+    "hasAllOrNothingPorts": true,
+    "gdsPriorityPort": true,
+    "foundationMustPortFirst": true
+  }
+}

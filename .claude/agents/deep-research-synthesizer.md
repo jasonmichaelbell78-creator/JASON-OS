@@ -8,7 +8,7 @@ description: >-
   agents complete. Use PROACTIVELY after multiple FINDINGS.md files have been
   written to a research topic directory and need to be combined into a single
   coherent output.
-tools: Read, Write, Bash
+tools: Read, Write, Bash, Grep, Glob
 color: purple
 ---
 

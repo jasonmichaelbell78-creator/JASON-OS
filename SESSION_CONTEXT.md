@@ -1,7 +1,7 @@
 # Session Context — JASON-OS
 
 ## Current Session Counter
-6
+7
 
 ## Uncommitted Work
 No
@@ -10,10 +10,39 @@ No
 2026-04-18
 
 ## Quick Status
-Session 6 active on branch `sync-mechanism-41826`. Goal: prep + ship
-T23 fix (verifier/challenger persistence) so Piece 1b SoNash discovery
-scan can dispatch in next session. **Restart REQUIRED** before Piece 1b
-— Claude Code only loads agent tool grants at session start.
+Session 7 complete on branch `sync-mechanism-41826`. Piece 1b SoNash
+discovery scan COMPLETE (58 agents, 93% VERIFIED post-dispute) + T24
+agent-grant fix landed (dispute-resolver Write + 4 enhancement grants).
+**Restart REQUIRED** before next /deep-research run for T24 grants to load.
+
+**What landed in Session 7:**
+
+- **Piece 1b SoNash Discovery Scan COMPLETE** — `.research/sync-mechanism/piece-1b-discovery-scan-sonash/`
+  - 58 agents across 10 batches + synth + verify + challenge + dispute
+  - Wave 1: 40 D-agents (inventory) — NO FILE OUT OF SCOPE census PASS
+  - Wave 2: 12 D-agents (cross-cutting) — 884 dep edges, 51 composites,
+    72 NET NEW schema fields, 168 memory graph edges, 18 redundancy clusters
+  - Phase 2-5: synthesizer + V1/V2 + contrarian (5 HIGH) + OTB (8 alts)
+    + dispute-resolver (5 resolved)
+  - Final verdict: 56 VERIFIED / 1 REFUTED / 2 UNVERIFIABLE / 1 CONFLICTED
+    of 60 claims = 93% VERIFIED; inline corrections (below 20% threshold);
+    gap pursuit SKIPPED (gaps are Piece 2 decisions)
+  - 3 formal security flags surfaced (all gitignored); 1 precautionary
+    OpenWeatherMap key redacted from D13 findings
+  - 5 SCHEMA_SPEC corrections identified for Piece 2
+  - 3 operationally-wrong canonical memory files flagged
+  - Research index entry created at `.research/research-index.jsonl`
+
+- **T24 agent-grant fix landed in BOTH repos** — closes T23 gap
+  - `dispute-resolver` granted Write + Bash (was Read,Grep,Glob only —
+    couldn't persist findings/dispute-resolutions.md per Phase 3.5 spec)
+  - SKILL.md Phase 3.5 grew persistence safety net note
+  - 4 enhancement grants bundled: contrarian-challenger +Bash+WebFetch,
+    otb-challenger +Bash+WebFetch, deep-research-gap-pursuer +context7
+    MCP tools, deep-research-synthesizer +Grep+Glob
+  - SKILL.md version history bumped to 1.10
+  - Mirror commit applied to SoNash per Session 6 T23 precedent
+  - T24 → status:completed in `.planning/todos.jsonl`
 
 **What landed in Session 6:**
 
@@ -62,16 +91,49 @@ scan can dispatch in next session. **Restart REQUIRED** before Piece 1b
 
 ## Next Session Goals
 
-**HARD REQUIREMENT:** New Claude Code session needed for T23 fix to take
-effect. Agent tool grants only load at session start. Do NOT attempt
-Piece 1b in the same session that landed the fix.
+**HARD REQUIREMENT:** New Claude Code session needed for T24 fix to take
+effect. Agent tool grants only load at session start. The 5 agents with
+updated grants (dispute-resolver, contrarian, otb, gap-pursuer, synthesizer)
+will operate under old grants until restart.
 
 ### Step 1 — `/session-begin`
-Counter 6 → 7. Branch should still be `sync-mechanism-41826`. Working
-tree should be clean (Session 6 commits include the T23 fix; SoNash
-mirror commit is `6f330702`).
+Counter 7 → 8. Branch should still be `sync-mechanism-41826` OR a new
+branch for Piece 2. Working tree should be clean.
 
-### Step 2 — `/deep-research piece-1b-discovery-scan-sonash`
+### Step 2 — `/deep-plan piece-2-schema-design`
+
+Inputs:
+- `.research/sync-mechanism/piece-1a-discovery-scan-jason-os/RESEARCH_OUTPUT.md`
+- `.research/sync-mechanism/piece-1b-discovery-scan-sonash/RESEARCH_OUTPUT.md`
+  (including Post-Verification Addendum with contrarian/OTB challenges)
+- `.research/sync-mechanism/piece-1a-discovery-scan-jason-os/findings/D13-schema-candidates.md`
+  (63 baseline fields)
+- Piece 1b D22a/D22b findings (72 NET NEW fields)
+
+Key inputs for Piece 2 design decisions:
+1. **21-field MVP recommendation** — but contrarian challenged as
+   migration-phase schema. Consider splitting migration fields vs
+   steady-state fields.
+2. **5 SCHEMA_SPEC corrections** before any next scan: team parser
+   (HTML-comment WRONG → prettier-ignore+bold+table), hook event enum
+   (+UserPromptSubmit, +PostToolUseFailure), type enum (+shared-doc-lib,
+   +database), status enum (+generated), portability enum (+not-portable-
+   systemic-dep).
+3. **Foundation layer port ordering:** safe-fs.js (58 callers),
+   sanitize-error.cjs (26), symlink-guard.js (27). OTB alternative:
+   publish `@jason-os/foundation` npm package.
+4. **GSD install** via npm `get-shit-done-cc` v1.37.1. Contrarian:
+   pin + upgrade-review-gate.
+5. **3 back-port candidates** (JASON-OS → SoNash): session-begin v2.1,
+   session-end-commit.js, deep-research T23 safety net.
+6. **Canonical memory gap 73%** — sync must include canonical-promotion
+   workflow as first-class feature.
+7. **3 operationally-wrong canonical files** must be corrected before
+   any memory sync.
+
+### Step 2 alt — deferred Piece 1b reference
+
+Original Piece 1b topic was `/deep-research piece-1b-discovery-scan-sonash`:
 
 **Topic:** What exists in SoNash that needs classification for bidirectional
 sync with JASON-OS? (Piece 1b, companion to completed Piece 1a.)

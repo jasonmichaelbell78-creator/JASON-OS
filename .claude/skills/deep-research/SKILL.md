@@ -279,7 +279,10 @@ or fails more than 50% of calls, proceed with independent assessment. Record
 ## Phase 3.5: Dispute Resolution (mandatory when conflicts exist)
 
 Spawn `Agent(subagent_type="dispute-resolver")` for conflicting claims. 1 agent
-per 5 disputes. Details: REFERENCE.md Section 21.
+per 5 disputes. Produces `findings/dispute-resolutions.md`. **Apply Phase 2.5
+persistence safety net** to every spawn — verify non-empty output on disk;
+orchestrator fallback-writes the full agent return if the agent failed or
+truncated; max 1 retry then escalate. Details: REFERENCE.md Section 21.
 
 ---
 
@@ -401,6 +404,7 @@ to artifact-based recovery on corruption. Schema: REFERENCE.md Section 19.
 
 | Version | Date       | Description                                                                                                     |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------- |
+| 1.10    | 2026-04-18 | T24: Phase 3.5 persistence safety net (dispute-resolver Write grant completes T23); 4 agent tool-grant enhancements (contrarian+Bash+WebFetch, otb+Bash+WebFetch, gap-pursuer+context7, synthesizer+Grep+Glob) |
 | 1.9     | 2026-04-03 | Added Windows agent output fallback (anthropics/claude-code#39791)                                              |
 | 1.8     | 2026-03-29 | Skill-audit: 20 decisions — UX, guard rails, output, compaction, CL, TDMS, scalability, extraction              |
 | 1.7     | 2026-03-29 | Add Phases 3.95-3.97: gap pursuit, gap verification, final re-synthesis. Rule 9. Extract detail to REFERENCE.md |

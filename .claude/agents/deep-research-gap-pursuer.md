@@ -7,7 +7,7 @@ description: >-
   /deep-research during Phase 3.95. Use PROACTIVELY when synthesized research
   contains MEDIUM or LOW confidence claims, unresolved contradictions, or
   scope gaps that would undermine a planning decision.
-tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch
+tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 disallowedTools: Agent
 model: sonnet
 maxTurns: 30

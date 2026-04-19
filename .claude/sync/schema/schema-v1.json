@@ -2,8 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://jason-os.local/sync/schema/schema-v1.json",
   "title": "JASON-OS Sync-Mechanism Registry Schema",
-  "description": "Validation spec for sync-mechanism registry records (files.jsonl + composites.jsonl). Schema v1.0 — 26 universal file-level columns, 41 per-type extension fields, section records, migration-metadata, and composite records. Authoritative source: .claude/sync/schema/SCHEMA.md (§3-§9). Decision record: .planning/piece-2-schema-design/DECISIONS.md (D1-D32).",
-  "version": "1.0",
+  "description": "Validation spec for sync-mechanism registry records (files.jsonl + composites.jsonl). Schema v1.0 — 26 universal file-level columns, 41 per-type extension fields, section records, migration-metadata, and composite records. Authoritative source: .claude/sync/schema/SCHEMA.md (§3-§9). Decision record: .planning/piece-2-schema-design/DECISIONS.md (D1-D32). Version info lives in enums.json (`schema_version`) and EVOLUTION.md; removed from this file so Ajv strict mode accepts draft-07 compliance.",
   "definitions": {
     "enum_type": {
       "type": "string",
@@ -31,6 +30,7 @@
         "keybindings",
         "shared-doc-lib",
         "database",
+        "composite",
         "other"
       ]
     },
@@ -318,7 +318,12 @@
         "runtime_scope",
         "portability",
         "status",
-        "notes"
+        "notes",
+        "dependencies",
+        "external_services",
+        "tool_deps",
+        "mcp_dependencies",
+        "required_secrets"
       ],
       "properties": {
         "name": { "type": "string" },
@@ -467,6 +472,13 @@
       },
       "allOf": [
         {
+          "$comment": "file_record must not carry type=composite — that dispatches to composite_record via the top-level oneOf.",
+          "not": {
+            "properties": { "type": { "const": "composite" } },
+            "required": ["type"]
+          }
+        },
+        {
           "if": {
             "properties": { "type": { "const": "skill" } },
             "required": ["type"]
@@ -583,6 +595,7 @@
       "type": "object",
       "required": [
         "name",
+        "type",
         "purpose",
         "source_scope",
         "runtime_scope",
@@ -593,6 +606,7 @@
       ],
       "properties": {
         "name": { "type": "string" },
+        "type": { "const": "composite" },
         "purpose": { "type": "string" },
         "source_scope": { "$ref": "#/definitions/enum_scope" },
         "runtime_scope": { "$ref": "#/definitions/enum_scope" },

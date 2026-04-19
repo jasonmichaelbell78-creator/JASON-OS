@@ -6,18 +6,48 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+// Route all error text through the repo-standard sanitizer per CLAUDE.md §2 /
+// §5 (PR #7 R1 / Qodo QF2 compliance). Path is relative from this file
+// (.claude/sync/schema/) up to scripts/lib/ at the repo root.
+const { sanitizeError } = require('../../../scripts/lib/sanitize-error.cjs');
+
 let Ajv;
 try {
   Ajv = require('ajv');
 } catch {
-  console.error('FAIL: ajv not installed. Run `npm install ajv` in repo root.');
+  console.error('FAIL: ajv not installed. Run `npm install --save-dev ajv` in repo root.');
   process.exit(2);
 }
 
 const SCHEMA_DIR = __dirname;
-const schema = JSON.parse(fs.readFileSync(path.join(SCHEMA_DIR, 'schema-v1.json'), 'utf-8'));
+const SCHEMA_PATH = path.join(SCHEMA_DIR, 'schema-v1.json');
 
-const ajv = new Ajv({ allErrors: true, strict: false });
+// Wrap schema read + parse in try/catch per CLAUDE.md §5 (PR #7 R1 / Qodo
+// QF1 compliance — prevents existsSync race + malformed-JSON crash).
+let schema;
+try {
+  const raw = fs.readFileSync(SCHEMA_PATH, 'utf-8');
+  schema = JSON.parse(raw);
+} catch (err) {
+  console.error(`FAIL: could not read/parse schema-v1.json: ${sanitizeError(err)}`);
+  process.exit(2);
+}
+
+// allErrors:true is deliberate for a dev harness — surfaces every per-record
+// schema issue in one run instead of bailing on the first. The Semgrep rule
+// javascript.ajv.security.audit.ajv-allerrors-true targets production handlers
+// accepting untrusted input (DoS via allocation flood); this harness validates
+// static, repo-owned schema + test records only. nosemgrep justified.
+//
+// strict: true + strictRequired: false. Per-type allOf/then blocks require
+// properties defined at file_record's top-level — Ajv strictRequired checks
+// each subschema in isolation and can't follow cross-block references, which
+// is a legitimate draft-07 limitation addressed in 2019-09 via
+// unevaluatedProperties (tracked as debt D1, PR #7 R1 G4). Disabling ONLY
+// strictRequired keeps every other strict-mode guard active (Gemini G3
+// intent preserved).
+// nosemgrep: javascript.ajv.security.audit.ajv-allerrors-true.ajv-allerrors-true
+const ajv = new Ajv({ allErrors: true, strict: true, strictRequired: false });
 const validate = ajv.compile(schema);
 
 const results = [];
@@ -25,7 +55,17 @@ const results = [];
 function test(label, record, shouldPass) {
   const valid = validate(record);
   const pass = valid === shouldPass;
-  results.push({ label, expected: shouldPass ? 'pass' : 'fail', actual: valid ? 'pass' : 'fail', ok: pass, errors: valid ? null : validate.errors });
+  // Snapshot the Ajv errors — validate.errors is mutated on every subsequent
+  // call, so a raw reference would be overwritten before the report runs
+  // (PR #7 R1 / Qodo Q2 compliance).
+  const errors = valid ? null : structuredClone(validate.errors);
+  results.push({
+    label,
+    expected: shouldPass ? 'pass' : 'fail',
+    actual: valid ? 'pass' : 'fail',
+    ok: pass,
+    errors,
+  });
 }
 
 // Positive test 1 — minimal valid skill record
@@ -39,6 +79,11 @@ test('pos1-skill-minimal', {
   portability: 'portable',
   status: 'active',
   notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
   reference_layout: 'none',
   supports_parallel: true,
   fallback_available: false,
@@ -55,6 +100,11 @@ test('pos2-hook-with-state', {
   portability: 'portable',
   status: 'active',
   notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
   state_files: [
     { path: '.claude/state/push-attempts.jsonl', access: 'write' }
   ],
@@ -78,6 +128,11 @@ test('pos3-memory-with-sections', {
   portability: 'sanitize-then-portable',
   status: 'active',
   notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
   sections: [
     {
       heading: 'Rule',
@@ -117,6 +172,11 @@ test('pos4-file-with-migration', {
   portability: 'portable',
   status: 'active',
   notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
   migration_metadata: {
     context_skills: [],
     dropped_in_port: [],
@@ -129,9 +189,10 @@ test('pos4-file-with-migration', {
   fallback_available: false,
 }, true);
 
-// Positive test 5 — composite record (now with dep fields post-H3 fix)
+// Positive test 5 — composite record (now with `type: composite` per G2 fix)
 test('pos5-composite', {
   name: 'deep-research-workflow',
+  type: 'composite',
   purpose: 'Multi-agent research engine with dispute resolution and verification.',
   source_scope: 'universal',
   runtime_scope: 'project',
@@ -179,12 +240,19 @@ test('neg2-bad-status-enum', {
   portability: 'portable',
   status: 'pending', // not in the 8-value enum
   notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
   reference_layout: 'none',
   supports_parallel: true,
   fallback_available: false,
 }, false);
 
-// Negative test 3 — skill missing required per-type extensions
+// Negative test 3 — skill missing required per-type extensions (after G4 fix,
+// type-conditional allOf block requires reference_layout/supports_parallel/
+// fallback_available to be present for type=skill)
 test('neg3-skill-missing-extensions', {
   name: 'missing-ext',
   path: '.claude/skills/missing-ext/SKILL.md',
@@ -195,6 +263,11 @@ test('neg3-skill-missing-extensions', {
   portability: 'portable',
   status: 'active',
   notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
   // no reference_layout / supports_parallel / fallback_available
 }, false);
 
@@ -206,7 +279,11 @@ for (const r of results) {
   console.log(`[${mark}] ${r.label}  expected=${r.expected} actual=${r.actual}`);
   if (!r.ok && r.errors) {
     for (const e of r.errors.slice(0, 3)) {
-      console.log(`        - ${e.instancePath || '(root)'} ${e.message}`);
+      // Route Ajv error text through the repo sanitizer — paths/values in
+      // error.message can leak host context per CLAUDE.md §2 / §5
+      // (PR #7 R1 / Qodo QF2 compliance).
+      const msg = sanitizeError(e.message || 'unknown');
+      console.log(`        - ${e.instancePath || '(root)'} ${msg}`);
     }
   }
   if (r.ok) pass++; else fail++;

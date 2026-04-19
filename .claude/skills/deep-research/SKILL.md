@@ -248,25 +248,43 @@ VERIFIED, REFUTED, UNVERIFIABLE, CONFLICTED) with evidence.
 "+80% improvement") MUST cite its measurement methodology, benchmark, or source.
 Unsubstantiated % claims are flagged as UNVERIFIABLE by verifiers.
 
+**Persistence safety net (post-spawn — applies to verifier, challenger, and
+dispute-resolver agents across Phases 2.5, 3, 3.5, 3.9, and 3.96):** After
+each applicable agent returns, orchestrator MUST verify the expected
+`findings/<file>` (or `challenges/<file>`) is non-empty (non-zero bytes;
+substantive content beyond a header). If the agent failed to write OR
+returned a truncated `<result>`, orchestrator captures the agent's full
+return text and writes it to the expected path as a fallback. Never proceed
+silently — if both agent-write AND fallback are empty, re-spawn the agent
+(max 1 retry) then escalate to user. This addresses the Windows 0-byte
+agent-write bug (CLAUDE.md Critical Rule 15) and response truncation
+observed during piece-1a-discovery-scan-jason-os (T23) and
+piece-1b-discovery-scan-sonash (T24, dispute-resolver gap).
+
 ---
 
 ## Phase 3: Mandatory Challenges
 
 Spawn `Agent(subagent_type="contrarian-challenger")` and
 `Agent(subagent_type="otb-challenger")` **in parallel**. Scale: L1-L2 (1+1), L3
-(2+2), L4 (3+3 + red team + pre-mortem). Agent definitions contain full
-methodology; REFERENCE.md Sections 8-9 provide supplementary templates.
-Cross-model + CL verification: REFERENCE.md Sections 13-14. Re-synthesize if
-more than 20% of claims changed. If `gemini` CLI unavailable or fails more than
-50% of calls, proceed with independent assessment. Record "cross-model:
-unavailable" in metadata.json.
+(2+2), L4 (3+3 + red team + pre-mortem). Each writes
+`challenges/contrarian-<N>.md` and `challenges/otb-<N>.md` respectively.
+**Apply Phase 2.5 persistence safety net** to every spawn. Agent definitions
+contain full methodology; REFERENCE.md Sections 8-9 provide supplementary
+templates. Cross-model + CL verification: REFERENCE.md Sections 13-14.
+Re-synthesize if more than 20% of claims changed. If `gemini` CLI unavailable
+or fails more than 50% of calls, proceed with independent assessment. Record
+"cross-model: unavailable" in metadata.json.
 
 ---
 
 ## Phase 3.5: Dispute Resolution (mandatory when conflicts exist)
 
 Spawn `Agent(subagent_type="dispute-resolver")` for conflicting claims. 1 agent
-per 5 disputes. Details: REFERENCE.md Section 21.
+per 5 disputes. Produces `findings/dispute-resolutions.md`. **Apply Phase 2.5
+persistence safety net** to every spawn — verify non-empty output on disk;
+orchestrator fallback-writes the full agent return if the agent failed or
+truncated; max 1 retry then escalate. Details: REFERENCE.md Section 21.
 
 ---
 
@@ -302,8 +320,8 @@ Details: REFERENCE.md Section 22 (source list, dedup/actionability rules).
 
 Same pattern as Phase 2.5 — spawn
 `Agent(subagent_type="deep-research-verifier")`. Agent count: L1 (2), L2 (2), L3
-(3), L4 (4). Each writes `findings/GV<N>-<scope>.md`. Details: REFERENCE.md
-Section 22.
+(3), L4 (4). Each writes `findings/GV<N>-<scope>.md`. **Apply Phase 2.5
+persistence safety net** to every spawn. Details: REFERENCE.md Section 22.
 
 ---
 
@@ -388,6 +406,7 @@ to artifact-based recovery on corruption. Schema: REFERENCE.md Section 19.
 
 | Version | Date       | Description                                                                                                     |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------- |
+| 1.10    | 2026-04-18 | T24: Phase 3.5 persistence safety net (dispute-resolver Write grant completes T23); 4 agent tool-grant enhancements (contrarian+Bash+WebFetch, otb+Bash+WebFetch, gap-pursuer+context7, synthesizer+Grep+Glob) |
 | 1.9     | 2026-04-03 | Added Windows agent output fallback (anthropics/claude-code#39791)                                              |
 | 1.8     | 2026-03-29 | Skill-audit: 20 decisions — UX, guard rails, output, compaction, CL, TDMS, scalability, extraction              |
 | 1.7     | 2026-03-29 | Add Phases 3.95-3.97: gap pursuit, gap verification, final re-synthesis. Rule 9. Extract detail to REFERENCE.md |

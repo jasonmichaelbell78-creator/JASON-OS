@@ -37,6 +37,7 @@ coverage/
 .env.*
 !.env.example
 *.pem
+tools/statusline/config.local.toml
 
 # logs
 *.log
@@ -55,3 +56,5 @@ coverage/
 # claude code — machine-specific binaries (will rebuild per platform)
 tools/**/*.exe
 tools/**/bin/
+tools/statusline/jason-statusline-v*
+!tools/statusline/jason-statusline-v*.go

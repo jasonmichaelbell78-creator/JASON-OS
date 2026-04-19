@@ -224,3 +224,96 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
   384K, 49 regex hits" but didn't verify metadata.json fields against the
   actual bundle state. Add a consistency assertion line to the standard
   PORT_ANALYSIS row for future research ports.
+
+#### Review #4: PR #6 R1 — sync-mechanism discovery phase + T23/T24 infra (2026-04-18)
+
+**Source:** Mixed (Qodo + SonarCloud + Semgrep OSS + Gemini + github-advanced-security)
+**PR/Branch:** #6 / `sync-mechanism-41826`
+**Items:** 16 total (Critical: 0, Major: 4, Minor: 3, Trivial: 9)
+
+**Patterns Identified:**
+
+1. **Pattern regex false-positives on git action SHAs in research JSONL.**
+   Semgrep's `generic.secrets.security.detected-sonarqube-docs-api-key` rule
+   matches 40-char hex strings. The `action_pins[].sha` field in D9/D16 CI-workflow
+   inventories records these pinned SHAs verbatim. Two FPs on `.research/` files.
+   - Root cause: Secret-detection regex shape overlaps with git SHA shape; no
+     path-scoped exclusion for research/inventory artifacts.
+   - Prevention: Add `.research/**` to Semgrep path-ignore for secret-detection
+     rules, OR annotate JSONL `action_pins` field with a semgrep-nosec marker.
+     Deferred — current approach is dismiss-as-FP per occurrence.
+
+2. **Hardcoded platform-specific paths in cross-platform scripts.**
+   `.claude/statusline-command.sh` hardcoded `.exe` extension (Qodo Bug #2,
+   3-source convergence with Gemini + Qodo-compliance). The shim worked only on
+   Windows even though `build.sh` gates `.exe` append on `GOOS=windows`.
+   - Root cause: Copy-from-local-Windows pattern — ported from a dev path
+     without cross-platform probe logic.
+   - Prevention: Cross-platform scripts MUST probe both extension-less and
+     `.exe` variants. Add to CLAUDE.md §5 Anti-Patterns.
+
+3. **Silent-failure file-I/O anti-pattern (Go).**
+   `config.go loadConfig()` used `os.Stat` existence check followed by
+   `toml.DecodeFile()` with ignored error return. TOCTOU window + malformed
+   config silently falls back to defaults (Qodo Bug #1).
+   - Root cause: Checklist-as-try/catch translation was literal rather than
+     idiomatic. In Go: inspect DecodeFile's returned err; classify
+     `errors.Is(err, os.ErrNotExist)` as expected.
+   - Prevention: CLAUDE.md §5 already flags "File reads: Wrap ALL in try/catch
+     (existsSync race condition)" — extend to Go's `os.Stat` + `DecodeFile`
+     equivalent pattern.
+
+4. **Unguarded index into user-editable slice.**
+   `cache.go recordFailure()` indexed `backoffMinutes[idx]` without `len(..)>0`
+   guard. `retry_backoff` comes from user-editable TOML; `[]` panics with
+   index-out-of-range (Qodo Bug #3).
+   - Root cause: Implicit assumption of non-empty config-derived slices.
+   - Prevention: Audit all TOML-slice indexers for empty-slice guards. Add
+     unit tests with empty inputs to every user-config-touching path.
+
+5. **Config field consumed but not reflected in display.**
+   `widgetWeatherCurrent()` passed `cfg.Weather.Units` to the API request but
+   hardcoded `°F` in the display (Qodo Bug #4).
+   - Root cause: Units field threaded into fetch path during initial
+     implementation but display side was hardcoded from a Fahrenheit-default
+     dev session.
+   - Prevention: When a config field affects data, grep for the FIELD NAME
+     in all consumers and verify each read/write path.
+
+6. **SonarCloud "TODO" rule false-positives on function names.**
+   `findLatestTodoFile`/`findInProgressTask` matched SonarCloud's TODO-comment
+   rule (2 FPs on widgets.go L344/L375). Not actionable TODOs — just function
+   names containing "todo" (the statusline's todo-widget feature).
+   - Root cause: Rule regex matches substring "todo" in comments without
+     disambiguating code vs TODO-marker context.
+   - Prevention: Mark-FP in SonarCloud UI; no code change needed.
+
+**Resolution:**
+
+- **Fixed: 8 items** (4 MAJOR bugs + 1 MINOR SKILL.md generalization + 1 MINOR
+  merge-if + 2 LOW suggestions).
+- **Unit tests added:** `TestRecordFailureEmptyBackoff`,
+  `TestRecordFailurePopulatedBackoff`, `TestTemperatureUnitSuffix`.
+- **Deferred: 0 items.**
+- **User-action UI dismissals: 8 items** (no debt-log entries):
+  - 4 × SonarCloud S4036 PATH hotspots → **Mark Reviewed-Safe** in SonarCloud UI
+    (dev-tool exec.Command with hardcoded args; no user input flows to command)
+  - 2 × Semgrep FP `detected-sonarqube-docs-api-key` → **Dismiss as False
+    Positive** on GitHub alerts (matches git action SHAs in JSONL)
+  - 2 × SonarCloud "TODO" INFO → **Mark Won't Fix / False Positive** in UI
+    (function names, not actionable TODOs)
+- **Rejected: 0 items.**
+
+**Key Learnings:**
+
+- Multi-source convergence (Bug #2: Qodo + Gemini + Qodo-compliance) auto-
+  elevates priority — fixed in same commit regardless of individual severity.
+- 16 items on a 179-file PR is GOOD signal density — first-scan on 90%-research
+  PR could have generated hundreds of FPs but Qodo/Gemini stayed focused on the
+  15% real-code surface (statusline + SKILL.md).
+- The SKILL.md persistence-safety-net description was NOT caught by T23 (Session
+  6) or T24 (Session 7) — Gemini caught it in R1 review. Cross-cutting
+  documentation generalizations are hard to see from inside the change; external
+  reviewers add value here.
+- User memory `feedback_sonarcloud_mark_as_safe` applies — code changes alone
+  don't clear To-Review hotspots; user must click through the UI.

@@ -7,7 +7,7 @@ description: >-
   when two or more research findings directly contradict each other and the
   contradiction affects a claim that will be cited in the final research
   output.
-tools: Read, Grep, Glob
+tools: Read, Write, Bash, Grep, Glob
 disallowedTools: Agent
 model: sonnet
 maxTurns: 20

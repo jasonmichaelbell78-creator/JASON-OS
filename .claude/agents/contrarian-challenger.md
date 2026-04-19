@@ -6,7 +6,7 @@ description: >-
   challenges with severity levels. Spawned by /deep-research during Phase 3.
   Use PROACTIVELY after initial synthesis when the research findings will drive
   an irreversible architectural or tooling decision — not for routine findings.
-tools: Read, Grep, Glob, WebSearch
+tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch
 disallowedTools: Agent
 model: sonnet
 maxTurns: 25

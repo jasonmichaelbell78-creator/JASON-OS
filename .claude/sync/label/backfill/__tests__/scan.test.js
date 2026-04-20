@@ -155,6 +155,40 @@ test("splitBatches: packs files correctly, large file gets own bin, totals conse
   }
 });
 
+test("splitBatches: caps per-batch file count at maxFilesPerBatch (default 15)", () => {
+  // 30 tiny files — at 2 KB each, total weighted 60 KB, all fit one bin
+  // byte-wise. Without the cap they'd pack into a single 30-file batch
+  // which breaches the feedback_agent_stalling_pattern 16-file stall
+  // ceiling. With the default cap they split into two bins.
+  const files = Array.from({ length: 30 }, (_, i) => ({
+    path: `tiny-${i}.md`,
+    size_bytes: 2 * 1024,
+    size_kb: 2,
+    weighted_kb: 2,
+  }));
+  const batches = splitBatches(files);
+  assert.equal(batches.length, 2, "30 tiny files exceed the 15-file cap → 2 bins");
+  for (const bin of batches) {
+    assert.ok(bin.files.length <= 15, `bin with ${bin.files.length} files exceeds cap`);
+  }
+  // All 30 files still placed — cap doesn't drop anything.
+  const placed = batches.reduce((acc, b) => acc + b.files.length, 0);
+  assert.equal(placed, 30);
+});
+
+test("splitBatches: custom maxFilesPerBatch overrides default", () => {
+  const files = Array.from({ length: 10 }, (_, i) => ({
+    path: `x-${i}.md`,
+    size_bytes: 1 * 1024,
+    size_kb: 1,
+    weighted_kb: 1,
+  }));
+  // maxFilesPerBatch: 3 on 10 files → 4 bins (3+3+3+1).
+  const batches = splitBatches(files, { maxFilesPerBatch: 3 });
+  assert.equal(batches.length, 4);
+  assert.ok(batches.every((b) => b.files.length <= 3));
+});
+
 test("splitBatches: single-file overflow — a 160 KB file gets its own bin", () => {
   // Synthetic input; doesn't need fs. Target 135, one file weighted 160.
   const files = [

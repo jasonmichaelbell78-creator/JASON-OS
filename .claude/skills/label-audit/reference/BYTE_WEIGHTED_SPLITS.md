@@ -12,6 +12,7 @@ agents. Derived from the Piece 1a discovery-scan LEARNINGS and T22
 ```
 TARGET_KB_PER_AGENT      = 135  # midpoint of 120–150 KB window
 LARGE_FILE_THRESHOLD_KB  = 50   # files >50 KB count as 2 units
+MAX_FILES_PER_BATCH      = 15   # per-batch file-count cap (stall defense)
 ```
 
 ### Step 1 — Gather sizes
@@ -28,10 +29,16 @@ weighted = raw_kb > LARGE_FILE_THRESHOLD_KB ? raw_kb * 2 : raw_kb
 Sort files descending by `weighted`. Pack into bins:
 
 - For each file, place in the first bin whose current total + weighted ≤
-  `TARGET_KB_PER_AGENT`.
+  `TARGET_KB_PER_AGENT` **AND** whose current file count is below
+  `MAX_FILES_PER_BATCH`.
 - If no bin fits, start a new bin.
 - Bins ≈ batches; batch count = agent count (before doubling for
   primary/secondary).
+
+The dual cap (bytes + file count) keeps dense small-file batches from
+exceeding the `feedback_agent_stalling_pattern` ceiling: agents reading
+16+ files silently stall, so we pack at most 15 files per bin even when
+the byte budget could hold more. See "Why cap file count?" below.
 
 ### Step 3 — Apply the T22 count-pass gate
 
@@ -67,6 +74,22 @@ Above ~200 KB per agent, output quality drops measurably and timeouts
 become likely. The 135 KB midpoint is a safety margin on both ends.
 
 ---
+
+## Why cap file count at 15?
+
+An agent's stall mode under the Windows 0-byte-output bug pattern
+correlates with file count as well as byte count. The
+`feedback_agent_stalling_pattern` memory captures this: "agents reading
+16+ files silently stall; split into narrower scopes."
+
+Without the cap, a dense batch of 30 × 2 KB memory files weighs only
+60 KB (well under target) but handing it to one agent triggers the
+stall. Capping at 15 files forces a split into two comfortable batches
+that each stay below both thresholds.
+
+The cap is a ceiling, not a quota: batches with 4 or 6 files are fine
+when their bytes fit. Only applies when density would otherwise push a
+bin above 15 files.
 
 ## Why double large files (>50 KB)?
 

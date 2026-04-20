@@ -47,6 +47,11 @@ const { sanitize } = require(path.join(
 // Defaults per BYTE_WEIGHTED_SPLITS.md.
 const DEFAULT_TARGET_KB = 135;
 const DEFAULT_LARGE_THRESHOLD_KB = 50;
+// Per `feedback_agent_stalling_pattern` memory: agents reading 16+ files
+// silently stall. Cap per-batch file count below that threshold so dense
+// small-file batches (e.g. packs of 2 KB memories, prompt templates, or
+// short configs) don't exceed the stall ceiling even when bytes fit.
+const DEFAULT_MAX_FILES_PER_BATCH = 15;
 
 // Directories pruned at walk time. Matches scope.json excludes for the
 // common-hot paths — pre-stat pruning saves ~99% of stat calls on a repo
@@ -180,12 +185,19 @@ function scan(opts = {}) {
  * @param {number} [opts.targetKb=135]
  * @param {number} [opts.largeThresholdKb=50] - Reserved for future tuning;
  *   retained in signature per the module brief.
+ * @param {number} [opts.maxFilesPerBatch=15] - Dual cap alongside targetKb
+ *   to keep per-batch file count below the agent-stalling threshold
+ *   (`feedback_agent_stalling_pattern`: 16+ files silently stalls).
  * @returns {Array<{files: Array, total_kb: number, total_weighted_kb: number}>}
  */
 // eslint-disable-next-line no-unused-vars
 function splitBatches(files, opts = {}) {
   const targetKb =
     typeof opts.targetKb === "number" ? opts.targetKb : DEFAULT_TARGET_KB;
+  const maxFilesPerBatch =
+    typeof opts.maxFilesPerBatch === "number" && opts.maxFilesPerBatch > 0
+      ? Math.floor(opts.maxFilesPerBatch)
+      : DEFAULT_MAX_FILES_PER_BATCH;
 
   // Defensive copy + descending sort. The scan phase already sorts, but a
   // caller passing arbitrary input shouldn't silently break bin-packing
@@ -210,7 +222,10 @@ function splitBatches(files, opts = {}) {
 
     let placed = false;
     for (const bin of bins) {
-      if (bin.total_weighted_kb + weight <= targetKb) {
+      if (
+        bin.files.length < maxFilesPerBatch &&
+        bin.total_weighted_kb + weight <= targetKb
+      ) {
         bin.files.push(file);
         bin.total_kb += file.size_kb;
         bin.total_weighted_kb += weight;
@@ -264,5 +279,6 @@ module.exports = {
   // Exported for tests + orchestrator introspection.
   DEFAULT_SCOPE_PATH,
   DEFAULT_TARGET_KB,
+  DEFAULT_MAX_FILES_PER_BATCH,
   DEFAULT_LARGE_THRESHOLD_KB,
 };

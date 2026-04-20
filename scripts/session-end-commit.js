@@ -2,17 +2,29 @@
 /**
  * Session End Auto-Commit Script
  *
- * Purpose: Automatically commits and pushes SESSION_CONTEXT.md updates
- * at the end of a session to ensure session-end is never forgotten.
+ * Purpose: Automatically commits and pushes session-end artifacts
+ * (SESSION_CONTEXT.md + active plan files) so session-end is never forgotten.
  *
  * Usage:
- *   node scripts/session-end-commit.js
+ *   node scripts/session-end-commit.js [--no-push]
  *   npm run session:end
+ *
+ * Flags:
+ *   --no-push  Run steps 1-3 (update + commit) but skip the push. Context
+ *              is preserved locally. Matches the skill's --no-push contract.
  *
  * What it does:
  *   1. Updates SESSION_CONTEXT.md to mark "Uncommitted Work: No"
- *   2. Commits the change with session-end message
- *   3. Pushes to the current branch
+ *   2. Collects all modified files in the session-end allowlist:
+ *      SESSION_CONTEXT.md, .planning/<topic>/PLAN.md,
+ *      .planning/<topic>/PORT_ANALYSIS.md
+ *   3. Commits the allowlisted files together (single atomic revert unit)
+ *   4. Pushes to the current branch (unless --no-push)
+ *
+ * Scope note (T17): The commit is scoped via `--only -- <paths>` so unrelated
+ * staged files still cannot slip into the session-end commit. Scope gating
+ * for non-allowlisted files is the skill's Step 9 (pre-commit review)
+ * responsibility.
  *
  * Created: Session #115 (2026-01-29)
  * Security: Review #217 - execFileSync with args arrays (no command injection)
@@ -57,6 +69,15 @@ try {
 
 const SESSION_CONTEXT_PATH = path.join(REPO_ROOT, "SESSION_CONTEXT.md");
 
+// T17: session-end commit allowlist. Matches the skill's "Expected v0
+// session-end output files" contract (Step 9). Glob pathspecs use git's
+// `:(glob)` magic signature so `**` matches across directories.
+const SESSION_END_PATHSPECS = [
+  "SESSION_CONTEXT.md",
+  ":(glob).planning/**/PLAN.md",
+  ":(glob).planning/**/PORT_ANALYSIS.md",
+];
+
 /**
  * Run a git command using execFileSync (Review #217: no command injection)
  * @param {string[]} args - Git command arguments
@@ -87,16 +108,33 @@ function getCurrentBranch() {
 }
 
 /**
- * Check if SESSION_CONTEXT.md has uncommitted changes
- * Review #217 R2/R4/R5: Scope to target file, use repo-relative pathspec with cwd
+ * Return repo-relative paths of every file in the session-end allowlist
+ * that currently has working-tree or index changes (or is untracked).
+ *
+ * T17: replaces the legacy SESSION_CONTEXT-only check so plan files edited
+ * during skill Step 3 land in the same commit. Scope stays narrow via
+ * SESSION_END_PATHSPECS — other staged/modified files are still ignored
+ * here and remain the skill's Step 9 review responsibility.
+ *
+ * Review #217 R2/R4/R5: narrow pathspec, repo-relative, cwd: REPO_ROOT.
  */
-function hasSessionContextChanges() {
-  // Use repo-relative path with cwd for better portability (Review #217 R5)
-  const status = runGit(["status", "--porcelain", "--", "SESSION_CONTEXT.md"], {
-    silent: true,
-    cwd: REPO_ROOT,
-  });
-  return Boolean(status && status.trim().length > 0);
+function getModifiedSessionEndFiles() {
+  const status = runGit(
+    ["status", "--porcelain", "--", ...SESSION_END_PATHSPECS],
+    { silent: true, cwd: REPO_ROOT }
+  );
+  if (!status?.trim()) return [];
+
+  const files = [];
+  for (const rawLine of status.split("\n")) {
+    if (!rawLine.trim()) continue;
+    // Porcelain v1: "XY path" (2-char status, space, path).
+    // Renames render as "XY old -> new" — take the right-hand side.
+    const rest = rawLine.slice(3);
+    const arrowIdx = rest.indexOf(" -> ");
+    files.push(arrowIdx >= 0 ? rest.slice(arrowIdx + 4) : rest);
+  }
+  return files;
 }
 
 function updateSessionContext() {
@@ -187,6 +225,10 @@ function validateSessionContextUpdated() {
 function main() {
   log("\n📋 Session End Auto-Commit\n", colors.cyan);
 
+  // Parse CLI flags. `--no-push` honors the skill contract: all prior steps
+  // run, only the final push is skipped so context is preserved locally.
+  const noPush = process.argv.slice(2).includes("--no-push");
+
   const branch = getCurrentBranch();
 
   // Review #217: Check for detached HEAD state
@@ -204,17 +246,21 @@ function main() {
   // Step 1: Update SESSION_CONTEXT.md
   updateSessionContext();
 
-  // Step 2: Check if SESSION_CONTEXT.md has changes to commit
-  // Review #217 R2: Only check target file, not all uncommitted changes
-  if (!hasSessionContextChanges()) {
-    log("\n✅ No changes to SESSION_CONTEXT.md - session end already complete", colors.green);
+  // Step 2: Collect all session-end allowlisted files with pending changes
+  // (SESSION_CONTEXT.md + active plan files). T17.
+  const stagableFiles = getModifiedSessionEndFiles();
+  if (stagableFiles.length === 0) {
+    log("\n✅ No session-end files changed - session end already complete", colors.green);
     return;
   }
+
+  log(`\nFiles to commit (${stagableFiles.length}):`);
+  for (const f of stagableFiles) log(`  • ${f}`);
 
   // Step 3: Commit
   log("\n📝 Committing session-end...", colors.cyan);
   try {
-    runGit(["add", "SESSION_CONTEXT.md"]);
+    runGit(["add", "--", ...stagableFiles]);
 
     // Log the hard-coded skips for audit trail
     // m2: use process.execPath for consistent node resolution, resolve script
@@ -245,21 +291,33 @@ function main() {
       /* non-blocking */
     }
 
-    // Review #217 R2/R3/R4: Commit ONLY SESSION_CONTEXT.md to prevent accidental commits of other staged files
-    // --only flag ensures only specified file is committed, even if other files are staged
-    // Use SKIP flags via env to avoid blocking on doc index/header checks
+    // Review #217 R2/R3/R4 + T17: Commit ONLY the session-end allowlist paths
+    // to prevent accidental commits of other staged files. --only scoped to
+    // the explicit allowlist keeps the safety even when plan files join the
+    // commit. Use SKIP flags via env to avoid blocking on doc index/header
+    // checks.
+    //
+    // SonarCloud javascript:S4036: `git` is resolved via $PATH rather than an
+    // absolute path. This is intentional — git is an expected, operator-
+    // controlled PATH binary on all supported platforms; hard-coding an
+    // absolute path would break cross-platform portability. Marked Safe in
+    // SonarCloud UI (PR #8 R1).
     const commitMessage = "docs: session end - mark complete\n\nhttps://claude.ai/code";
-    execFileSync("git", ["commit", "--only", "-m", commitMessage, "--", "SESSION_CONTEXT.md"], {
-      cwd: REPO_ROOT, // Review #217 R4: Works from any subdirectory
-      encoding: "utf8",
-      stdio: "inherit",
-      env: {
-        ...process.env,
-        SKIP_DOC_INDEX_CHECK: "1",
-        SKIP_DOC_HEADER_CHECK: "1",
-        SKIP_REASON: "automated session-end commit — only SESSION_CONTEXT.md",
-      },
-    });
+    execFileSync(
+      "git",
+      ["commit", "--only", "-m", commitMessage, "--", ...stagableFiles],
+      {
+        cwd: REPO_ROOT, // Review #217 R4: Works from any subdirectory
+        encoding: "utf8",
+        stdio: "inherit",
+        env: {
+          ...process.env,
+          SKIP_DOC_INDEX_CHECK: "1",
+          SKIP_DOC_HEADER_CHECK: "1",
+          SKIP_REASON: "automated session-end commit — allowlisted paths only",
+        },
+      }
+    );
     log("✓ Committed session-end changes", colors.green);
   } catch (err) {
     log("❌ Commit failed - may need manual intervention", colors.red);
@@ -268,6 +326,12 @@ function main() {
   }
 
   // Step 4: Push (Review #217: args array prevents branch name injection)
+  if (noPush) {
+    log("\n⏸  --no-push specified — skipping push. Context preserved locally.", colors.yellow);
+    log("\n✅ Session end complete (local only)!", colors.green);
+    return;
+  }
+
   log("\n🚀 Pushing to remote...", colors.cyan);
   try {
     runGit(["push", "-u", "origin", branch]);

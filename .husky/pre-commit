@@ -29,3 +29,42 @@ else
   echo "  gitleaks not installed — secrets scan skipped (advisory)" >&2
   echo "  Install: winget install Gitleaks.Gitleaks (Windows) or brew install gitleaks (macOS)" >&2
 fi
+
+# --- Check 2: label validation (Piece 3 D3 + D5) ---
+# Blocks commits that include label-catalog records in invalid commit-time
+# state: status:partial, pending_agent_fill:true, or non-empty needs_review.
+# Only validates catalogs present in the staged-file list; silent skip
+# otherwise. Validator source: .claude/sync/label/lib/validate-catalog.js
+if is_skipped "labels"; then
+  require_skip_reason "SKIP_CHECKS=labels"
+  echo "  label validation skipped (SKIP_REASON: $SKIP_REASON)"
+elif command -v node >/dev/null 2>&1; then
+  LABEL_VALIDATOR=".claude/sync/label/lib/validate-catalog.js"
+  if [ ! -f "$LABEL_VALIDATOR" ]; then
+    # If any label-catalog files are staged, the validator MUST run — skipping
+    # silently would let invalid state (status:partial, pending_agent_fill,
+    # non-empty needs_review) land in a commit. Block until the validator is
+    # restored or the catalog changes are unstaged. Advisory skip only applies
+    # when no catalog files are in the staged set.
+    # --diff-filter=ACMR excludes deletions (D) — a commit that only deletes
+    # stale catalog files should not be blocked by a missing validator.
+    if git diff --cached --name-only --diff-filter=ACMR | grep -Eq '^\.claude/sync/label/([^/]+\.jsonl|preview/)'; then
+      echo "" >&2
+      echo "  label validator missing ($LABEL_VALIDATOR) but label catalogs are staged" >&2
+      echo "  Commit blocked to prevent invalid label-catalog state from landing." >&2
+      echo "  Restore the validator file or unstage the catalog changes." >&2
+      exit 1
+    fi
+    echo "  label validator not found ($LABEL_VALIDATOR) — label validation skipped (advisory)" >&2
+  elif ! node "$LABEL_VALIDATOR" --staged; then
+    echo "" >&2
+    echo "  Commit blocked by label validator" >&2
+    echo "  See error details above. Fix and re-commit." >&2
+    echo "  Skip (only if intentional): SKIP_CHECKS=labels SKIP_REASON=\"...\" git commit" >&2
+    exit 1
+  else
+    echo "  labels: no unresolved needs_review or status:partial in staged catalogs"
+  fi
+else
+  echo "  node not available — label validation skipped (advisory)" >&2
+fi

@@ -1,9 +1,10 @@
 # Sync-Mechanism Registry Schema — Evolution Rules
 
 **Version:** 1.0
-**Last Updated:** 2026-04-19
+**Last Updated:** 2026-04-20
 **Status:** ACTIVE
-**Applies to schema version:** v1.0
+**Applies to schema version:** v1.1 (governance rules unchanged since v1.0;
+see SCHEMA.md §11 for the bump from v1.0 → v1.1 driven by Piece 3)
 **Cross-references:**
 - Schema contract: `./SCHEMA.md`
 - Authoritative decisions: `../../../.planning/piece-2-schema-design/DECISIONS.md`

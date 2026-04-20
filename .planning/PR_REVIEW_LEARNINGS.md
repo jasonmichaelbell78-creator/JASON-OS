@@ -414,3 +414,365 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
   `console.log(e.message)` dump, so they weren't counted as propagation
   targets. Rule: propagation identifies the _pattern_, not the _token_ —
   context-check before fanning out.
+
+#### Review #6: Piece 3 labeling mechanism (PR #8) — Round 1 (2026-04-20)
+
+**Source:** Mixed — SonarCloud + Semgrep + Qodo Code Review + Qodo PR Suggestions + Qodo Compliance + Gemini
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 19 total (Critical: 0, Major: 6, Minor: 10, Trivial: 3)
+
+**Patterns Identified:**
+
+1. **Hook spawn paths need async-error wiring, not just sync try/catch.**
+   - Root cause: `agent-runner.defaultHeadlessSpawner` used `spawn()` with `detached + shell:true` but no `child.once('error', ...)`. Caller's try/catch only covers synchronous exceptions — async ENOENT/EACCES would crash the parent hook. Same bug shape as a generic-purpose agent spawn loop.
+   - Prevention: any `spawn()` in a hook context MUST attach an `error` listener AND persist the failure somewhere the next sweep will see (in this case, a `{ error }` marker at `outputPath` so `applyAgentOutput` surfaces it via its existing error path). Sync-only error handling is insufficient for detached children.
+
+2. **`shell:true` is a platform concession, not a default.**
+   - Root cause: `shell:true` was set unconditionally to handle `claude` → `claude.cmd` resolution on Windows. Semgrep flagged it as a generic injection surface even though the command name is a constant.
+   - Prevention: gate `shell:true` on `process.platform === "win32"` when the reason is Windows-specific `.cmd` resolution. On POSIX, `shell:false` removes the finding and reduces attack surface.
+
+3. **`existsSync + statSync` pre-check is a propagation target, not a single bug.**
+   - Root cause: Piece 3 new code repeated the TOCTOU pattern in **four** sites (`readQueue`, `classifyJob`, `appendQueueEntry`, `readCatalog`). Qodo Bug#1 only cited the first three; the fourth was found during the mandatory propagation sweep.
+   - Prevention: replace with `try { statSync(...) } catch (ENOENT → return default / ENOENT → fall through)`. Propagation sweep grep: `fs\.existsSync\s*\(.*fs\.statSync` across new diff files. Pre-existing defensive sites with downstream try/catch on the read (e.g. `session-end-commit.js:141`) are not propagation targets — context-check per Review #5.
+
+4. **Stale Gemini findings on already-wrapped code.**
+   - Root cause: Gemini flagged `mkdirSync` in `post-tool-use-label.js:220` and `catalog-io.js:109` as unwrapped — both are clearly inside `try { ... } catch (err) { throw new Error(...sanitize(err)) }` blocks. The finding referenced the right lines but missed the surrounding context.
+   - Prevention: multi-source convergence requires cross-checking the cited location against the current HEAD before acting. Two reviewer sources agreeing elevates; one reviewer disagreeing with the codebase is grounds for reject-with-evidence. Per Review #1 pattern #4, convergence works both ways.
+
+5. **Qodo Compliance ⚪ items are advisory, not action-required (same as Review #5 finding).**
+   - Root cause: four informational Compliance warnings (missing actor in audit, notification leaks internal paths, stderr path logging, shell-spawn usage). The ⚪ marker matches the Review #5 rule — no specific defect, context-dependent on threat model.
+   - Prevention: batch-reject informational Compliance items with a one-line threat-model rationale (single-user local-dev infrastructure, no multi-tenant audit requirement), file under Rejected in learning entry. Only escalate if a specific defect is named.
+
+6. **Dependency Review Scorecard warnings are posture, not vulnerabilities.**
+   - Root cause: Dependency Review flagged 3 low-Scorecard packages (`growly`, `node-notifier`, `shellwords`) — all transitive/direct deps of our single `node-notifier` devDep. Zero CVEs, zero license issues. Low scores reflect upstream maintenance signal.
+   - Prevention: treat Dependency Review Scorecard warnings as evaluation items (T31), not review items. Three paths to evaluate: replace with native platform calls, allowlist via `.github/dependency-review-config.yml`, or drop the feature. Out of scope for R1 fixes; tracked separately.
+
+**Resolution:** 19 parsed items → 13 fixed (15 fix actions including 2 propagation sites) + 3 rejected + 3 advisory-rejected = 19 dispositions ✓
+
+- **Fixed: 13 reviewer items (+2 propagation fixes = 15 total fix actions)**
+  - 6 MAJOR: spawn error handler + shell:true platform guard (Semgrep #22 / Qodo Bug#3 / Compliance shell-risk — three findings, one fix), readQueue TOCTOU (Qodo Bug#1a), classifyJob TOCTOU (Qodo Bug#1b), ReDoS hardening via globToRegex input validation (Semgrep #23), AppleScript injection via whitelist-by-removal (Qodo Compliance), applyAgentOutput null/array validation (Qodo Sugg#2).
+  - 5 MINOR (reviewer): logger.error in drainPendingQueue empty catch (Qodo Bug#2), ajv `allErrors: false` (Semgrep #24), husky validator existence check (Qodo Sugg#3), derive.js parseExistingFrontmatter repo-root enforcement (Qodo Sugg#4), SonarCloud S4036 code comment + user-side Mark-as-Safe.
+  - 2 MINOR (propagation-sweep, no reviewer cite): appendQueueEntry TOCTOU, readCatalog TOCTOU — same pattern as Qodo Bug#1, found via the MUST propagation step.
+  - 2 TRIVIAL: optional chain in session-end-commit.js:126 (SonarCloud code smell), buildFailureWarning CR/LF/tab strip (Qodo Sugg#5).
+  - **Bundled non-review work:** T30 (learnings-consumption system) + T31 (node-notifier supply-chain evaluation) created via `/todo`. Bundled with this commit per user instruction — not counted in the 19 review items.
+- **Deferred: 0 items**
+- **Rejected: 3 items** (with justification):
+  - **Gemini mkdirSync post-tool-use-label.js:220** — stale finding, code already wrapped in try/catch with `sanitize(err)`.
+  - **Gemini mkdirSync catalog-io.js:109** — stale finding, same as above.
+  - **Qodo Sugg#6 Husky SKIP_REASON redundant guard** — verified against `_shared.sh:33` — `require_skip_reason` already `exit 1`s on empty SKIP_REASON. Qodo's own note said "likely redundant." Confirmed redundant, no change.
+- **Advisory rejected: 3 items** (Qodo Compliance ⚪, per pattern #5):
+  - Missing actor in audit trail — single-user local-dev infra; no multi-tenant audit requirement.
+  - Notification leaks internal paths — operator-visible info on their own desktop; not multi-tenant.
+  - Stderr logging sensitive paths — same threat-model rationale; operator output, not remote log sink.
+
+**Pending user action:**
+
+- Mark SonarCloud S4036 hotspot (PATH-based `git` resolution in `session-end-commit.js`) as **Safe** in the SonarCloud UI with justification from the code comment.
+- Evaluate T31 (node-notifier supply-chain posture) — pick one of: replace with native platform calls, allowlist via `.github/dependency-review-config.yml`, or drop the ambient-notification feature.
+- Design T30 (learnings-consumption system) — needs `/deep-research` + `/deep-plan` before implementation.
+
+**Key Learnings:**
+
+- **Propagation sweep found one extra TOCTOU site beyond what Qodo cited.** Qodo Bug#1 flagged 3 locations in `agent-runner.js`; the sweep found a fourth in `appendQueueEntry` (same file) and a fifth matching pattern in `catalog-io.js:readCatalog`. Rule: do not trust reviewer site lists as exhaustive when the pattern is fs-level — always grep the new-diff surface.
+- **`process.platform === "win32"` is the clean fix for the shell:true findings.** Don't argue with the Semgrep / Qodo flag; accept that `shell:true` is a platform concession and gate it accordingly. Reduces finding + attack surface in one edit.
+- **Stale reviewer findings still count toward the dispositions total.** Gemini's two stale mkdirSync findings were rejected with evidence, not silently dropped. The three rejected items cover two stale findings + one confirmed-redundant suggestion. Step 7 count check: fixed(13 reviewer items) + rejected(3 primary) + advisory-rejected(3 Compliance) = 19 ✓ matches the 19 primary items parsed. The 2 propagation-sweep fixes are bonus work, not review items. Todos T30/T31 are bundled non-review work, not counted.
+- **Whitelist-by-removal beats escape-and-hope for quote-delimited DSL strings.** AppleScript `display notification` takes quote-delimited strings; escape rules are subtle and context-dependent (backslash, backtick, dollar, control chars). Stripping all of them outright (`/["`$\\\r\n\x00-\x1f\x7f]/g`) is easier to reason about than correctly-ordered escapes. Same pattern applies to `msg.exe` on Windows — both funneled through one `sanitizeForShellArg` helper.
+- **SonarCloud "Security Hotspot" ≠ "Security Bug."** S4036 (PATH-based command search) is a hotspot because it depends on your PATH hygiene. The finding is correct; the response is to add a code comment explaining the tradeoff and Mark-as-Safe in the UI, not to hardcode an absolute `git` path and break portability.
+
+#### Review #7: Piece 3 labeling mechanism (PR #8) — Round 2 (2026-04-20)
+
+**Source:** Mixed — Semgrep + Qodo Compliance + Qodo PR Suggestions
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 11 total (Critical: 0, Major: 0, Minor: 4, Trivial: 4, Advisory: 3)
+
+**Patterns Identified:**
+
+1. **Platform-gated `shell:true` does not silence Semgrep — Semgrep's pattern is syntactic, not semantic.**
+   - Root cause: R1 fix set `shell: process.platform === "win32"` to keep Windows `.cmd` resolution working while reducing surface on POSIX. Semgrep's rule `javascript.lang.security.audit.spawn-shell-true.spawn-shell-true` fires on *any* truthy-ish expression in the `shell` slot — it doesn't evaluate the expression. The R1 fix reduced real surface but didn't clear the scanner.
+   - Prevention: for Node `spawn()`, the only pattern that reliably clears this rule is `shell: false` (or omitting `shell` entirely, defaulting to false). To keep Windows `.cmd` support with `shell: false`, resolve the target binary to an absolute path before spawning. Implemented a `resolveExecutable(name)` helper in `agent-runner.js` that walks `process.env.PATH` (honouring `PATHEXT` on Windows) and returns the first file match. Spawning the resolved absolute path lets Windows execute `.cmd` directly without shell.
+
+2. **Qodo occasionally self-refutes in its own "Why" field — read it carefully.**
+   - Root cause: two R2 Qodo suggestions (spawnSync for notify-send, `git status -z` parsing) came with "Why" text that explicitly flagged the proposed fix as broken or counterproductive. Qodo's scoring is imperfect; the "Why" sometimes exposes the flaw Qodo's own suggestion introduces.
+   - Prevention: Step 2 triage MUST read the full "Why" field before accepting or even planning a fix. When Qodo self-refutes, reject with a short note pointing at the self-refutation, and (if the underlying concern is real) propose a better alternative. The non-blocking `spawn()` + `child.once('error', () => {})` pattern beats `spawnSync` for the notify-send ENOENT concern.
+
+3. **R2+ cross-round dedup is load-bearing — repeated compliance items consume triage bandwidth otherwise.**
+   - Root cause: Qodo Compliance re-surfaced two items that R1 rejected with documented threat-model justification (missing-actor-identity, unstructured-stderr-logs). Without cross-round dedup the temptation is to re-evaluate and potentially flip; the dedup rule holds the line.
+   - Prevention: auto-reject repeat compliance items with a one-line reference to the R1 entry. Only re-examine if the threat model itself has changed (e.g., project flipped to multi-tenant). New *framings* of an old concern (R2's PATH-hijack reframing of R1's shell-risk) are fresh items and need their own disposition.
+
+**Resolution:** 11 parsed items → 5 fixed + 3 rejected + 3 advisory-rejected = 11 dispositions ✓
+
+- **Fixed: 5 reviewer items (+ 1 bonus defensive fix)**
+  - 4 MINOR: Semgrep #25 via `resolveExecutable` + `shell: false` (R1 follow-up); `sanitizeForShellArg` extended to strip U+2028/U+2029 (Qodo Sugg#1); `oneLine` extended to strip all ASCII control chars (Qodo Sugg#2); `.husky/pre-commit` blocks commit when validator missing AND catalogs staged (Qodo Sugg#3).
+  - 1 TRIVIAL: `post-tool-use-label.js` outputPath filename strips all Windows-invalid chars + length cap (Qodo Sugg#6, modified to keep readable stem instead of hash).
+  - **Bonus:** Added `child.once('error', () => {})` to `runOsascript`, `runPowerShellToast`, `runNotifySend` spawn calls — addresses Qodo Sugg#5's underlying ENOENT concern without the spawnSync event-loop block.
+- **Deferred: 0 items**
+- **Rejected: 3 items** (with justification):
+  - **Qodo Sugg#4 (mkdirSync in library)** — redundant. `processCurrentEdit` already `mkdirSync`s `AGENT_OUTPUT_DIR` at L219-220 before calling `runAgentAsync`. Qodo's own "Why" concedes this.
+  - **Qodo Sugg#5 (spawnSync for notify-send)** — Qodo self-refutes: its "Why" explicitly notes the proposed fix "would block the event loop, breaking the script's non-blocking intention." Underlying ENOENT concern addressed via the bonus `child.once('error')` listeners instead.
+  - **Qodo Sugg#7 (git status -z parsing)** — Qodo self-refutes: its "Why" notes "the provided -z parsing code is broken for renames." Also `session-end-commit.js` only processes the SESSION_END_PATHSPECS allowlist (known repo-local files) where paths with spaces don't occur in practice.
+- **Advisory-rejected: 3 items** (Qodo Compliance ⚪):
+  - PATH hijacking — inherent to any PATH-relative binary resolution; mitigating fully would hardcode absolute paths and break cross-platform portability. Threat only materializes if an attacker has write to a PATH directory (at which point they can do anything). Same threat-model argument as R1 shell-risk.
+  - Audit-trail missing user identity — **repeat from R1**, auto-rejected (single-user local-dev infra, no multi-tenant audit requirement).
+  - Unstructured stderr logs — **repeat from R1**, auto-rejected (operator-visible stderr, not a remote log sink).
+
+**Pending user action:**
+
+- Still pending from R1: Mark SonarCloud S4036 hotspot as Safe in the UI.
+- No new pending actions from R2.
+
+**Key Learnings:**
+
+- **`shell: false` + absolute-path resolution is the portable Windows `.cmd` pattern.** Node's `spawn()` on Windows can run `.cmd`/`.bat` without `shell:true` only if the *full* executable name (with extension) or an absolute path is given. A small `resolveExecutable` helper (PATH + PATHEXT walk, first-match wins) avoids adding a `which`-style dep while cleanly silencing the spawn-shell-true rule. Cost: a handful of `statSync` calls at hook-spawn time — negligible in practice.
+- **The U+2028/U+2029 gap is easy to miss.** R1's `sanitizeForShellArg` covered ASCII control chars and common shell metacharacters but missed Unicode line separators. JS string literals + some shell parsers treat these as line breaks — worth including in any shell-arg/DSL-arg sanitizer regex as a default. Applied same `\u2028\u2029` expansion to one related sanitizer (`oneLine`) during R2.
+- **Readable filenames beat hashes when both portability and debuggability matter.** Qodo Sugg#6 suggested SHA-256 hashing the `rel` path for outputPath filenames. Stripping Windows-invalid chars + length cap preserves readability in `ls` / logs while still producing a valid filename on every OS. Debugging an orphaned pending-queue job is easier with `_claude_sync_label_lib_derive.js.1713619200000.json` than `a4b2…f0.1713619200000.json`.
+- **R2 fix rate is expected to trend down.** R1 handled 13/19 items (68%). R2 handled 5/11 items (45%) plus 3 advisory-rejects. Most R2 "items" are incremental suggestions on R1 fixes, not new defects. This matches the Step 7.5 expectation that signal-to-noise degrades across rounds — a third round will likely come in with <30% fix rate and Step 7.5 will recommend merging.
+
+#### Review #8: Piece 3 labeling mechanism (PR #8) — Round 3 (2026-04-20)
+
+**Source:** Qodo (Compliance + PR Suggestions). No Semgrep / SonarCloud / Gemini items this round.
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 9 total (Critical: 0, Major: 1, Minor: 5, Trivial: 2, Advisory: 1). Two bare "⚪ Unreviewed" compliance markers excluded per Review #5 rule.
+
+**Patterns Identified:**
+
+1. **The prediction that R3 would be noise was wrong — R3 surfaced the first real logic bug.**
+   - Root cause: Qodo Sugg#1 flagged `derive.js parseExistingFrontmatter`'s kv regex (`^([A-Za-z_][\w-]*)\s*:\s*(.*)$`) as missing a leading-whitespace allowance. Traced the effect: any indented nested key under `metadata:\n  key: value` failed the regex, hit `if (!kv) continue;`, and was silently dropped. The `currentNested` object was left empty. **This broke nested-frontmatter extraction for every file with a `metadata:` block.** Existing test only covered top-level keys, which is why 40/40 passed with the bug live.
+   - Prevention: reviewer-suggested regex hardening *can* surface real defects, not just noise. The R2-learnings prediction ("R3 will probably come in below 30%") was wrong — R3 fix rate was 67%. Do not pre-filter reviewer rounds as noise; each round still gets full triage. Added a regression test in `smoke.test.js` for nested-metadata extraction so this can't silently come back.
+
+2. **Test coverage that passes doesn't mean test coverage exists.**
+   - Root cause: "derive: parseExistingFrontmatter yaml + lineage body" tests top-level YAML keys and the lineage-body pattern — but never asserts any nested `metadata.*` access. So the test was green throughout the bug's lifetime, including R1 and R2.
+   - Prevention: when a reviewer-suggested fix touches a code path with existing tests, grep the tests for coverage of the *specific* case being fixed. If the existing test wouldn't have failed without the fix, add a regression test. Applied during R3 fixing before committing.
+
+3. **Option-injection defence on notify-send was missing despite R1's sanitize pass.**
+   - Root cause: R1 added `sanitizeForShellArg` to `runPowerShellToast` (msg.exe) and `runOsascript`, but `runNotifySend` (Linux notify-send) still passed raw `title`/`body` — plus no `--` flag to cap option parsing. A body starting with `--help` or `-t` would have been parsed as an option. Qodo Sugg#5 caught what R1's fix missed.
+   - Prevention: when sanitizing across multiple parallel platform paths (Win / macOS / Linux), verify each path individually — don't assume consistency. Now all three notify functions route through `sanitizeForShellArg`, and the arg-passing path uses `--` where the target tool supports it.
+
+4. **Bidi control chars are a real prompt-surface risk, not academic.**
+   - Root cause: R2 extended `oneLine` to strip `[\x00-\x1f\x7f]` (ASCII controls). R3 noted that Unicode bidi control chars (U+200E, U+200F, U+202A-E, U+2066-9) can visually reverse string order in a terminal — e.g. a `file_path` value containing RLO makes `hook.js` appear as `sj.kooh`. For a prompt-surface string that the user reads before deciding to retry/skip/fix, visual spoofing is a real attack. Plus U+2028/U+2029 are line breaks for some parsers. R2's ASCII-controls-only strip wasn't enough.
+   - Prevention: sanitizers for any string that will appear on the prompt surface or in terminal output MUST strip the full bidi-control set plus line separators, not just ASCII controls. Added both to `oneLine` in R3.
+
+**Resolution:** 9 parsed items → 6 fixed + 3 rejected = 9 dispositions ✓
+
+- **Fixed: 6 items**
+  - 1 MAJOR: `derive.js parseExistingFrontmatter` kv regex accepts leading whitespace + `indent.length >= 2` nesting check (Qodo Sugg#1).
+  - 5 MINOR: `agent-runner.classifyJob` returns `running` on JSON parse failure until deadline (Qodo Sugg#2); `applyAgentOutput` locks `merged.path = base.path` to prevent primary-key rewrite (Qodo Sugg#3); `parseFingerprint` lowercases the algorithm match (Qodo Sugg#4); `runNotifySend` adds `sanitizeForShellArg` + `--` flag (Qodo Sugg#5); `oneLine` extends to strip U+2028/U+2029 + Unicode bidi controls (Qodo Sugg#6).
+  - Regression test added: nested-metadata extraction in `smoke.test.js`.
+- **Deferred: 0 items**
+- **Rejected: 3 items**:
+  - **Qodo Sugg#7 (hash suffix on output filename)** — `Date.now()` already in the filename provides de-facto uniqueness; Qodo's own "Why" concedes "collisions highly improbable." Adding 12 hex chars reduces stem readability in logs for negligible gain. Same readability-over-hash reasoning as R2 Sugg#6's modification.
+  - **Qodo Sugg#8 (mkdirSync in library)** — **Cross-round dedup**: identical to R2 Sugg#4 which I rejected. Caller `processCurrentEdit` already `mkdirSync`s `AGENT_OUTPUT_DIR`. Qodo's own "Why" concedes "the caller in this PR already creates the directory." Auto-rejected per R2 disposition.
+  - **Qodo Compliance (Git porcelain parsing)** — **Same threat-model argument as R2 Sugg#7**: `session-end-commit.js` operates only on `SESSION_END_PATHSPECS` (controlled allowlist of known repo-local files). Paths with embedded newlines don't occur in that set. Cost of `-z` NUL parsing (Qodo itself called its own suggested implementation "broken for renames" in R2) not justified by defense-in-depth against an impossible-in-practice case.
+
+**Pending user action:**
+
+- Still pending from R1: Mark SonarCloud S4036 hotspot as Safe in UI. No new pending actions from R3.
+
+**Key Learnings:**
+
+- **R3 fix rate (67%) refutes the R2-era prediction that later rounds trend to noise.** Rounds trend toward *different kinds of findings* — earlier rounds surface the obvious first-scan stuff, later rounds surface subtler logic bugs that require full code-reading. R3's highest-impact finding (YAML kv regex) was a genuine defect that had been live since Piece 3 started. Don't pre-filter later rounds as noise; don't raise the bar for fix acceptance based on round number; Step 7.5's merge-trigger check is a *threshold* rule, not an expectation of decay.
+- **Regex-level reviewer suggestions can surface real defects, not just lint.** Qodo Sugg#1 looked like a stylistic fix for indentation support; investigating the `if (!kv) continue;` path revealed that every nested metadata key in the codebase had been silently dropped since the parser was written. Always trace the actual code path a regex change affects, don't auto-accept or auto-reject based on surface appearance.
+- **Existing tests passing doesn't mean the case you're fixing has coverage.** The test "parseExistingFrontmatter yaml + lineage body" passed throughout R1, R2, R3 — while the bug in question silently dropped nested keys under `metadata:`. When Qodo flagged the regex, grep-checking the test for specifically `metadata.*` access revealed zero coverage. Always read the test for the case being fixed, not just the function under fix — and if the test doesn't cover the case, add a regression line before committing.
+- **Parallel sanitizer paths need per-path audit, not batch trust.** R1 added `sanitizeForShellArg` across platforms but skipped `runNotifySend`. The mental model "we sanitize notifications" was true; the implementation "every notify path sanitizes" was false. For any N-platform code with parallel paths, verify each path explicitly.
+- **Bidi control stripping is cheap defense against a real spoofing surface.** U+202E (right-to-left override) and its siblings can rearrange terminal output so the displayed string doesn't match the underlying bytes. For strings that appear on the prompt surface before a user decision, always include the bidi-control range `[\u200e\u200f\u202a-\u202e\u2066-\u2069]` alongside ASCII control stripping. One extra `.replace` call, covers a class of attack that's hard to diagnose if it happens.
+
+#### Review #9: Piece 3 labeling mechanism (PR #8) — Round 4 (2026-04-20)
+
+**Source:** Qodo (Compliance + PR Suggestions). Still no new Semgrep / SonarCloud / Gemini items since R3.
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 9 total (Critical: 0, Major: 0, Minor: 4, Trivial: 3, Advisory: 3, of which 2 are R2+R3 repeats).
+
+**Patterns Identified:**
+
+1. **A "cross-round dedup" reject doesn't always mean the concern is wrong — only that the *previously proposed fix* was.**
+   - Root cause: R2 rejected Qodo Sugg#5 (`spawnSync` for `runNotifySend`) because the proposed fix would block the event loop. R2's bonus fix added a silent-drop `child.once('error', () => {})` listener that prevented the parent crash — but `runNotifySend` still returned `true` on ENOENT, so `notify()`'s stderr fallback never triggered. Qodo Sugg#2 in R4 surfaced the same concern in a fresh way, and its "Why" field correctly identified the gap the silent-drop left.
+   - Prevention: when rejecting a proposed fix for being problematic, separately verify that the *underlying concern* is addressed — either by the existing code or by an alternative fix. Log the underlying concern in the learning entry so future rounds have the full picture. In R4 I re-opened with a better fix: `resolveExecutable` pre-check → return `false` if the binary is missing, so the caller's stderr fallback actually triggers. Keep the silent-drop listener for race-window post-check failures.
+
+2. **Shared helpers earn their keep when a "new surface" review framing matches an existing code pattern.**
+   - Root cause: R4 Compliance item #2 (external command execution on notify binaries) was a fresh framing of the R2 PATH-hijack concern but now targeted `msg.exe` / `osascript` / `notify-send` instead of `claude`. Rather than duplicate the R2 `resolveExecutable` logic into `notification-label.js`, extracted it into `scripts/lib/resolve-exec.js` as a shared helper. One fix now partially mitigates two pieces of advisory feedback across two files, and any future hook that spawns an external binary can reuse it.
+   - Prevention: when a R-N+1 review reframes an R-N concern across a new surface, check whether the R-N mitigation can be extracted into a helper before applying it inline to the new site. The cost (one small file) is minor; the coverage gain is meaningful.
+
+3. **Qodo's "self-refute in Why" pattern has a third variant: "no functional impact."**
+   - Root cause: R4 Sugg#6 (`classifyEdit` should prefer `content_hash` over `fingerprint`) conceded in its own "Why" field that the fix has "no functional impact because both branches of the condition currently return MINOR." The deeper finding — that `classifyEdit` has a dead-code conditional (both branches return the same value) — is a real code smell, but Qodo's proposed field-name fix doesn't address that; it just paints over it.
+   - Prevention: when Qodo proposes a fix that it itself calls "no functional impact," reject the fix but note whether the underlying code smell warrants a follow-up todo. In R4 the smell (dead-code conditional in `classifyEdit`) is minor enough to leave as-is, but could be filed as a cleanup todo if the field-name drift matters for Piece 3's downstream consumers.
+
+**Resolution:** 9 parsed items → 5 reviewer fixes + 1 bonus propagation = 6 fix actions + 1 rejected + 3 advisory-rejected = 9 dispositions ✓
+
+- **Fixed: 5 reviewer items (+ 1 propagation, + 1 shared-helper extraction)**
+  - 4 MINOR: `applyAgentOutput` path fallback to `entry.file_path` when `base.path` missing (Qodo Sugg#1); `runNotifySend` pre-checks binary via `resolveExecutable`, returns false if missing so `notify()` stderr fallback triggers (Qodo Sugg#2 — modified fix, not Qodo's spawnSync); `.husky/pre-commit` `--diff-filter=ACMR` on staged-catalog check (Qodo Sugg#4); `scope-matcher` explicit escape of `[` inside character class (Qodo Sugg#5).
+  - 1 TRIVIAL: `classifyJob` timeout clamp to `Math.max(0, Number.isFinite(raw))` (Qodo Sugg#3).
+  - **1 propagation:** applied the `resolveExecutable` pre-check to `runPowerShellToast` + `runOsascript` (parallel-paths gap, R3 pattern).
+  - **1 shared-helper extraction:** moved `resolveExecutable` from `agent-runner.js` into `scripts/lib/resolve-exec.js`; both hook and library now import from there.
+- **Deferred: 0 items**
+- **Rejected: 1 item** (Qodo self-refute):
+  - **Qodo Sugg#6 `classifyEdit` content_hash vs fingerprint** — Qodo's "Why" concedes "no functional impact because both branches of the condition currently return MINOR." The real smell (dead-code conditional) isn't what the fix addresses. Rejected; optional follow-up todo if the field-name drift matters downstream.
+- **Advisory-rejected: 3 items** (Qodo Compliance ⚪):
+  - **PATH binary hijack (`agent-runner.js`)** — **cross-round dedup**, repeat of R2 PATH-hijack advisory. Same threat-model argument applies.
+  - **External command execution (notify binaries)** — new framing, same threat-model argument, BUT partially mitigated by the R4 `resolveExecutable` extension to notify binaries. Residual risk (attacker with write to expected bin path) remains theoretical and unavoidable without hardcoded paths.
+  - **Path data in logs** — **cross-round dedup**, repeat of R1+R2 advisory. Same rationale (operator-visible stderr, not remote log sink).
+
+**Pending user action:**
+
+- Still pending from R1: SonarCloud S4036 Mark-as-Safe in UI. No new pending actions from R4.
+
+**Step 7.5 merge-trigger check (R4+):** Fix rate = 5/9 = 56% (6/9 = 67% counting propagation). Both above the 30-50% "one more round max" flag. Not yet at merge recommendation. R5, if it happens, I'll watch for <30%.
+
+**Key Learnings:**
+
+- **Reject-for-bad-fix ≠ reject-for-bad-concern.** R2's reject of Qodo Sugg#5 (spawnSync) was the right call on the fix but left the underlying concern unaddressed. My bonus `child.once('error')` prevented the crash but didn't propagate failure to the caller. R4 re-framed the same concern and I applied a better fix: pre-check via `resolveExecutable`, return false if missing, fall through to stderr. **Rule:** when rejecting a proposed fix, write the underlying concern into the learning entry so future rounds (or future me) can tell whether it was address or only deflected.
+- **Extract shared helpers when cross-file reviewer framings point at the same pattern.** R4's Compliance item #2 (notify-binary PATH-hijack) was a fresh framing of R2's concern at a new call site. Rather than duplicating the R2 `resolveExecutable` into notification-label.js, moved it to `scripts/lib/resolve-exec.js` and imported from both. One file added, reduces future duplication for any hook that spawns an external binary.
+- **"No functional impact" in a reviewer's own rationale is a clear reject signal.** Applying a fix with no functional impact adds churn without value and can mask the deeper smell the reviewer almost saw. Log the smell as a follow-up candidate; don't paint over it with a cosmetic field-name change.
+- **R4 fix rate trend (56–67%) challenges the "signal-to-noise decays linearly across rounds" mental model.** Noise is stochastic; signal is whatever the reviewer catches. R4 caught two real defects (path-fallback edge case, notify-binary false-success), one propagation-worthy concern (PATH-hijack on notify binaries), and one code smell (dead-code conditional). Decay isn't the right frame — the right question is "did this round teach me something I didn't already know?" R4 did.
+
+#### Review #10: Piece 3 labeling mechanism (PR #8) — Round 5 (2026-04-20)
+
+**Source:** Qodo (Compliance + PR Suggestions). Still no Semgrep / SonarCloud / Gemini items since R3.
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 11 total (Critical: 0, Major: 1, Minor: 5, Trivial: 2, Advisory: 3).
+
+**Patterns Identified:**
+
+1. **I introduced a MAJOR logic bug while fixing a TRIVIAL defensive suggestion in R4.**
+   - Root cause: R4 Sugg#3 asked for timeout clamping. I applied `Math.max(0, timeoutRaw)` as the clamp floor, reasoning "non-negative is the lower bound." For a negative input this returns 0, which makes `now - spawnedAt > 0` true for any job spawned more than a millisecond ago. Net effect: **every job, on every sweep, would have been classified as past-deadline the moment its output file wasn't yet present.** The R4 fix was meant to prevent immediate timeouts from corruption; it guaranteed them instead. Qodo Sugg#1 in R5 caught this on the very next round.
+   - Prevention: (a) when applying a defensive clamp, trace the clamp through its downstream boundary check — a "safe lower bound" is only safe if the boundary check above that bound has the right semantics; (b) when the original concern is "a corrupted value could cause bad behaviour X," the fix must not make bad behaviour X *more likely* for the corrupted case; (c) any defensive-clamp fix needs a regression test for the corrupted-input case *before* commit, not after review surfaces the defect. Added regression test in `smoke.test.js` covering `timeout_ms: -1` and `timeout_ms: 0` — both must classify as `running` for a fresh entry.
+
+2. **Fixing a hardening rule can introduce a new failure path the existing fail-closed wrapper doesn't catch.**
+   - Root cause: R1 added `validateGlob` to reject pathological globs. `validateGlob` throws on violation, propagates via `globToRegex` into `compileScope`. The existing `loadScope` had a try/catch around JSON parse but NOT around `compileScope` — so a malformed `scope.json` was fail-closed but a malformed-*glob* scope.json would crash the hook with an uncaught throw. R5 Sugg#6 caught this gap.
+   - Prevention: when adding a new throw-path into a previously throw-free function, grep every caller's error handling — does the caller's try/catch cover the new throw, or only the old ones? Especially load-bearing for hook entry-points where an uncaught throw means hook-crash → hook-silently-disabled-for-user. Wrapped `compileScope` in loadScope's existing fail-closed pattern.
+
+3. **Re-rejecting on the same reviewer concern across rounds is correct when the threat model hasn't changed, even if the reviewer provides a better implementation.**
+   - Root cause: Qodo Sugg#7 (git status -z) appeared in R2 (broken impl — Qodo self-refuted), R3 (framed as compliance), and R5 (correct impl this time). The *implementation* improved across rounds; the *threat model* didn't — SESSION_END_PATHSPECS is a hardcoded allowlist of known repo-local files that don't contain embedded newlines. Same reject stands across all three rounds.
+   - Prevention: distinguish "reviewer provides better impl" from "threat model changed." The second triggers re-evaluation; the first doesn't. Document the threat-model argument once and reference it across rounds.
+
+4. **"Silent drop for post-check race" is still a known-unknown worth one line of observability.**
+   - Root cause: R4 added `child.once('error', () => {})` to notify spawns to prevent the unhandled-error crash after the `resolveExecutable` pre-check. The rationale was "ENOENT is handled by the pre-check; post-check race failures are vanishingly rare." True but R5 Compliance #3 correctly pointed out: "rare" doesn't mean "we shouldn't be able to see them when they happen." Cost: one sanitized stderr line per failure. Benefit: actually diagnosable when the race does hit.
+   - Prevention: silent-drop patterns are worth one sanitized-log line, not zero. The line should be minimal (error code + binary basename, not full message / full path) to avoid leaking context. Added `logSpawnError(bin, err)` helper emitting `[label-notify] spawn(<basename>) <code>`.
+
+**Resolution:** 11 parsed items → 8 fixed + 3 rejected = 11 dispositions ✓
+
+- **Fixed: 8 items**
+  - 1 MAJOR: `classifyJob` timeout clamp — fallthrough to `DEFAULT_TIMEOUT_MS` for non-positive / non-finite input, floor positive at 1000ms (Qodo Sugg#1, correcting my R4 Sugg#3 fix). **Regression test added** covering `timeout_ms: -1` and `timeout_ms: 0`.
+  - 5 MINOR: prototype-pollution key strip before spread in `applyAgentOutput` (Qodo Compliance #1); `resolveExecutable` handles paths and pre-existing extensions correctly (Qodo Sugg#2); `resolveExecutable` POSIX exec-bit check via `fs.accessSync` (Qodo Sugg#3); `loadScope` fail-closed on `compileScope` throws (Qodo Sugg#6); `notification-label` spawn error listeners log sanitized one-liner via `logSpawnError` (Qodo Compliance #3).
+  - 2 TRIVIAL: `resolveExecutable` trims and quote-strips PATH/PATHEXT entries (Qodo Sugg#4); `applyAgentOutput` throws if both `base.path` and `entry.file_path` missing — defence-in-depth against hand-edited queue files (Qodo Sugg#5).
+- **Deferred: 0 items**
+- **Rejected: 3 items**:
+  - **Qodo Compliance #2 unstructured stderr logs** — **cross-round dedup** (R1 + R2 + R4 rejection chain). Threat model unchanged: operator-visible stderr, not a remote log sink.
+  - **Qodo Sugg#7 git status -z** — **cross-round dedup** (R2 + R3 rejection). Qodo's R5 implementation is correct (unlike R2's broken one), but the threat model is unchanged — SESSION_END_PATHSPECS is a hardcoded allowlist of known repo-local files. ~16 LOC delta for an unreachable edge case doesn't pass cost/benefit.
+  - **Qodo Sugg#8 random suffix on outputPath filename** — **cross-round dedup** (R3 Sugg#7 pattern). Timestamp already provides de-facto uniqueness; random suffix reduces stem readability in `ls` / log output for negligible collision-probability gain.
+
+**Pending user action:**
+
+- Still pending from R1: SonarCloud S4036 Mark-as-Safe in UI. No new pending actions from R5.
+
+**Step 7.5 merge-trigger check (R5):** Fix rate = 8/11 = **73%**. Well above the 30%/50% thresholds. R5 surfaced a real MAJOR bug I introduced in R4 plus two genuine security concerns (prototype pollution, observability gap). No merge recommendation from the rule. Continuing normally — but acknowledging user frustration: each round adds commit churn, and R5's most valuable finding (timeout bug) was a bug *I* made in R4, which argues for tighter pre-commit verification rather than more rounds.
+
+**Key Learnings:**
+
+- **Defensive clamps need regression tests for the corrupted-input case, in the commit that adds them.** R4 added `Math.max(0, raw)` without a test that would've failed on a negative input and immediately showed the `now - spawnedAt > 0` interaction. One test, written at fix-time, would have caught this. Now covered in `smoke.test.js` with both `timeout_ms: -1` and `timeout_ms: 0` cases. **Rule:** whenever a defensive clamp or bound is added to handle "corrupted X can cause bad behaviour Y," write a test that *actually passes corrupted X* and asserts bad behaviour Y *doesn't* occur.
+- **I can introduce new throw-paths that existing fail-closed wrappers don't catch.** R1's `validateGlob` throw looked isolated to `globToRegex`, but it propagated through `compileScope` into `loadScope` — whose existing try/catch only covered JSON parsing. Whenever you add a throw to a library function, grep every caller's error handling and verify the throw lands inside a try, not outside one. Especially load-bearing for hook entry-points.
+- **Reviewer-implementation quality can improve across rounds without changing the underlying threat-model math.** Qodo's R5 git-status-z impl was correct; its R2 impl was admitted-broken. But the reason to reject wasn't "the impl is broken" — it was "the threat doesn't exist in this allowlist scenario." Document the threat-model argument once, reference it across rounds, and don't re-evaluate unless the threat model itself changed.
+- **Silent-drop error handlers should log one sanitized line, not zero.** The cost is negligible. The benefit is that "rare race-window failure" becomes diagnosable instead of phantom. Format: error code + binary basename, not full message or full path — minimizes leak surface while maximizing "I can tell this happened."
+- **R5 is peak irony: the highest-impact finding was a bug I caused by applying R4's defensive suggestion incorrectly.** This argues for stronger pre-commit self-review on defensive-code changes specifically: one question at commit-time — *does the clamped/validated value still meet the property the original code assumed?* For `Math.max(0, raw)`, the answer is obviously no for a downstream `> 0` check; asking the question would have caught it.
+
+#### Review #11: Piece 3 labeling mechanism (PR #8) — Round 6 (2026-04-20)
+
+**Source:** Mixed — SonarCloud (1 code smell) + Qodo (Compliance + PR Suggestions).
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 10 total (Critical: 0, Major: 0, Minor: 6, Trivial: 2, Advisory: 2).
+
+**Patterns Identified:**
+
+1. **Cross-file documentation contradictions are real bugs, not cosmetic drift.**
+   - Root cause: R6 surfaced *two* genuine doc contradictions in the `/label-audit` skill references. `DISAGREEMENT_RESOLUTION.md` said "Record needs review → `status: partial` during preview" while `SKILL.md` L222 explicitly lists "No `status: partial` in the preview" as an invariant. `DERIVATION_RULES.md` showed an agent output example with nested `{fields: {type: {value, confidence}}}` while `buildAgentPrompt` L337-348 tells the agent to return a flat record and `applyAgentOutput` spreads it flat. Both contradictions were shipped in prior commits without being caught by self-audit because the references are read by humans and agents but not by the runtime code.
+   - Prevention: reference docs that describe runtime contracts need at least one assertion that verifies the doc against the runtime. Options: (a) a lightweight convergence loop during skill-audit that greps invariant claims in SKILL.md against the actual code, (b) treat doc-contract as part of the same PR gates that block code-contract divergence. Not applied in R6 (out of scope), but candidate for a future /todo.
+
+2. **SonarCloud cognitive complexity caught an R5 overreach.**
+   - Root cause: R5's rewrite of `resolveExecutable` added a bunch of legitimate features (absolute-path handling, PATHEXT-skip for pre-extended names, exec-bit check, PATH/PATHEXT trim) but bundled them all into one function. Complexity climbed to 19 against a 15 threshold. SonarCloud's threshold is a style preference, but the underlying signal — "too many intertwined branches, hard to reason about one case without the others" — was real. R6 refactor splits the helpers into `isExecutableFile`, `getPathExts`, `getPathDirs`, `nameHasKnownExt`, `resolveFromProvidedPath`, `findInDir`, `findInPathDirs`; the main `resolveExecutable` now has 3 branches total.
+   - Prevention: when adding multiple defensive features to one function in a single commit, split them as they land instead of piling them. The rewrite was easier to review in helper-sized chunks anyway, and the pre-existing complexity headroom was small.
+
+3. **Fail-open on invalid config input is a latent bug class.**
+   - Root cause: `extractNeedsReview(fieldScores, threshold)` used `clamp01(threshold)` which maps negative/non-finite input to 0. Then `clamp01(score) < 0` is never true, so `needs_review` is always empty — the cross-check layer silently passes every record. A user who passes `threshold: undefined` (or a corrupted config loader) gets "everything looks fine" instead of the documented DEFAULT_THRESHOLD. The function failed OPEN where it was supposed to fail SAFE.
+   - Prevention: validate input → either clamp to a meaningful range AND fall back to default on non-meaningful input, or reject with a throw. Clamping alone can collapse to a technically-valid-but-semantically-broken value. Fixed via `Number.isFinite && > 0 ? clamp01 : DEFAULT_THRESHOLD`.
+
+4. **Silent `process.exit(0)` in hook entry-points is observability theft.**
+   - Root cause: `readStdinAndHandle` exited 0 on stdin errors and invalid-JSON payloads without any stderr output. Rationale was "hook must not break Claude's flow" — correct, but the rationale doesn't require zero observability. Qodo Compliance #3 R6 was right that this class of silent failure becomes impossible to diagnose when it recurs.
+   - Prevention: exit 0 is fine; zero output isn't. Added a sanitized stderr one-liner (`[label-hook] stdin <code>` / `[label-hook] invalid stdin payload`) before each exit. Same principle as the R5 notify-binary spawn-error observability fix: silence-for-robustness trades too aggressively against diagnosability.
+
+**Resolution:** 10 parsed items → 7 fixed + 3 rejected = 10 dispositions ✓
+
+- **Fixed: 7 items**
+  - 6 MINOR: SonarCloud cognitive-complexity refactor of `resolveExecutable` into helpers (SonarCloud); `readStdinAndHandle` stdin / parse-error diagnostics (Qodo Compliance #3); `DISAGREEMENT_RESOLUTION.md` contradiction with SKILL.md L222 invariant (Qodo Sugg#1); `extractNeedsReview` fail-safe to DEFAULT_THRESHOLD on invalid input (Qodo Sugg#2); `DERIVATION_RULES.md` agent output shape contract aligned to CATALOG_SHAPE.md + applyAgentOutput's flat-record merge (Qodo Sugg#3); `resolve-exec.js` PATHEXT fallback for provided absolute paths without extensions (Qodo Sugg).
+  - 1 TRIVIAL: `resolve-exec.js` always returns absolute resolved paths via `path.resolve()` wrap (Qodo Sugg).
+  - **Bundled gain:** the resolve-exec refactor addressed three R6 items in one pass (cognitive-complexity + PATHEXT-for-paths + absolute-paths).
+- **Deferred: 0 items**
+- **Rejected: 3 items**:
+  - **Qodo Compliance PATH hijack execution** — **cross-round dedup** (R2+R4). Same threat-model argument applies.
+  - **Qodo Compliance unstructured stderr logs** — **cross-round dedup** (R1+R2+R4+R5). Same rationale.
+  - **Qodo Sugg classifyEdit content_hash vs fingerprint** — **cross-round dedup** (R4 Sugg#6). Qodo self-refutes in "Why": "impact is negligible since the function returns MINOR in both branches."
+
+**Pending user action:**
+
+- Still pending from R1: SonarCloud S4036 Mark-as-Safe in UI. No new pending actions from R6.
+
+**Step 7.5 merge-trigger check (R6):** Fix rate = 7/10 = **70%**. Above thresholds. R6 surfaced two real doc-contract contradictions + a fail-open bug + a legitimate code-smell refactor pressure + an observability gap — all genuine, none redundant. Not a merge recommendation from the rule.
+
+**Key Learnings:**
+
+- **Doc contradictions between SKILL.md invariants and reference-doc examples are real bugs that the runtime doesn't catch.** The `partial` status contradiction between `DISAGREEMENT_RESOLUTION.md` and `SKILL.md` L222, and the flat-vs-nested output contradiction between `DERIVATION_RULES.md` and `buildAgentPrompt`+`applyAgentOutput`, would have silently confused agents reading those references. `skill-audit` doesn't currently cross-check invariants in SKILL.md against runtime code or against companion reference docs. Candidate for a future `skill-audit` enhancement.
+- **"Clamp to safe range" is not the same as "fail-safe on invalid input."** `clamp01(negative) = 0` is a valid clamp output, but `threshold: 0` means "no threshold" in `extractNeedsReview`'s semantics — fail-OPEN, not fail-safe. Input validation needs to separate "is this a meaningful value?" from "can I coerce this into the value type?" — the former rejects negative thresholds, the latter just zeros them. Applied the separation via `Number.isFinite(raw) && raw > 0 ? clamp01(raw) : DEFAULT_THRESHOLD`.
+- **Silent exits are worse than noisy ones in hook entry-points.** Hooks MUST NOT crash Claude's flow, so exit 0 is correct — but exit 0 *without* a diagnostic turns a transient error into a phantom. Same pattern as the R5 spawn-error silent-drop: one sanitized stderr line per exit is enough, and costs nothing.
+- **SonarCloud's 15-complexity threshold is an imperfect proxy for a real concern.** The 19-complexity resolveExecutable wasn't "broken" — it worked and passed tests — but the underlying "hard to reason about one branch without reading all of them" signal was true. Splitting into seven single-purpose helpers made the next R5-style expansion (which will happen when Windows adds new PATHEXT quirks or POSIX needs a symlink-follow option) easier to do without hitting the same refactor pressure again.
+- **Multi-round reviews have a secondary value beyond bug-catching: they stress-test your own consistency.** R6 flagged my own R5 refactor for complexity, which I hadn't noticed; R5 flagged my R4 clamp bug, which I definitely hadn't noticed. The review loop isn't "external scanner vs my code" — it's "two passes of external attention" that each catch stuff the prior pass left. Worth continuing as long as each round teaches something; worth stopping the moment it doesn't.
+
+#### Review #12: Piece 3 labeling mechanism (PR #8) — Round 7 (2026-04-20)
+
+**Source:** Mixed — Qodo (Compliance + PR Suggestions). SonarCloud Quality Gate PASSED (0 new issues, 0 hotspots — S4036 cleared). All CI checks green. PR mergeable.
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 13 total (Critical: 0, Major: 0, Minor: 5, Trivial: 3, Advisory: 5).
+
+**Patterns Identified:**
+
+1. **Propagation gaps across parallel hook entry-points are easy to miss.**
+   - Root cause: R6 added stdin-error + invalid-JSON diagnostics to `post-tool-use-label.js readStdinAndHandle`, but `user-prompt-submit-label.js readStdinAndHandle` had the identical silent-exit pattern and was left untouched. Two parallel hook entry-points, one got the fix, the other didn't. Qodo R7 caught the gap as Compliance 🔴 + Sugg#5 (same underlying finding in two flavors).
+   - Prevention: when fixing a pattern at one hook entry-point, grep every `readStdinAndHandle` / `process.stdin.on("error"` / similar load-bearing entry-point pattern across the codebase before committing. Same category of propagation I added to the Step 4 discipline in Review #5, but now applied to hook entry-points specifically.
+
+2. **The D15 contract survives stdin failure — Step 0 must always run.**
+   - Root cause: my R6 fix added observability (stderr one-liner) but still called `process.exit(0)` on stdin error. That means `drainPendingQueue` — which is the D15 mechanism for surfacing past agent failures — never ran when the current-edit stdin was broken. Past failures silently accumulated. Qodo Sugg#1 (imp 9) correctly identified this as breaking the D15 acknowledgement contract.
+   - Prevention: for hook entry-points with both "process current payload" AND "drain backlog" responsibilities, stdin failure must NOT skip the drain leg. Changed `process.exit(0)` → `process.exit(handleHook({}))` so `drainPendingQueue` runs with empty payload; `processCurrentEdit({})` safely no-ops via `extractFilePath` returning null.
+
+3. **Wrong-type agent output can bypass array-based rule-layer semantics.**
+   - Root cause: `applyAgentOutput` checked `Array.isArray(merged.needs_review) && merged.needs_review.length > 0` to set `status: partial`. If agent output gave `needs_review: "string"` or `needs_review: {something: true}`, `Array.isArray` was false, so `status: active` was set — bypassing the rule-layer's intent that `active` means "needs_review is empty." Same class of issue as R5 prototype-pollution: agent output is semi-trusted and can violate type contracts.
+   - Prevention: coerce structural fields to their rule-layer-expected type after the spread merge. `needs_review` → array (with `["needs_review"]` sentinel on bad type so status stays `partial`, not silently `active`); `manual_override` → `[]` on bad type. Coercion AFTER the prototype-pollution strip and path-pin, so all structural invariants are established in a predictable order before the rule-layer reads them.
+
+4. **Global schema relaxation as a fallback is a fail-open posture.**
+   - Root cause: `relaxFileRecordAdditionalProperties` also relaxed `schema.additionalProperties` at the top level "in case the schema is authored flat." For any schema that's flat-authored, this flips the whole document's strictness. A flat-authored schema where `additionalProperties: false` was a deliberate strict check would be silently loosened by our validator. Qodo Sugg R7 (imp 5) correctly flagged this.
+   - Prevention: relaxation fallbacks need to fail closed, not open. Removed the top-level relaxation entirely; any future flat-authored schema needs explicit record-scoped relaxation via a new code path, not an auto-flip.
+
+**Resolution:** 13 parsed items → 6 fixes (covering 7 findings) + 6 rejected = 13 dispositions ✓
+
+- **Fixed: 6 fixes covering 7 findings**
+  - MINOR: `post-tool-use-label readStdinAndHandle` — `process.exit(handleHook({}))` instead of `process.exit(0)` so D15 drain runs on stdin failure (Qodo Sugg#1 imp 9, real contract gap).
+  - MINOR: `user-prompt-submit-label readStdinAndHandle` — propagation of R6's stdin diagnostics + covers Qodo Compliance Silent-stdin + Sugg#5.
+  - MINOR: `applyAgentOutput` — coerce `needs_review` to `["needs_review"]` sentinel on wrong-type agent output, `manual_override` to `[]` (Qodo Sugg R7, real rule-bypass defence).
+  - MINOR: `buildFailureWarning` sort — NaN-safe via `Number.isFinite(n) ? n : +Infinity` (Qodo Sugg imp 7).
+  - MINOR: `validate-catalog relaxFileRecordAdditionalProperties` — drop top-level fallback; keep record-scoped relaxation only (Qodo Sugg imp 5).
+  - TRIVIAL: `resolve-exec getPathDirs` — filter PATH entries with `path.isAbsolute` (Qodo Sugg imp 4).
+- **Deferred: 0 items**
+- **Rejected: 6 items**:
+  - **Qodo Compliance PATH-hijacked binary** — **cross-round dedup** (R2+R4+R6). Same threat-model argument.
+  - **Qodo Compliance PATH-hijacked git** — S4036 already cleared in SonarCloud UI + Quality Gate now passes; compliance framing is advisory.
+  - **Qodo Compliance unstructured log output (validate-catalog)** — **cross-round dedup** (R1+R2+R4+R5+R6). Operator-visible stderr, not remote log sink.
+  - **Qodo Compliance missing audit context** — **cross-round dedup** (R1+R2). Single-user local-dev infra.
+  - **Qodo Sugg iterate safe own keys (confidence.js)** — Qodo self-refutes: `Object.entries` already iterates only own enumerable properties; reading `__proto__` as key doesn't cause pollution.
+  - **Qodo Sugg create output dirs early** — **cross-round dedup** (R2 Sugg#4, repeated in R3 Sugg#8). Caller `processCurrentEdit` already mkdirs `AGENT_OUTPUT_DIR` before runAgentAsync.
+
+**Pending user action:** Nothing new. R1's SonarCloud S4036 Mark-as-Safe is CLEARED (Quality Gate passes).
+
+**Step 7.5 merge-trigger check (R7):** Fix rate = 7/13 = **54%**. Just above the 50% "one more round max" boundary; technically "continue normally" per rule. **But the environmental context overrides the rule:** SonarCloud PASSED, all 6 CI checks green, PR auto-mergeable. R7 caught real gaps (propagation + D15 contract + structural bypass + global-relaxation fail-open). **Recommendation: merge after this R7 commit.** Any R8 will almost certainly be cross-round dedup.
+
+**Key Learnings:**
+
+- **Propagate hook-entry-point fixes to every hook entry-point, not just the one currently under review.** R6's stdin diagnostics were a good fix on `post-tool-use-label.js`; the identical pattern on `user-prompt-submit-label.js` got the same treatment a round later only because Qodo caught it. Better discipline: when fixing a pattern on a hook entry-point, grep the whole `/hooks/` directory for the same pattern before committing.
+- **Observability and drain-on-failure are separate concerns.** R6's stderr one-liner answered "can I see that stdin failed?" but not "did the D15 contract still run?" The fixes compose: log the failure AND still do the load-bearing drain. `process.exit(handleHook({}))` gives both — observable exit + drained queue.
+- **Structural-field type coercion belongs on the output-apply boundary.** Agent output crosses a trust boundary. Inside that boundary we can assume types (spreads, merges, rule checks all depend on it). So the coercion — `Array.isArray || default` — needs to happen at the boundary, not scattered through downstream reads. Added to `applyAgentOutput` alongside prototype-key stripping and path-pinning; all three boundary concerns now live in one place.
+- **Fail-safe schema validators don't take "any schema shape" — they take the schemas they were designed for.** My global-relaxation fallback ("in case the schema is authored flat") was trying to be forgiving, but forgiving validators are fail-open validators. If a future schema is flat-authored, it needs an explicit record-scoped relaxation, not a document-wide flip.
+- **The R7 data says "merge now" more clearly than the Step 7.5 rule does.** 54% fix rate technically says "continue normally," but SonarCloud-clear + CI-green + auto-mergeable + R7's unique findings all being real follow-ups (not new defect classes) all say "this PR is done." Adding the environmental context to Step 7.5 logic would help: `if mergeable && quality-gate-passed && fix-rate > 50% && round >= 4 → recommend merge after commit.` Candidate skill-audit enhancement.

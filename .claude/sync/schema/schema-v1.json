@@ -64,7 +64,8 @@
         "gated",
         "deprecated",
         "archived",
-        "generated"
+        "generated",
+        "partial"
       ]
     },
     "enum_hook_event": {

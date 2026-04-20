@@ -122,6 +122,21 @@ function sanitizeForShellArg(s) {
   return String(s).replace(/["`$\\\r\n\u2028\u2029\x00-\x1f\x7f]/g, "");
 }
 
+// Observability for post-precheck spawn failures (binary deleted between
+// resolveExecutable() and spawn(), permission flip, etc). Non-throwing,
+// single-line, redacts message to code + binary-basename so repo paths
+// don't land on stderr. (Qodo Compliance #3 R5, R4's silent-drop was a
+// known-unknown otherwise.)
+function logSpawnError(bin, err) {
+  const code = err && typeof err.code === "string" ? err.code : "UNKNOWN";
+  const base = typeof bin === "string" ? path.basename(bin) : "<unknown>";
+  try {
+    process.stderr.write(`[label-notify] spawn(${base}) ${code}\n`);
+  } catch {
+    // Writes to closed stderr are survivable; notifications are optional.
+  }
+}
+
 // Pre-check that the notify binary exists before we spawn. Returning the
 // absolute path on success lets us spawn with shell:false (reduces
 // PATH-hijack attack surface per Compliance #2 R4). Returning null tells
@@ -144,7 +159,7 @@ function runPowerShellToast(title, body) {
   // Silent-drop post-check race failures (binary deleted between check and
   // spawn). The pre-check above handles the common ENOENT path by
   // returning false upstream.
-  child.once("error", () => {});
+  child.once("error", (err) => logSpawnError(bin, err));
   child.unref();
   return true;
 }
@@ -159,7 +174,7 @@ function runOsascript(title, body) {
   const safeBody = sanitizeForShellArg(body);
   const script = `display notification "${safeBody}" with title "${safeTitle}"`;
   const child = spawn(bin, ["-e", script], { stdio: "ignore" });
-  child.once("error", () => {});
+  child.once("error", (err) => logSpawnError(bin, err));
   child.unref();
   return true;
 }
@@ -177,7 +192,7 @@ function runNotifySend(title, body) {
     ["--", safeTitle, safeBody],
     { stdio: "ignore" }
   );
-  child.once("error", () => {});
+  child.once("error", (err) => logSpawnError(bin, err));
   child.unref();
   return true;
 }

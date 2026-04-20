@@ -380,18 +380,41 @@ function applyAgentOutput(entry) {
 
   updateRecord(catalogFor(entry.file_path), entry.file_path, (cur) => {
     const base = cur ?? { path: entry.file_path };
-    const merged = { ...base, ...output };
+    // Strip prototype-pollution keys from agent output before spread. JSON
+    // can parse `__proto__` / `constructor` / `prototype` as own properties;
+    // even though `{...output}` uses CreateDataProperty and doesn't pollute
+    // the prototype directly, the own-key copies surprise downstream code
+    // (Object.assign, iteration, frozen-object assumptions). Agent output
+    // is semi-trusted (we spawn it, but the prompt is large and agent
+    // behaviour is not fully controlled). (Qodo Compliance #1 R5.)
+    const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+    const sanitizedOutput = {};
+    for (const key of Object.keys(output)) {
+      if (DANGEROUS_KEYS.has(key)) continue;
+      sanitizedOutput[key] = output[key];
+    }
+    const merged = { ...base, ...sanitizedOutput };
     // Lock primary key — never let agent output rewrite the record's path.
     // A hallucinated `path` would mismatch updateRecord's lookup key and
     // stall the job permanently. Pin after spread, before any other
     // protected-field logic. If `base.path` is missing / empty (corrupted
-    // record), fall back to the queue entry's file_path so the pin never
-    // produces undefined and permanently breaks the primary key. (Qodo
-    // Sugg#1 R4.)
-    merged.path =
-      typeof base.path === "string" && base.path.length > 0
+    // record), fall back to the queue entry's file_path. If BOTH are
+    // missing, throw rather than silently write `undefined` as the primary
+    // key — unreachable given upstream runAgentAsync validation of
+    // filePath, but defence-in-depth against hand-edited queue files.
+    // (Qodo Sugg#1 R4 + Sugg#5 R5.)
+    const pinnedPath =
+      typeof base.path === "string" && base.path.trim().length > 0
         ? base.path
-        : entry.file_path;
+        : typeof entry.file_path === "string" && entry.file_path.trim().length > 0
+          ? entry.file_path
+          : null;
+    if (!pinnedPath) {
+      throw new Error(
+        "applyAgentOutput: cannot pin record path (base.path and entry.file_path both missing)"
+      );
+    }
+    merged.path = pinnedPath;
     // Respect manual_override — don't let agent output clobber it.
     const protectedFields = new Set(
       Array.isArray(base.manual_override) ? base.manual_override : []

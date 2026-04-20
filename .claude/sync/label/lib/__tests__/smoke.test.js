@@ -139,6 +139,24 @@ test("agent-runner: injected spawner + queue round-trip", () => {
   const staleEntry = { ...q[0], spawned_at: 1, output_path: path.join(tmpDir, "nope.json") };
   assert.equal(classifyJob(staleEntry), "timed_out");
 
+  // Regression coverage for R5 Sugg#1: a corrupted queue entry with a
+  // negative or zero timeout_ms must fall back to DEFAULT_TIMEOUT_MS, not
+  // clamp to 0 and instantly mark every job past-deadline. Without the fix
+  // this assertion would read "timed_out" for a job spawned milliseconds
+  // ago, which defeats the entire defensive intent of the clamp.
+  const freshWithNegativeTimeout = {
+    ...q[0],
+    output_path: path.join(tmpDir, "nope.json"),
+    spawned_at: Date.now(),
+    timeout_ms: -1,
+  };
+  assert.equal(classifyJob(freshWithNegativeTimeout), "running");
+  const freshWithZeroTimeout = {
+    ...freshWithNegativeTimeout,
+    timeout_ms: 0,
+  };
+  assert.equal(classifyJob(freshWithZeroTimeout), "running");
+
   // Rewrite
   rewriteQueue(queuePath, []);
   assert.deepEqual(readQueue(queuePath), []);

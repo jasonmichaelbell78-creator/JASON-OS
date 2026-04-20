@@ -139,9 +139,18 @@ function loadScope(scopePath = DEFAULT_SCOPE_PATH) {
     empty.loadError = err;
     return empty;
   }
-  cachedMatcher = compileScope(scope);
-  cachedScopePath = scopePath;
-  return cachedMatcher;
+  // compileScope → globToRegex → validateGlob can throw on pathological
+  // input (my R1 hardening). Fail-closed rather than crashing the hook.
+  // (Qodo Sugg#6 R5 — R1 created a new throw path loadScope didn't catch.)
+  try {
+    cachedMatcher = compileScope(scope);
+    cachedScopePath = scopePath;
+    return cachedMatcher;
+  } catch (err) {
+    const empty = { matches: () => false };
+    empty.loadError = err;
+    return empty;
+  }
 }
 
 module.exports = {

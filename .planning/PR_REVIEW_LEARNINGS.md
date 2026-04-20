@@ -622,3 +622,53 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
 - **Extract shared helpers when cross-file reviewer framings point at the same pattern.** R4's Compliance item #2 (notify-binary PATH-hijack) was a fresh framing of R2's concern at a new call site. Rather than duplicating the R2 `resolveExecutable` into notification-label.js, moved it to `scripts/lib/resolve-exec.js` and imported from both. One file added, reduces future duplication for any hook that spawns an external binary.
 - **"No functional impact" in a reviewer's own rationale is a clear reject signal.** Applying a fix with no functional impact adds churn without value and can mask the deeper smell the reviewer almost saw. Log the smell as a follow-up candidate; don't paint over it with a cosmetic field-name change.
 - **R4 fix rate trend (56–67%) challenges the "signal-to-noise decays linearly across rounds" mental model.** Noise is stochastic; signal is whatever the reviewer catches. R4 caught two real defects (path-fallback edge case, notify-binary false-success), one propagation-worthy concern (PATH-hijack on notify binaries), and one code smell (dead-code conditional). Decay isn't the right frame — the right question is "did this round teach me something I didn't already know?" R4 did.
+
+#### Review #10: Piece 3 labeling mechanism (PR #8) — Round 5 (2026-04-20)
+
+**Source:** Qodo (Compliance + PR Suggestions). Still no Semgrep / SonarCloud / Gemini items since R3.
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 11 total (Critical: 0, Major: 1, Minor: 5, Trivial: 2, Advisory: 3).
+
+**Patterns Identified:**
+
+1. **I introduced a MAJOR logic bug while fixing a TRIVIAL defensive suggestion in R4.**
+   - Root cause: R4 Sugg#3 asked for timeout clamping. I applied `Math.max(0, timeoutRaw)` as the clamp floor, reasoning "non-negative is the lower bound." For a negative input this returns 0, which makes `now - spawnedAt > 0` true for any job spawned more than a millisecond ago. Net effect: **every job, on every sweep, would have been classified as past-deadline the moment its output file wasn't yet present.** The R4 fix was meant to prevent immediate timeouts from corruption; it guaranteed them instead. Qodo Sugg#1 in R5 caught this on the very next round.
+   - Prevention: (a) when applying a defensive clamp, trace the clamp through its downstream boundary check — a "safe lower bound" is only safe if the boundary check above that bound has the right semantics; (b) when the original concern is "a corrupted value could cause bad behaviour X," the fix must not make bad behaviour X *more likely* for the corrupted case; (c) any defensive-clamp fix needs a regression test for the corrupted-input case *before* commit, not after review surfaces the defect. Added regression test in `smoke.test.js` covering `timeout_ms: -1` and `timeout_ms: 0` — both must classify as `running` for a fresh entry.
+
+2. **Fixing a hardening rule can introduce a new failure path the existing fail-closed wrapper doesn't catch.**
+   - Root cause: R1 added `validateGlob` to reject pathological globs. `validateGlob` throws on violation, propagates via `globToRegex` into `compileScope`. The existing `loadScope` had a try/catch around JSON parse but NOT around `compileScope` — so a malformed `scope.json` was fail-closed but a malformed-*glob* scope.json would crash the hook with an uncaught throw. R5 Sugg#6 caught this gap.
+   - Prevention: when adding a new throw-path into a previously throw-free function, grep every caller's error handling — does the caller's try/catch cover the new throw, or only the old ones? Especially load-bearing for hook entry-points where an uncaught throw means hook-crash → hook-silently-disabled-for-user. Wrapped `compileScope` in loadScope's existing fail-closed pattern.
+
+3. **Re-rejecting on the same reviewer concern across rounds is correct when the threat model hasn't changed, even if the reviewer provides a better implementation.**
+   - Root cause: Qodo Sugg#7 (git status -z) appeared in R2 (broken impl — Qodo self-refuted), R3 (framed as compliance), and R5 (correct impl this time). The *implementation* improved across rounds; the *threat model* didn't — SESSION_END_PATHSPECS is a hardcoded allowlist of known repo-local files that don't contain embedded newlines. Same reject stands across all three rounds.
+   - Prevention: distinguish "reviewer provides better impl" from "threat model changed." The second triggers re-evaluation; the first doesn't. Document the threat-model argument once and reference it across rounds.
+
+4. **"Silent drop for post-check race" is still a known-unknown worth one line of observability.**
+   - Root cause: R4 added `child.once('error', () => {})` to notify spawns to prevent the unhandled-error crash after the `resolveExecutable` pre-check. The rationale was "ENOENT is handled by the pre-check; post-check race failures are vanishingly rare." True but R5 Compliance #3 correctly pointed out: "rare" doesn't mean "we shouldn't be able to see them when they happen." Cost: one sanitized stderr line per failure. Benefit: actually diagnosable when the race does hit.
+   - Prevention: silent-drop patterns are worth one sanitized-log line, not zero. The line should be minimal (error code + binary basename, not full message / full path) to avoid leaking context. Added `logSpawnError(bin, err)` helper emitting `[label-notify] spawn(<basename>) <code>`.
+
+**Resolution:** 11 parsed items → 8 fixed + 3 rejected = 11 dispositions ✓
+
+- **Fixed: 8 items**
+  - 1 MAJOR: `classifyJob` timeout clamp — fallthrough to `DEFAULT_TIMEOUT_MS` for non-positive / non-finite input, floor positive at 1000ms (Qodo Sugg#1, correcting my R4 Sugg#3 fix). **Regression test added** covering `timeout_ms: -1` and `timeout_ms: 0`.
+  - 5 MINOR: prototype-pollution key strip before spread in `applyAgentOutput` (Qodo Compliance #1); `resolveExecutable` handles paths and pre-existing extensions correctly (Qodo Sugg#2); `resolveExecutable` POSIX exec-bit check via `fs.accessSync` (Qodo Sugg#3); `loadScope` fail-closed on `compileScope` throws (Qodo Sugg#6); `notification-label` spawn error listeners log sanitized one-liner via `logSpawnError` (Qodo Compliance #3).
+  - 2 TRIVIAL: `resolveExecutable` trims and quote-strips PATH/PATHEXT entries (Qodo Sugg#4); `applyAgentOutput` throws if both `base.path` and `entry.file_path` missing — defence-in-depth against hand-edited queue files (Qodo Sugg#5).
+- **Deferred: 0 items**
+- **Rejected: 3 items**:
+  - **Qodo Compliance #2 unstructured stderr logs** — **cross-round dedup** (R1 + R2 + R4 rejection chain). Threat model unchanged: operator-visible stderr, not a remote log sink.
+  - **Qodo Sugg#7 git status -z** — **cross-round dedup** (R2 + R3 rejection). Qodo's R5 implementation is correct (unlike R2's broken one), but the threat model is unchanged — SESSION_END_PATHSPECS is a hardcoded allowlist of known repo-local files. ~16 LOC delta for an unreachable edge case doesn't pass cost/benefit.
+  - **Qodo Sugg#8 random suffix on outputPath filename** — **cross-round dedup** (R3 Sugg#7 pattern). Timestamp already provides de-facto uniqueness; random suffix reduces stem readability in `ls` / log output for negligible collision-probability gain.
+
+**Pending user action:**
+
+- Still pending from R1: SonarCloud S4036 Mark-as-Safe in UI. No new pending actions from R5.
+
+**Step 7.5 merge-trigger check (R5):** Fix rate = 8/11 = **73%**. Well above the 30%/50% thresholds. R5 surfaced a real MAJOR bug I introduced in R4 plus two genuine security concerns (prototype pollution, observability gap). No merge recommendation from the rule. Continuing normally — but acknowledging user frustration: each round adds commit churn, and R5's most valuable finding (timeout bug) was a bug *I* made in R4, which argues for tighter pre-commit verification rather than more rounds.
+
+**Key Learnings:**
+
+- **Defensive clamps need regression tests for the corrupted-input case, in the commit that adds them.** R4 added `Math.max(0, raw)` without a test that would've failed on a negative input and immediately showed the `now - spawnedAt > 0` interaction. One test, written at fix-time, would have caught this. Now covered in `smoke.test.js` with both `timeout_ms: -1` and `timeout_ms: 0` cases. **Rule:** whenever a defensive clamp or bound is added to handle "corrupted X can cause bad behaviour Y," write a test that *actually passes corrupted X* and asserts bad behaviour Y *doesn't* occur.
+- **I can introduce new throw-paths that existing fail-closed wrappers don't catch.** R1's `validateGlob` throw looked isolated to `globToRegex`, but it propagated through `compileScope` into `loadScope` — whose existing try/catch only covered JSON parsing. Whenever you add a throw to a library function, grep every caller's error handling and verify the throw lands inside a try, not outside one. Especially load-bearing for hook entry-points.
+- **Reviewer-implementation quality can improve across rounds without changing the underlying threat-model math.** Qodo's R5 git-status-z impl was correct; its R2 impl was admitted-broken. But the reason to reject wasn't "the impl is broken" — it was "the threat doesn't exist in this allowlist scenario." Document the threat-model argument once, reference it across rounds, and don't re-evaluate unless the threat model itself changed.
+- **Silent-drop error handlers should log one sanitized line, not zero.** The cost is negligible. The benefit is that "rare race-window failure" becomes diagnosable instead of phantom. Format: error code + binary basename, not full message or full path — minimizes leak surface while maximizing "I can tell this happened."
+- **R5 is peak irony: the highest-impact finding was a bug I caused by applying R4's defensive suggestion incorrectly.** This argues for stronger pre-commit self-review on defensive-code changes specifically: one question at commit-time — *does the clamped/validated value still meet the property the original code assumed?* For `Math.max(0, raw)`, the answer is obviously no for a downstream `> 0` check; asking the question would have caught it.

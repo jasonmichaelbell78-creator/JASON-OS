@@ -287,14 +287,18 @@ function classifyJob(entry, now = Date.now()) {
   if (!entry || typeof entry !== "object") return "failed";
   const outputPath = entry.output_path;
   const spawnedAt = Number(entry.spawned_at);
-  // Clamp timeout_ms to a finite non-negative number so a corrupted queue
-  // entry with negative / NaN / -Infinity doesn't immediately mark every
-  // job past-deadline. Positive-but-huge values are fine — they just
-  // mean the job has a longer grace window. (Qodo Sugg#3 R4.)
+  // Clamp timeout_ms so a corrupted queue entry can't mis-classify live
+  // jobs. R4's Math.max(0, raw) had a bug: for negative values it returns
+  // 0, which makes (now - spawnedAt > 0) true for every job on every sweep
+  // — the exact immediate-timeout it was meant to prevent. Fall through
+  // to DEFAULT_TIMEOUT_MS for non-positive or non-finite input, and floor
+  // positive values at 1000ms so a tiny corrupted value still gets a full
+  // sweep cycle to land. (Qodo Sugg#1 R5, correcting my R4 Sugg#3 fix.)
   const timeoutRaw = Number(entry.timeout_ms);
-  const timeoutMs = Number.isFinite(timeoutRaw)
-    ? Math.max(0, timeoutRaw)
-    : DEFAULT_TIMEOUT_MS;
+  const timeoutMs =
+    Number.isFinite(timeoutRaw) && timeoutRaw > 0
+      ? Math.max(1_000, timeoutRaw)
+      : DEFAULT_TIMEOUT_MS;
 
   if (!Number.isFinite(spawnedAt)) return "failed";
   const pastDeadline = now - spawnedAt > timeoutMs;

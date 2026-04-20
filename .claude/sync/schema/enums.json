@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "enums": {
     "type": {
       "values": [
@@ -73,10 +73,11 @@
         "gated",
         "deprecated",
         "archived",
-        "generated"
+        "generated",
+        "partial"
       ],
-      "description": "Lifecycle state of the file.",
-      "decision_ref": "D22"
+      "description": "Lifecycle state of the file. `partial` is a transient Piece 3 state (added in v1.1) for records whose async understanding-field fill is still in flight — valid in the live catalog, rejected at commit time by the pre-commit validator.",
+      "decision_ref": "D22; Piece 3 D11"
     },
     "hook_event": {
       "values": [

@@ -104,13 +104,17 @@ the ~milliseconds-to-seconds window before the async agent returns.
 
 `stub` is already in the Piece 2 enum — no action needed for that value.
 
-**Schema-bump implication (per Piece 2 D5 + `EVOLUTION.md`):** adding one
-enum value is a **minor version bump**, non-breaking. The actual
-`schema-v1.json` edit is scheduled to land with **Plan §S2** (where
-`validate-catalog.js` first reads the enum via ajv). Until then,
-CATALOG_SHAPE.md is the authoritative place the extended value is
-documented. After the bump, the schema moves from v1.0 → v1.1 and
-`schema_version` on every record (see §4.6) advances accordingly.
+**Schema-bump status (2026-04-20):** ✓ **LANDED.** Schema v1.0 → v1.1.
+`partial` is now present in `.claude/sync/schema/enums.json`,
+`schema-v1.json`, and documented in `SCHEMA.md` §8.4 + §11. Every record
+Piece 3 writes should stamp `schema_version: "1.1"`. The in-memory
+`extendStatusEnum` fallback in `validate-catalog.js` is retained as
+belt-and-suspenders so older schema files still validate cleanly during
+cross-repo sync windows.
+
+Per Piece 2 `EVOLUTION.md` §8 (mirror rule): SoNash must receive the same
+v1.1 bump when Piece 2 is ported there (Piece 5.5 and onward). Tracked in
+the `/todo` backlog.
 
 **Invariant:** `status: partial` records are **rejected at commit time** by
 the pre-commit validator (Plan §S6, D3). They are valid in the live catalog
@@ -308,3 +312,4 @@ all 26 universal columns plus any per-type extensions per Piece 2 §9.
 | Version | Date | Description |
 | --- | --- | --- |
 | 0.1 | 2026-04-20 | Initial draft — S1. Piece 3 additions documented; schema-v1.0 → v1.1 enum bump flagged for S2 landing. |
+| 0.2 | 2026-04-20 | Schema v1.0 → v1.1 bump landed (added `status: partial`) across enums.json + schema-v1.json + SCHEMA.md. §4.1 updated to reflect landed state + SoNash mirror obligation. |

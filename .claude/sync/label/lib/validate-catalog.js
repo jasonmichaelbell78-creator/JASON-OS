@@ -71,15 +71,6 @@ function getValidators() {
   // cross-repo sync windows.)
   extendStatusEnum(schema, "partial");
 
-  // Piece 3 adds machinery fields (`pending_agent_fill`, `manual_override`,
-  // `needs_review`, `last_hook_fire`, `schema_version`) on top of the Piece 2
-  // universal columns. Until those land as typed optional columns via a
-  // schema v1.2 bump (tracked in the /todo backlog), we relax the file_record
-  // subschema to allow additional properties. The rule layer below still
-  // enforces the semantic invariants (status:partial, pending_agent_fill,
-  // needs_review) so commit-time safety is unaffected.
-  relaxFileRecordAdditionalProperties(schema);
-
   // allErrors:false — fail-fast on first validation error. Silences the
   // ajv-allerrors-true DoS advisory (Semgrep) and matches production-grade
   // usage; we still emit a specific diagnostic for the first failure, which
@@ -107,37 +98,6 @@ function extendStatusEnum(schema, value) {
   }
 }
 
-/**
- * Relax `additionalProperties: false` on the file_record subschema so the
- * Piece 3 machinery fields don't trip schema validation. Scoped narrowly —
- * we only flip the file_record (and composite_record) definition, not the
- * whole schema.
- * @param {object} schema
- */
-function relaxFileRecordAdditionalProperties(schema) {
-  const locations = [schema.definitions, schema.$defs];
-  for (const container of locations) {
-    if (!container) continue;
-    for (const key of [
-      "file_record",
-      "fileRecord",
-      "composite_record",
-      "compositeRecord",
-    ]) {
-      const def = container[key];
-      if (def && typeof def === "object" && def.additionalProperties === false) {
-        def.additionalProperties = true;
-      }
-    }
-  }
-  // NOTE: we deliberately do NOT relax `schema.additionalProperties` at the
-  // top level. A flat-authored schema would mean "additionalProperties
-  // applies to the whole document," and flipping it globally dilutes
-  // strict-schema checks for every consumer — a fail-open posture. If a
-  // future schema is authored flat, add the targeted relaxation at the
-  // record-definition that actually needs it, not the document root.
-  // (Qodo Sugg R7 — removed top-level fallback.)
-}
 
 /**
  * Compile a validator for file records. Falls back to the whole schema if

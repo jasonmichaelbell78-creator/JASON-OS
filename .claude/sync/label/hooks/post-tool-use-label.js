@@ -309,7 +309,7 @@ function mergeRecord(existing, cheap, classification) {
     path: cheap.path,
     manual_override: [],
     needs_review: [],
-    schema_version: "1.1",
+    schema_version: "1.2",
   };
   // Never overwrite fields listed in manual_override.
   const protectedFields = new Set(
@@ -322,7 +322,7 @@ function mergeRecord(existing, cheap, classification) {
   }
   merged.content_hash = cheap.fingerprint;
   merged.last_hook_fire = now;
-  merged.schema_version = base.schema_version || "1.1";
+  merged.schema_version = base.schema_version || "1.2";
   merged.manual_override = Array.isArray(base.manual_override) ? base.manual_override : [];
   merged.needs_review = Array.isArray(base.needs_review) ? base.needs_review : [];
   merged.pending_agent_fill = false;

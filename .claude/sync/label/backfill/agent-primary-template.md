@@ -152,7 +152,7 @@ Agents emit these unless the hook is managing them directly:
   skill merges with existing overrides from the catalog)
 - `needs_review: []` — agents don't populate this; cross-check does
 - `last_hook_fire` — current UTC ISO-8601 timestamp
-- `schema_version: "1.1"` — current Piece 2 + Piece 3 schema version
+- `schema_version: "1.2"` — current Piece 2 + Piece 3 schema version
 
 ### Confidence reporting
 

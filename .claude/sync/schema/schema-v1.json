@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://jason-os.local/sync/schema/schema-v1.json",
   "title": "JASON-OS Sync-Mechanism Registry Schema",
-  "description": "Validation spec for sync-mechanism registry records (files.jsonl + composites.jsonl). Schema v1.0 — 26 universal file-level columns, 41 per-type extension fields, section records, migration-metadata, and composite records. Authoritative source: .claude/sync/schema/SCHEMA.md (§3-§9). Decision record: .planning/piece-2-schema-design/DECISIONS.md (D1-D32). Version info lives in enums.json (`schema_version`) and EVOLUTION.md; removed from this file so Ajv strict mode accepts draft-07 compliance.",
+  "description": "Validation spec for sync-mechanism registry records (files.jsonl + composites.jsonl). Schema v1.2 — 26 universal file-level columns + 5 Piece 3 machinery fields (pending_agent_fill, manual_override, needs_review, last_hook_fire, schema_version) + 41 per-type extension fields, section records, migration-metadata, and composite records. Authoritative source: .claude/sync/schema/SCHEMA.md (§3-§9). Decision record: .planning/piece-2-schema-design/DECISIONS.md (D1-D32); Piece 3 DECISIONS.md for machinery fields. Version info lives in enums.json (`schema_version`) and EVOLUTION.md; removed from this file so Ajv strict mode accepts draft-07 compliance.",
   "definitions": {
     "enum_type": {
       "type": "string",
@@ -469,7 +469,20 @@
           "type": "array",
           "items": { "$ref": "#/definitions/action_pin_entry" }
         },
-        "secret_bearing": { "type": "boolean" }
+        "secret_bearing": { "type": "boolean" },
+        "pending_agent_fill": { "type": "boolean" },
+        "manual_override": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "needs_review": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "last_hook_fire": {
+          "type": ["string", "null"]
+        },
+        "schema_version": { "type": "string" }
       },
       "allOf": [
         {
@@ -656,7 +669,20 @@
         "required_secrets": {
           "type": "array",
           "items": { "$ref": "#/definitions/external_dep_entry" }
-        }
+        },
+        "pending_agent_fill": { "type": "boolean" },
+        "manual_override": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "needs_review": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "last_hook_fire": {
+          "type": ["string", "null"]
+        },
+        "schema_version": { "type": "string" }
       },
       "additionalProperties": false
     }

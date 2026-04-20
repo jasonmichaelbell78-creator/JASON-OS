@@ -24,10 +24,18 @@ Top-level files added later:
 
 | File | Purpose | Built in |
 | --- | --- | --- |
-| `scope.json` | In-scope file patterns used by the PostToolUse hook | S3 |
+| `scope.json` | In-scope file patterns used by the PostToolUse hook | S3 ✓ |
 | `shared.jsonl` + `local.jsonl` | Primary catalog files (per D14) | S10 back-fill |
 | `composites-shared.jsonl` + `composites-local.jsonl` | Composite catalogs (per D14) | S10 |
 | `preview/` | Preview catalogs pending user approval (D9c gate) | S8 |
+
+## Hook wiring (NOT YET LIVE)
+
+`hooks/post-tool-use-label.js` lands in S3 as a fully-tested executable,
+but **is not yet registered in `.claude/settings.json`**. Flipping the hook
+live requires explicit user approval (per memory feedback on acknowledgment
+and project-scoped config). The user will surface this at the appropriate
+checkpoint; until then the hook is dormant code + unit tests only.
 
 ## Note on `skill/` vs `.claude/skills/label-audit/`
 

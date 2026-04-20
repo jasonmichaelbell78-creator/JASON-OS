@@ -1,129 +1,122 @@
 # Session Context — JASON-OS
 
 ## Current Session Counter
-9
+10
 
 ## Uncommitted Work
-No (on branch `piece-3-labeling-mechanism`, clean post-session-end-commit)
+No (session-end-commit.js finalizes below)
 
 ## Last Updated
-2026-04-19
+2026-04-20
 
 ## Quick Status
 
-**Session 9 COMPLETE — Piece 3 (labeling mechanism) fully planned, approved,
-awaiting execution.**
+**Session 10 COMPLETE — Piece 3 execution Sessions A+B both done; dormant
+hook wiring + schema v1.2 bump held for user-approval gates pre-S12.**
 
-**Piece 3 planning artifacts (`.planning/piece-3-labeling-mechanism/`):**
+**Piece 3 artifacts landed this session (11 commits, branch
+`piece-3-labeling-mechanism`):**
 
-- **DIAGNOSIS.md** (v2 — rewritten after user correction on pre-made
-  defaults): reframe to "source-of-truth is the load-bearing decision,"
-  4-question plain-language decision space, hard constraint surfaced (no
-  manual steps day-to-day)
-- **DECISIONS.md** — 21 decisions (D1–D19 + D12a + D15a); full safety net
-  posture; skills never primary mechanism
-- **PLAN.md** — 14 steps (S0–S14), 3–5 execution sessions (~20–30h Claude
-  work), self-audit PASS, 21/21 decision coverage; explicit cross-repo
-  "STOP" gate at S14
+- **S0** (`531c111`) — ajv + node-notifier devDeps + `.claude/sync/label/`
+  tree with 6 placeholder READMEs
+- **S1** (`231c417`) — `CATALOG_SHAPE.md`: 26 Piece 2 universals + 6 Piece 3
+  additions (status-enum extension + 5 machinery fields) + Piece 4 interface
+- **S2** (`97e0045`) — 7-module derivation library (sanitize, fingerprint,
+  confidence, catalog-io, agent-runner, derive, validate-catalog) + 12 smoke
+  tests passing under `node --test`
+- **S3** (`c895900`) — `post-tool-use-label.js` PostToolUse hook +
+  `scope.json` + `scope-matcher.js` + 12 smoke tests. Dormant until
+  settings.json wiring.
+- **Schema bump** (`4e42332`) — v1.0 → v1.1 adding `status: partial` across
+  SCHEMA.md / enums.json / schema-v1.json / EVOLUTION.md
+- **S4** (`a8505f6`) — `user-prompt-submit-label.js` backstop hook + 7 tests
+- **S5** (`334b9d1`) — `notification-label.js` OS-toast hook
+  (node-notifier + platform shell fallback) + 9 tests
+- **S6** (`e69768c`) — `.husky/pre-commit` Check 2 wired; validator
+  `relaxFileRecordAdditionalProperties` patch for Piece 3 fields
+- **S7** (`ccf44e7` + `d119d7b`) — `/label-audit` skill scaffold (v0.2):
+  SKILL.md + 3 reference docs; conversational invocation + Phase 8
+  self-audit (MUST) added per user feedback
 
-**Approved plan shape:**
+**Plus T17 fix (`bca1719`):** `scripts/session-end-commit.js` now commits
+the full allowlist atomically (SESSION_CONTEXT.md + `.planning/**/PLAN.md`
++ `.planning/**/PORT_ANALYSIS.md`) and honors `--no-push`.
 
-- Q1: catalog + `content_hash` fingerprint safety net (1d)
-- Q2: all three — PostToolUse write hook + pre-commit validator + audit skill
-- Q3: pre-commit + on-demand audit skill (3c)
-- Q4: heuristic + fingerprint-triggered re-check + agent audit skill (4c+4d)
-- Q5: pure-agent back-fill (most thorough)
-- Q6: multi-agent cross-check
-- Q7: checkpoint + preview + re-run (all three)
-- Q8: two-phase hook (sync cheap fields + async agent) + three-path failure
-  surfacing
-- Q9: automatic discovery (confidence + disagreement + pre-commit gate) +
-  conversational correction (no file editing)
-- Q10: heuristic + agent audit skill + Piece 1a/1b seed (all three)
-- Q11: shared.jsonl (mirrored) + local.jsonl (per-repo)
-- Q12: three real-time surfacing paths (exit code, prompt-submit,
-  OS notification) — no log-and-forget
-- Q13: eager atomic schema migration
-- Meta: one consolidated `/label-audit` skill; explicit cross-repo gates
+**Test suite: 40/40 passing** under `node --test`
+(12 lib + 12 PostToolUse + 7 UPS + 9 Notification).
 
-**CL findings baked into plan:**
+**Open gates held for user approval (pre-S12 insertion):**
+- Hook wiring in `.claude/settings.json` for S3/S4/S5 — batch-wires
+  between S11 audit checkpoint and S12 end-to-end tests. Rationale:
+  wiring before S10 back-fill creates orphan `partial` records against a
+  non-existent baseline.
+- Schema v1.1 → v1.2 bump (T27) to add Piece 3 machinery fields as typed
+  optional columns; currently patched via `relaxFileRecordAdditionalProperties`.
 
-- Claim 11: `ajv@8.18.0` installed extraneous → PLAN S0.1 declares devDep
-- Claim 12: `Lineage` is markdown body text, not YAML frontmatter → S2
-  `parseExistingFrontmatter` handles body-text pattern
-
-**Memory deltas this session (user-home memory, outside git):**
-
-- `feedback_deep_plan_no_preemptive_defaults` — DIAGNOSIS.md must not have
-  a pre-recommended-defaults table; defaults live inside individual
-  Discovery questions only
-- `feedback_plain_language_structure` — plain-language applies to document
-  STRUCTURE too; "axis A / option A1 / drift risk" is jargon
-- `feedback_skills_not_primary_mechanism` — skills are optional/forgettable;
-  primary determination/correction/validation must be automatic
-- MEMORY.md index updated with 3 new entries
-
-**Cross-session learnings worth surfacing next session:**
-
-- User corrected my pattern THREE TIMES in one session: pre-made defaults,
-  technical jargon, and recommend-and-move-on. All three now in memory.
-- Convergence-loop on DIAGNOSIS claims surfaced 2 real fixes (ajv dep,
-  Lineage pattern). Worth doing every L/XL plan.
-- Plan-gate discipline: user explicitly caught "I haven't made all the
-  decisions" when I summarized and moved on — my summaries cannot
-  substitute for their explicit yes/no.
+**Todos filed this session:** T25 (SoNash session-end port), T26 (SoNash
+schema mirror — Piece 5.5 territory), T27 (schema v1.2 bump), T28
+(`/migrate` skill — named-target port with deep-plan; consumes existing +
+yet-to-be-built processes).
 
 ## Next Session Goals
 
 ### Step 1 — `/session-begin`
-Counter 9 → 10. Branch: likely `piece-3-labeling-mechanism` still (execution
-branch per BRAINSTORM execution-per-piece pattern).
+Counter 10 → 11. Branch: `piece-3-labeling-mechanism` continuing.
 
-### Step 2 — Start Piece 3 execution (Session A of 5)
+### Step 2 — Piece 3 Session C: S8 back-fill orchestrator
 
-Execution Session A per PLAN.md:
-- **S0** — `npm install --save-dev ajv` + scaffold `.claude/sync/label/`
-- **S1** — write `CATALOG_SHAPE.md`
-- **S2** — build derivation library (`derive.js`, `fingerprint.js`,
-  `confidence.js`, `catalog-io.js`, `agent-runner.js`, `sanitize.js`,
-  `validate-catalog.js`)
-- **S3** — build PostToolUse write hook (two-phase sync+async, surfaces past
-  failures at Step 0)
+S8 is size **L (~4–6h)** — likely its own session. Builds
+`orchestrate.js` + three agent-prompt templates under
+`.claude/sync/label/backfill/`. Pure agent fleet + D8 multi-agent
+cross-check + D9 checkpoint/preview/re-run. Depends on S1–S2 only (both
+done). Consumes:
 
-Or revisit the plan, or work on something else entirely.
+- `BYTE_WEIGHTED_SPLITS.md` (lives in `/label-audit` skill reference; can
+  be cross-referenced or copied)
+- `DERIVATION_RULES.md` + `DISAGREEMENT_RESOLUTION.md` (same)
+- Piece 3 lib/ for catalog-io, derive, confidence, fingerprint
 
-### Pre-reading for Piece 3 execution
+### Pre-reading for S8
 
-- `.planning/piece-3-labeling-mechanism/PLAN.md` (14 steps)
-- `.planning/piece-3-labeling-mechanism/DECISIONS.md` (21 decisions)
-- `.claude/sync/schema/SCHEMA.md` (the contract Piece 3 builds against)
-- `scripts/lib/safe-fs.js` + `scripts/lib/sanitize-error.cjs` (helpers per
-  CLAUDE.md §2)
+- `.planning/piece-3-labeling-mechanism/PLAN.md` §S8 (full spec)
+- `.claude/skills/label-audit/reference/*.md` (prompt contract already
+  authored in S7)
+- `.claude/sync/label/lib/*` (helpers S8 orchestrator will call)
 
-### Carried forward from prior sessions
+### Alternative goals if not S8
 
-- **D19-skipped layers still GATED** (fresh D34 required): T18 (Layer 2 —
-  5 hooks), T19 (Layer 3 — 4 nav docs), T20 (systematic-debugging), T21
-  (validate-claude-folder)
-- **Outstanding user-action:** m1 — batch-mark 5 SonarCloud `S4036` PATH
-  hotspots in `scripts/session-end-commit.js` as Reviewed-Safe
+- T27 schema v1.2 bump (S, ~1h)
+- T28 `/migrate` skill deep-plan (user-directed)
+- S9 OVERRIDE_CONVERSATION_EXAMPLES.md (S, ~1h — unblocks the
+  conversational-resolution runbook referenced throughout the skill
+  docs)
+
+### Carried forward
+
+- **D19-skipped Foundation layers still GATED** (fresh D34 required): T18
+  (Layer 2 — 5 hooks), T19 (Layer 3 — 4 nav docs), T20
+  (systematic-debugging), T21 (validate-claude-folder)
+- **SoNash-backport queue:** T25 (session-end), T26 (schema mirror),
+  eventually Piece 5.5 full port
 
 ## Key artifact paths (for resume)
 
-**Piece 3 (planned this session, not yet executed):**
+**Piece 3 (Sessions A+B complete; Sessions C–E pending):**
 
 - Plan: `.planning/piece-3-labeling-mechanism/PLAN.md`
 - Decisions: `.planning/piece-3-labeling-mechanism/DECISIONS.md`
-- Diagnosis: `.planning/piece-3-labeling-mechanism/DIAGNOSIS.md`
-- Deep-plan state: `.claude/state/deep-plan.piece-3-labeling-mechanism.state.json`
-  (gitignored, phase=complete, approved)
+- Root: `.claude/sync/label/` (all lib/, hooks/, skill/, backfill/,
+  docs/, scope.json)
+- Audit skill: `.claude/skills/label-audit/` (SKILL.md + 3 reference docs)
+- Tests: `.claude/sync/label/lib/__tests__/smoke.test.js` +
+  `hooks/__tests__/*.test.js`
 
-**Upstream (Piece 2, complete):** `.claude/sync/schema/` (6 files)
+**Upstream (Piece 2, complete, bumped to v1.1):** `.claude/sync/schema/`
 
 **Branch state:**
 
-- JASON-OS: `piece-3-labeling-mechanism` branch (stacked on
-  `piece-2-schema-design`), pushed to origin after this session-end
-- SoNash: `CAS-41826` branch unchanged since Session 8
+- JASON-OS: `piece-3-labeling-mechanism` (11 commits ahead of `main` after
+  this session-end push)
+- SoNash: `CAS-41826` unchanged since Session 8
 
-**Active todos:** `.planning/todos.jsonl` (unchanged this session)
+**Active todos:** `.planning/todos.jsonl` (28 entries)

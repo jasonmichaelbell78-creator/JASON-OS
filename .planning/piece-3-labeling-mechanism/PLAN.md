@@ -7,6 +7,31 @@
 **Diagnosis:** `.planning/piece-3-labeling-mechanism/DIAGNOSIS.md`
 **Effort:** L/XL — 3–5 execution sessions
 
+## Progress log
+
+| Step | Status | Session | Commit(s) | Notes |
+| --- | --- | --- | --- | --- |
+| S0 | ✓ DONE | 10 | `531c111` | ajv+node-notifier devDeps; `.claude/sync/label/` tree with 6 READMEs |
+| S1 | ✓ DONE | 10 | `231c417` | `CATALOG_SHAPE.md` v0.2; Piece 4 interface pinned |
+| S2 | ✓ DONE | 10 | `97e0045` | 7-module derivation library; 12 smoke tests |
+| S3 | ✓ DONE | 10 | `c895900` | PostToolUse hook + scope.json + scope-matcher; 12 tests. **Settings.json wiring DEFERRED to post-S11 user-approval gate.** |
+| (schema) | ✓ DONE | 10 | `4e42332` | Piece 2 schema v1.0 → v1.1 (added `status: partial`) |
+| S4 | ✓ DONE | 10 | `a8505f6` | UserPromptSubmit backstop hook; 7 tests. **Wiring deferred.** |
+| S5 | ✓ DONE | 10 | `334b9d1` | Notification desktop-toast hook; 9 tests. **Wiring deferred.** |
+| S6 | ✓ DONE | 10 | `e69768c` | Pre-commit Check 2 wired live; validator `relax` patch for Piece 3 fields (T27 filed for proper v1.2 bump) |
+| S7 | ✓ DONE | 10 | `ccf44e7`, `d119d7b` | `/label-audit` skill v0.2 + 3 reference docs; conversational invocation + Phase 8 self-audit |
+| S8 | — PENDING | — | — | Back-fill orchestrator (L ~4-6h). Likely its own session. |
+| S9 | — PENDING | — | — | OVERRIDE_CONVERSATION_EXAMPLES.md |
+| S10 | — PENDING | — | — | Run JASON-OS back-fill |
+| S11 | — PENDING | — | — | Audit checkpoint |
+| S12 | — PENDING | — | — | End-to-end tests. **Settings.json hook wiring lands immediately before this.** |
+| S13 | — PENDING | — | — | SoNash handoff prep |
+| S14 | — PENDING | — | — | Cross-repo gate (user decision) |
+
+**Test suite after Sessions A+B:** 40/40 passing (`node --test`).
+**Dormant hook count:** 3 (PostToolUse, UserPromptSubmit, Notification).
+**Open schema bump:** T27 v1.1 → v1.2 (machinery-fields as typed columns).
+
 ---
 
 ## Purpose

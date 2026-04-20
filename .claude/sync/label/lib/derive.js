@@ -304,10 +304,15 @@ function extractYamlFrontmatter(text) {
       blockBuffer = [];
     }
     if (rawLine.trim().length === 0) continue;
-    const kv = /^([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(rawLine);
+    // Allow leading whitespace in the key capture so indented nested keys
+    // (e.g. under `metadata:`) actually match. Without the `(\s*)` prefix
+    // the kv regex would fail on any indented line and silently drop the
+    // nested data, leaving `currentNested` as an empty {} (Qodo Sugg#1 R3).
+    const kv = /^(\s*)([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(rawLine);
     if (!kv) continue;
-    const [, key, rawValue] = kv;
+    const [, indent, key, rawValue] = kv;
     const value = rawValue.trim();
+    const isIndented = indent.length >= 2;
     if (value === "|" || value === ">-" || value === "|-" || value === ">") {
       blockKey = key;
       blockBuffer = [];
@@ -323,7 +328,7 @@ function extractYamlFrontmatter(text) {
     // Inline value — strip matching quotes if present
     const stripped = /^"(.*)"$/.exec(value) ?? /^'(.*)'$/.exec(value);
     const clean = stripped ? stripped[1] : value;
-    if (currentNested !== null && /^\s{2,}/.test(rawLine)) {
+    if (currentNested !== null && isIndented) {
       currentNested[key] = clean;
     } else {
       out[key] = clean;

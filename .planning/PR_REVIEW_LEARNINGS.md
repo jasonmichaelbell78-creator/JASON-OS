@@ -526,3 +526,51 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
 - **The U+2028/U+2029 gap is easy to miss.** R1's `sanitizeForShellArg` covered ASCII control chars and common shell metacharacters but missed Unicode line separators. JS string literals + some shell parsers treat these as line breaks — worth including in any shell-arg/DSL-arg sanitizer regex as a default. Applied same `\u2028\u2029` expansion to one related sanitizer (`oneLine`) during R2.
 - **Readable filenames beat hashes when both portability and debuggability matter.** Qodo Sugg#6 suggested SHA-256 hashing the `rel` path for outputPath filenames. Stripping Windows-invalid chars + length cap preserves readability in `ls` / logs while still producing a valid filename on every OS. Debugging an orphaned pending-queue job is easier with `_claude_sync_label_lib_derive.js.1713619200000.json` than `a4b2…f0.1713619200000.json`.
 - **R2 fix rate is expected to trend down.** R1 handled 13/19 items (68%). R2 handled 5/11 items (45%) plus 3 advisory-rejects. Most R2 "items" are incremental suggestions on R1 fixes, not new defects. This matches the Step 7.5 expectation that signal-to-noise degrades across rounds — a third round will likely come in with <30% fix rate and Step 7.5 will recommend merging.
+
+#### Review #8: Piece 3 labeling mechanism (PR #8) — Round 3 (2026-04-20)
+
+**Source:** Qodo (Compliance + PR Suggestions). No Semgrep / SonarCloud / Gemini items this round.
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 9 total (Critical: 0, Major: 1, Minor: 5, Trivial: 2, Advisory: 1). Two bare "⚪ Unreviewed" compliance markers excluded per Review #5 rule.
+
+**Patterns Identified:**
+
+1. **The prediction that R3 would be noise was wrong — R3 surfaced the first real logic bug.**
+   - Root cause: Qodo Sugg#1 flagged `derive.js parseExistingFrontmatter`'s kv regex (`^([A-Za-z_][\w-]*)\s*:\s*(.*)$`) as missing a leading-whitespace allowance. Traced the effect: any indented nested key under `metadata:\n  key: value` failed the regex, hit `if (!kv) continue;`, and was silently dropped. The `currentNested` object was left empty. **This broke nested-frontmatter extraction for every file with a `metadata:` block.** Existing test only covered top-level keys, which is why 40/40 passed with the bug live.
+   - Prevention: reviewer-suggested regex hardening *can* surface real defects, not just noise. The R2-learnings prediction ("R3 will probably come in below 30%") was wrong — R3 fix rate was 67%. Do not pre-filter reviewer rounds as noise; each round still gets full triage. Added a regression test in `smoke.test.js` for nested-metadata extraction so this can't silently come back.
+
+2. **Test coverage that passes doesn't mean test coverage exists.**
+   - Root cause: "derive: parseExistingFrontmatter yaml + lineage body" tests top-level YAML keys and the lineage-body pattern — but never asserts any nested `metadata.*` access. So the test was green throughout the bug's lifetime, including R1 and R2.
+   - Prevention: when a reviewer-suggested fix touches a code path with existing tests, grep the tests for coverage of the *specific* case being fixed. If the existing test wouldn't have failed without the fix, add a regression test. Applied during R3 fixing before committing.
+
+3. **Option-injection defence on notify-send was missing despite R1's sanitize pass.**
+   - Root cause: R1 added `sanitizeForShellArg` to `runPowerShellToast` (msg.exe) and `runOsascript`, but `runNotifySend` (Linux notify-send) still passed raw `title`/`body` — plus no `--` flag to cap option parsing. A body starting with `--help` or `-t` would have been parsed as an option. Qodo Sugg#5 caught what R1's fix missed.
+   - Prevention: when sanitizing across multiple parallel platform paths (Win / macOS / Linux), verify each path individually — don't assume consistency. Now all three notify functions route through `sanitizeForShellArg`, and the arg-passing path uses `--` where the target tool supports it.
+
+4. **Bidi control chars are a real prompt-surface risk, not academic.**
+   - Root cause: R2 extended `oneLine` to strip `[\x00-\x1f\x7f]` (ASCII controls). R3 noted that Unicode bidi control chars (U+200E, U+200F, U+202A-E, U+2066-9) can visually reverse string order in a terminal — e.g. a `file_path` value containing RLO makes `hook.js` appear as `sj.kooh`. For a prompt-surface string that the user reads before deciding to retry/skip/fix, visual spoofing is a real attack. Plus U+2028/U+2029 are line breaks for some parsers. R2's ASCII-controls-only strip wasn't enough.
+   - Prevention: sanitizers for any string that will appear on the prompt surface or in terminal output MUST strip the full bidi-control set plus line separators, not just ASCII controls. Added both to `oneLine` in R3.
+
+**Resolution:** 9 parsed items → 6 fixed + 3 rejected = 9 dispositions ✓
+
+- **Fixed: 6 items**
+  - 1 MAJOR: `derive.js parseExistingFrontmatter` kv regex accepts leading whitespace + `indent.length >= 2` nesting check (Qodo Sugg#1).
+  - 5 MINOR: `agent-runner.classifyJob` returns `running` on JSON parse failure until deadline (Qodo Sugg#2); `applyAgentOutput` locks `merged.path = base.path` to prevent primary-key rewrite (Qodo Sugg#3); `parseFingerprint` lowercases the algorithm match (Qodo Sugg#4); `runNotifySend` adds `sanitizeForShellArg` + `--` flag (Qodo Sugg#5); `oneLine` extends to strip U+2028/U+2029 + Unicode bidi controls (Qodo Sugg#6).
+  - Regression test added: nested-metadata extraction in `smoke.test.js`.
+- **Deferred: 0 items**
+- **Rejected: 3 items**:
+  - **Qodo Sugg#7 (hash suffix on output filename)** — `Date.now()` already in the filename provides de-facto uniqueness; Qodo's own "Why" concedes "collisions highly improbable." Adding 12 hex chars reduces stem readability in logs for negligible gain. Same readability-over-hash reasoning as R2 Sugg#6's modification.
+  - **Qodo Sugg#8 (mkdirSync in library)** — **Cross-round dedup**: identical to R2 Sugg#4 which I rejected. Caller `processCurrentEdit` already `mkdirSync`s `AGENT_OUTPUT_DIR`. Qodo's own "Why" concedes "the caller in this PR already creates the directory." Auto-rejected per R2 disposition.
+  - **Qodo Compliance (Git porcelain parsing)** — **Same threat-model argument as R2 Sugg#7**: `session-end-commit.js` operates only on `SESSION_END_PATHSPECS` (controlled allowlist of known repo-local files). Paths with embedded newlines don't occur in that set. Cost of `-z` NUL parsing (Qodo itself called its own suggested implementation "broken for renames" in R2) not justified by defense-in-depth against an impossible-in-practice case.
+
+**Pending user action:**
+
+- Still pending from R1: Mark SonarCloud S4036 hotspot as Safe in UI. No new pending actions from R3.
+
+**Key Learnings:**
+
+- **R3 fix rate (67%) refutes the R2-era prediction that later rounds trend to noise.** Rounds trend toward *different kinds of findings* — earlier rounds surface the obvious first-scan stuff, later rounds surface subtler logic bugs that require full code-reading. R3's highest-impact finding (YAML kv regex) was a genuine defect that had been live since Piece 3 started. Don't pre-filter later rounds as noise; don't raise the bar for fix acceptance based on round number; Step 7.5's merge-trigger check is a *threshold* rule, not an expectation of decay.
+- **Regex-level reviewer suggestions can surface real defects, not just lint.** Qodo Sugg#1 looked like a stylistic fix for indentation support; investigating the `if (!kv) continue;` path revealed that every nested metadata key in the codebase had been silently dropped since the parser was written. Always trace the actual code path a regex change affects, don't auto-accept or auto-reject based on surface appearance.
+- **Existing tests passing doesn't mean the case you're fixing has coverage.** The test "parseExistingFrontmatter yaml + lineage body" passed throughout R1, R2, R3 — while the bug in question silently dropped nested keys under `metadata:`. When Qodo flagged the regex, grep-checking the test for specifically `metadata.*` access revealed zero coverage. Always read the test for the case being fixed, not just the function under fix — and if the test doesn't cover the case, add a regression line before committing.
+- **Parallel sanitizer paths need per-path audit, not batch trust.** R1 added `sanitizeForShellArg` across platforms but skipped `runNotifySend`. The mental model "we sanitize notifications" was true; the implementation "every notify path sanitizes" was false. For any N-platform code with parallel paths, verify each path explicitly.
+- **Bidi control stripping is cheap defense against a real spoofing surface.** U+202E (right-to-left override) and its siblings can rearrange terminal output so the displayed string doesn't match the underlying bytes. For strings that appear on the prompt surface before a user decision, always include the bidi-control range `[\u200e\u200f\u202a-\u202e\u2066-\u2069]` alongside ASCII control stripping. One extra `.replace` call, covers a class of attack that's hard to diagnose if it happens.

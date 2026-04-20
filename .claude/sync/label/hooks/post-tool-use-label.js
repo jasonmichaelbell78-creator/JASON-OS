@@ -381,6 +381,11 @@ function applyAgentOutput(entry) {
   updateRecord(catalogFor(entry.file_path), entry.file_path, (cur) => {
     const base = cur ?? { path: entry.file_path };
     const merged = { ...base, ...output };
+    // Lock primary key — never let agent output rewrite the record's path.
+    // A hallucinated `path` would mismatch updateRecord's lookup key and
+    // stall the job permanently. Pin after spread, before any other
+    // protected-field logic.
+    merged.path = base.path;
     // Respect manual_override — don't let agent output clobber it.
     const protectedFields = new Set(
       Array.isArray(base.manual_override) ? base.manual_override : []

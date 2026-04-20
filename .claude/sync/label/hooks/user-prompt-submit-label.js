@@ -85,13 +85,19 @@ function buildFailureWarning(failures) {
   const sorted = [...failures].sort(
     (a, b) => Number(a.entry.spawned_at) - Number(b.entry.spawned_at)
   );
-  // Strip all ASCII control characters (including ANSI escapes, NUL, DEL)
-  // and cap length so a poisoned queue entry can't break the warning's
-  // line structure, inject ANSI sequences into the terminal, or smuggle
-  // lines into the prompt surface.
+  // Strip all ASCII controls (ANSI escapes, NUL, DEL), Unicode line and
+  // paragraph separators (which JS/shell parsers may treat as line breaks),
+  // and Unicode bidi control chars (LRM/RLM/LRE/RLE/PDF/LRO/RLO/LRI/RLI/FSI/
+  // PDI — visual reordering / right-to-left spoofing) so a poisoned queue
+  // entry can't break warning line structure, inject ANSI sequences, smuggle
+  // lines into the prompt, or visually misrepresent the surfaced path.
   const oneLine = (value, fallback) => {
     if (typeof value !== "string" || value.length === 0) return fallback;
-    return value.replace(/[\x00-\x1f\x7f]/g, " ").slice(0, 500);
+    return value
+      .replace(/[\x00-\x1f\x7f]/g, " ")
+      .replace(/[\u2028\u2029]/g, " ")
+      .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, " ")
+      .slice(0, 500);
   };
   const lines = [];
   lines.push("[LABEL-SYSTEM — acknowledgement required]");

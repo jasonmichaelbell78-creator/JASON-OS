@@ -150,7 +150,16 @@ function runOsascript(title, body) {
 }
 
 function runNotifySend(title, body) {
-  const child = spawn("notify-send", [title, body], { stdio: "ignore" });
+  // Sanitize like the other notify paths + use `--` to end option parsing
+  // so a body/title starting with `-` can't be interpreted as a flag
+  // (Qodo Sugg#5 R3).
+  const safeTitle = sanitizeForShellArg(title);
+  const safeBody = sanitizeForShellArg(body);
+  const child = spawn(
+    "notify-send",
+    ["--", safeTitle, safeBody],
+    { stdio: "ignore" }
+  );
   child.once("error", () => {});
   child.unref();
   return true;

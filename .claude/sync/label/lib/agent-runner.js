@@ -312,6 +312,9 @@ function classifyJob(entry, now = Date.now()) {
   const spawnedAt = Number(entry.spawned_at);
   const timeoutMs = Number(entry.timeout_ms) || DEFAULT_TIMEOUT_MS;
 
+  if (!Number.isFinite(spawnedAt)) return "failed";
+  const pastDeadline = now - spawnedAt > timeoutMs;
+
   if (typeof outputPath === "string") {
     try {
       const st = fs.statSync(outputPath);
@@ -320,7 +323,12 @@ function classifyJob(entry, now = Date.now()) {
           JSON.parse(readTextWithSizeGuard(outputPath));
           return "complete";
         } catch {
-          return "failed";
+          // Output file exists but isn't valid JSON — most likely a partial
+          // write captured mid-stream by the sweep. Keep classifying as
+          // running until the deadline elapses; only escalate to `failed`
+          // once we're past the timeout and still can't parse. Prevents
+          // race-induced false negatives during normal sweep cadence.
+          return pastDeadline ? "failed" : "running";
         }
       }
     } catch (err) {
@@ -330,8 +338,8 @@ function classifyJob(entry, now = Date.now()) {
       // ENOENT / ENOTDIR — fall through to timeout / running classification.
     }
   }
-  if (!Number.isFinite(spawnedAt)) return "failed";
-  if (now - spawnedAt > timeoutMs) return "timed_out";
+
+  if (pastDeadline) return "timed_out";
   return "running";
 }
 

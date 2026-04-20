@@ -206,6 +206,18 @@ test("derive: parseExistingFrontmatter yaml + lineage body", () => {
 
   const nothing = parseExistingFrontmatter("dummy", "just plain text");
   assert.equal(nothing, null);
+
+  // Regression coverage for R3 Sugg#1: nested keys under an empty-value
+  // parent (e.g. `metadata:\n  key: value`) must populate the nested
+  // object, not get silently dropped by an overly strict kv regex.
+  const nested = parseExistingFrontmatter(
+    "dummy",
+    "---\nname: test\nmetadata:\n  tier: foundation\n  owner: claude\n---\n"
+  );
+  assert.equal(nested.name, "test");
+  assert.ok(nested.metadata, "metadata block should be populated");
+  assert.equal(nested.metadata.tier, "foundation");
+  assert.equal(nested.metadata.owner, "claude");
 });
 
 // --- validate-catalog.js ---

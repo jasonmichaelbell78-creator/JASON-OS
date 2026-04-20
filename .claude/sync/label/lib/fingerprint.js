@@ -53,7 +53,9 @@ function fingerprint(content) {
 function parseFingerprint(fp) {
   if (typeof fp !== "string") return null;
   const match = /^(sha256):([a-f0-9]{64})$/i.exec(fp);
-  return match ? { algorithm: match[1], hex: match[2].toLowerCase() } : null;
+  return match
+    ? { algorithm: match[1].toLowerCase(), hex: match[2].toLowerCase() }
+    : null;
 }
 
 /**

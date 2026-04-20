@@ -478,3 +478,51 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
 - **Stale reviewer findings still count toward the dispositions total.** Gemini's two stale mkdirSync findings were rejected with evidence, not silently dropped. The three rejected items cover two stale findings + one confirmed-redundant suggestion. Step 7 count check: fixed(13 reviewer items) + rejected(3 primary) + advisory-rejected(3 Compliance) = 19 ✓ matches the 19 primary items parsed. The 2 propagation-sweep fixes are bonus work, not review items. Todos T30/T31 are bundled non-review work, not counted.
 - **Whitelist-by-removal beats escape-and-hope for quote-delimited DSL strings.** AppleScript `display notification` takes quote-delimited strings; escape rules are subtle and context-dependent (backslash, backtick, dollar, control chars). Stripping all of them outright (`/["`$\\\r\n\x00-\x1f\x7f]/g`) is easier to reason about than correctly-ordered escapes. Same pattern applies to `msg.exe` on Windows — both funneled through one `sanitizeForShellArg` helper.
 - **SonarCloud "Security Hotspot" ≠ "Security Bug."** S4036 (PATH-based command search) is a hotspot because it depends on your PATH hygiene. The finding is correct; the response is to add a code comment explaining the tradeoff and Mark-as-Safe in the UI, not to hardcode an absolute `git` path and break portability.
+
+#### Review #7: Piece 3 labeling mechanism (PR #8) — Round 2 (2026-04-20)
+
+**Source:** Mixed — Semgrep + Qodo Compliance + Qodo PR Suggestions
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 11 total (Critical: 0, Major: 0, Minor: 4, Trivial: 4, Advisory: 3)
+
+**Patterns Identified:**
+
+1. **Platform-gated `shell:true` does not silence Semgrep — Semgrep's pattern is syntactic, not semantic.**
+   - Root cause: R1 fix set `shell: process.platform === "win32"` to keep Windows `.cmd` resolution working while reducing surface on POSIX. Semgrep's rule `javascript.lang.security.audit.spawn-shell-true.spawn-shell-true` fires on *any* truthy-ish expression in the `shell` slot — it doesn't evaluate the expression. The R1 fix reduced real surface but didn't clear the scanner.
+   - Prevention: for Node `spawn()`, the only pattern that reliably clears this rule is `shell: false` (or omitting `shell` entirely, defaulting to false). To keep Windows `.cmd` support with `shell: false`, resolve the target binary to an absolute path before spawning. Implemented a `resolveExecutable(name)` helper in `agent-runner.js` that walks `process.env.PATH` (honouring `PATHEXT` on Windows) and returns the first file match. Spawning the resolved absolute path lets Windows execute `.cmd` directly without shell.
+
+2. **Qodo occasionally self-refutes in its own "Why" field — read it carefully.**
+   - Root cause: two R2 Qodo suggestions (spawnSync for notify-send, `git status -z` parsing) came with "Why" text that explicitly flagged the proposed fix as broken or counterproductive. Qodo's scoring is imperfect; the "Why" sometimes exposes the flaw Qodo's own suggestion introduces.
+   - Prevention: Step 2 triage MUST read the full "Why" field before accepting or even planning a fix. When Qodo self-refutes, reject with a short note pointing at the self-refutation, and (if the underlying concern is real) propose a better alternative. The non-blocking `spawn()` + `child.once('error', () => {})` pattern beats `spawnSync` for the notify-send ENOENT concern.
+
+3. **R2+ cross-round dedup is load-bearing — repeated compliance items consume triage bandwidth otherwise.**
+   - Root cause: Qodo Compliance re-surfaced two items that R1 rejected with documented threat-model justification (missing-actor-identity, unstructured-stderr-logs). Without cross-round dedup the temptation is to re-evaluate and potentially flip; the dedup rule holds the line.
+   - Prevention: auto-reject repeat compliance items with a one-line reference to the R1 entry. Only re-examine if the threat model itself has changed (e.g., project flipped to multi-tenant). New *framings* of an old concern (R2's PATH-hijack reframing of R1's shell-risk) are fresh items and need their own disposition.
+
+**Resolution:** 11 parsed items → 5 fixed + 3 rejected + 3 advisory-rejected = 11 dispositions ✓
+
+- **Fixed: 5 reviewer items (+ 1 bonus defensive fix)**
+  - 4 MINOR: Semgrep #25 via `resolveExecutable` + `shell: false` (R1 follow-up); `sanitizeForShellArg` extended to strip U+2028/U+2029 (Qodo Sugg#1); `oneLine` extended to strip all ASCII control chars (Qodo Sugg#2); `.husky/pre-commit` blocks commit when validator missing AND catalogs staged (Qodo Sugg#3).
+  - 1 TRIVIAL: `post-tool-use-label.js` outputPath filename strips all Windows-invalid chars + length cap (Qodo Sugg#6, modified to keep readable stem instead of hash).
+  - **Bonus:** Added `child.once('error', () => {})` to `runOsascript`, `runPowerShellToast`, `runNotifySend` spawn calls — addresses Qodo Sugg#5's underlying ENOENT concern without the spawnSync event-loop block.
+- **Deferred: 0 items**
+- **Rejected: 3 items** (with justification):
+  - **Qodo Sugg#4 (mkdirSync in library)** — redundant. `processCurrentEdit` already `mkdirSync`s `AGENT_OUTPUT_DIR` at L219-220 before calling `runAgentAsync`. Qodo's own "Why" concedes this.
+  - **Qodo Sugg#5 (spawnSync for notify-send)** — Qodo self-refutes: its "Why" explicitly notes the proposed fix "would block the event loop, breaking the script's non-blocking intention." Underlying ENOENT concern addressed via the bonus `child.once('error')` listeners instead.
+  - **Qodo Sugg#7 (git status -z parsing)** — Qodo self-refutes: its "Why" notes "the provided -z parsing code is broken for renames." Also `session-end-commit.js` only processes the SESSION_END_PATHSPECS allowlist (known repo-local files) where paths with spaces don't occur in practice.
+- **Advisory-rejected: 3 items** (Qodo Compliance ⚪):
+  - PATH hijacking — inherent to any PATH-relative binary resolution; mitigating fully would hardcode absolute paths and break cross-platform portability. Threat only materializes if an attacker has write to a PATH directory (at which point they can do anything). Same threat-model argument as R1 shell-risk.
+  - Audit-trail missing user identity — **repeat from R1**, auto-rejected (single-user local-dev infra, no multi-tenant audit requirement).
+  - Unstructured stderr logs — **repeat from R1**, auto-rejected (operator-visible stderr, not a remote log sink).
+
+**Pending user action:**
+
+- Still pending from R1: Mark SonarCloud S4036 hotspot as Safe in the UI.
+- No new pending actions from R2.
+
+**Key Learnings:**
+
+- **`shell: false` + absolute-path resolution is the portable Windows `.cmd` pattern.** Node's `spawn()` on Windows can run `.cmd`/`.bat` without `shell:true` only if the *full* executable name (with extension) or an absolute path is given. A small `resolveExecutable` helper (PATH + PATHEXT walk, first-match wins) avoids adding a `which`-style dep while cleanly silencing the spawn-shell-true rule. Cost: a handful of `statSync` calls at hook-spawn time — negligible in practice.
+- **The U+2028/U+2029 gap is easy to miss.** R1's `sanitizeForShellArg` covered ASCII control chars and common shell metacharacters but missed Unicode line separators. JS string literals + some shell parsers treat these as line breaks — worth including in any shell-arg/DSL-arg sanitizer regex as a default. Applied same `\u2028\u2029` expansion to one related sanitizer (`oneLine`) during R2.
+- **Readable filenames beat hashes when both portability and debuggability matter.** Qodo Sugg#6 suggested SHA-256 hashing the `rel` path for outputPath filenames. Stripping Windows-invalid chars + length cap preserves readability in `ls` / logs while still producing a valid filename on every OS. Debugging an orphaned pending-queue job is easier with `_claude_sync_label_lib_derive.js.1713619200000.json` than `a4b2…f0.1713619200000.json`.
+- **R2 fix rate is expected to trend down.** R1 handled 13/19 items (68%). R2 handled 5/11 items (45%) plus 3 advisory-rejects. Most R2 "items" are incremental suggestions on R1 fixes, not new defects. This matches the Step 7.5 expectation that signal-to-noise degrades across rounds — a third round will likely come in with <30% fix rate and Step 7.5 will recommend merging.

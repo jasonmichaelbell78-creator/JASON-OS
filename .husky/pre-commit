@@ -41,6 +41,18 @@ if is_skipped "labels"; then
 elif command -v node >/dev/null 2>&1; then
   LABEL_VALIDATOR=".claude/sync/label/lib/validate-catalog.js"
   if [ ! -f "$LABEL_VALIDATOR" ]; then
+    # If any label-catalog files are staged, the validator MUST run — skipping
+    # silently would let invalid state (status:partial, pending_agent_fill,
+    # non-empty needs_review) land in a commit. Block until the validator is
+    # restored or the catalog changes are unstaged. Advisory skip only applies
+    # when no catalog files are in the staged set.
+    if git diff --cached --name-only | grep -Eq '^\.claude/sync/label/([^/]+\.jsonl|preview/)'; then
+      echo "" >&2
+      echo "  label validator missing ($LABEL_VALIDATOR) but label catalogs are staged" >&2
+      echo "  Commit blocked to prevent invalid label-catalog state from landing." >&2
+      echo "  Restore the validator file or unstage the catalog changes." >&2
+      exit 1
+    fi
     echo "  label validator not found ($LABEL_VALIDATOR) — label validation skipped (advisory)" >&2
   elif ! node "$LABEL_VALIDATOR" --staged; then
     echo "" >&2

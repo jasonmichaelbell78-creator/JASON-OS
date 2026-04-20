@@ -224,9 +224,16 @@ function processCurrentEdit(payload) {
 
   try {
     fs.mkdirSync(AGENT_OUTPUT_DIR, { recursive: true });
+    // Strip all filesystem-invalid characters (slashes, Windows-reserved
+    // `<>:"|?*`, and control chars) + cap length so a path with unusual
+    // chars doesn't produce an invalid output filename. Keeps the stem
+    // human-readable in logs rather than hashing.
+    const safeStem = rel
+      .replace(/[\\/<>:"|?*\x00-\x1f]/g, "_")
+      .slice(0, 120);
     const outputPath = path.join(
       AGENT_OUTPUT_DIR,
-      `${rel.replace(/[\\/]/g, "_")}.${Date.now()}.json`
+      `${safeStem}.${Date.now()}.json`
     );
     const prompt = buildAgentPrompt(rel, classification);
     agentRunner.runAgentAsync({

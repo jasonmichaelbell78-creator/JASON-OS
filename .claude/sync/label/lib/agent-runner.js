@@ -59,13 +59,51 @@ function newJobId() {
  * @param {object} [args.env]
  * @returns {{pid: number | null, spawnedAt: number}} spawn metadata
  */
+function resolveExecutable(name) {
+  // Walk process.env.PATH (honouring PATHEXT on Windows) to find `name`'s
+  // absolute path. Returning an absolute path lets us spawn with
+  // shell:false on every platform — Windows can then resolve .cmd/.bat
+  // without needing the shell, which closes the spawn-shell-true finding
+  // (Semgrep #25, R2 follow-up to R1 #22).
+  const pathEnv = process.env.PATH || "";
+  const sep = process.platform === "win32" ? ";" : ":";
+  const exts = process.platform === "win32"
+    ? (process.env.PATHEXT || ".COM;.EXE;.BAT;.CMD").split(";")
+    : [""];
+  const dirs = pathEnv.split(sep).filter(Boolean);
+  for (const dir of dirs) {
+    for (const ext of exts) {
+      const candidate = path.join(dir, name + ext);
+      try {
+        if (fs.statSync(candidate).isFile()) return candidate;
+      } catch {
+        // Not found in this dir, try next. Most PATH entries miss on any
+        // given name — the throw-per-miss is the hot loop, not an error.
+      }
+    }
+  }
+  return null;
+}
+
 function defaultHeadlessSpawner({ prompt, outputPath, timeoutMs, env }) {
-  // shell:true is required on Windows so spawn resolves `claude` -> `claude.cmd`.
-  // On POSIX, `claude` is a regular executable — shell:false is safer and
-  // avoids the spawn-shell-true injection surface (Semgrep #22).
-  const child = spawn("claude", ["-p", "--output-format=json"], {
+  const claudeBinary = resolveExecutable("claude");
+  if (!claudeBinary) {
+    // No claude binary in PATH. Emit the same structured error shape as an
+    // async spawn failure so the next Step-0 sweep surfaces via
+    // applyAgentOutput's `output.error` path instead of hanging as
+    // timed_out.
+    try {
+      fs.writeFileSync(
+        outputPath,
+        JSON.stringify({ error: "spawn failed: claude binary not found in PATH" })
+      );
+    } catch {
+      // If marker write fails, pending-queue sweep still times out the job.
+    }
+    return { pid: null, spawnedAt: Date.now() };
+  }
+  const child = spawn(claudeBinary, ["-p", "--output-format=json"], {
     detached: true,
-    shell: process.platform === "win32",
     stdio: ["pipe", "ignore", "ignore"],
     env: { ...process.env, ...(env ?? {}), LABEL_AGENT_OUTPUT_PATH: outputPath },
     windowsHide: true,

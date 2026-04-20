@@ -111,9 +111,11 @@ function defaultShellRunner({ title, body }) {
 
 // Strip characters that can break out of a shell/AppleScript string literal
 // OR carry control semantics. Quote-escaping alone is insufficient defence
-// against injection when the source string is not fully trusted.
+// against injection when the source string is not fully trusted. Includes
+// U+2028 / U+2029 — Unicode line/paragraph separators that JS string
+// literals treat as newlines (and some parsers treat as statement breaks).
 function sanitizeForShellArg(s) {
-  return String(s).replace(/["`$\\\r\n\x00-\x1f\x7f]/g, "");
+  return String(s).replace(/["`$\\\r\n\u2028\u2029\x00-\x1f\x7f]/g, "");
 }
 
 function runPowerShellToast(title, body) {
@@ -127,6 +129,9 @@ function runPowerShellToast(title, body) {
     ["*", "/TIME:5", `${safeTitle}: ${safeBody}`],
     { stdio: "ignore", windowsHide: true }
   );
+  // Silent-drop ENOENT / EACCES from missing notify binary — notifications
+  // are non-essential, and an unhandled 'error' event crashes the parent.
+  child.once("error", () => {});
   child.unref();
   return true;
 }
@@ -139,12 +144,14 @@ function runOsascript(title, body) {
   const safeBody = sanitizeForShellArg(body);
   const script = `display notification "${safeBody}" with title "${safeTitle}"`;
   const child = spawn("osascript", ["-e", script], { stdio: "ignore" });
+  child.once("error", () => {});
   child.unref();
   return true;
 }
 
 function runNotifySend(title, body) {
   const child = spawn("notify-send", [title, body], { stdio: "ignore" });
+  child.once("error", () => {});
   child.unref();
   return true;
 }

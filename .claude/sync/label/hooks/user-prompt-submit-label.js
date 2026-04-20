@@ -85,11 +85,13 @@ function buildFailureWarning(failures) {
   const sorted = [...failures].sort(
     (a, b) => Number(a.entry.spawned_at) - Number(b.entry.spawned_at)
   );
-  // Strip CR/LF/tabs and cap length so a poisoned queue entry can't break
-  // the warning's line structure or inject lines into the prompt surface.
+  // Strip all ASCII control characters (including ANSI escapes, NUL, DEL)
+  // and cap length so a poisoned queue entry can't break the warning's
+  // line structure, inject ANSI sequences into the terminal, or smuggle
+  // lines into the prompt surface.
   const oneLine = (value, fallback) => {
     if (typeof value !== "string" || value.length === 0) return fallback;
-    return value.replace(/[\r\n\t]/g, " ").slice(0, 500);
+    return value.replace(/[\x00-\x1f\x7f]/g, " ").slice(0, 500);
   };
   const lines = [];
   lines.push("[LABEL-SYSTEM — acknowledgement required]");

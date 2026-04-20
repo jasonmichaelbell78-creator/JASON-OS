@@ -9,12 +9,12 @@ description: >-
   validator (§S6) even if this skill is never invoked.
 compatibility: agentskills-v1
 metadata:
-  version: 0.1
+  version: 0.2
   short-description: Audit + refresh label catalogs
 ---
 
 <!-- prettier-ignore-start -->
-**Document Version:** 0.1 (initial)
+**Document Version:** 0.2
 **Last Updated:** 2026-04-20 (Session #10)
 **Status:** ACTIVE (scaffolded in Piece 3 S7; real agent fleet wiring lands in §S8)
 **Lineage:** native — JASON-OS Piece 3
@@ -41,7 +41,12 @@ skill is never invoked, the catalog stays correct via the hook + pre-commit
 layers. Skill absence never breaks label-system correctness — only
 postpones drift detection until a commit trips the validator.
 
-## Invocation Patterns
+## Invocation — flag form AND conversational
+
+Both work. Flags are just the machine-readable sugar; Claude parses
+natural-language requests into the same scope set.
+
+### Flag form
 
 ```
 /label-audit                    # all in-scope files in both catalogs
@@ -51,10 +56,46 @@ postpones drift detection until a commit trips the validator.
 /label-audit --pending-only     # records with pending_agent_fill == true
 /label-audit --composites       # composite detection pass only
 /label-audit --sections         # section re-detection pass only
+/label-audit --days=<N>         # override the --recent window
+/label-audit --dry-run          # produce findings + preview, do NOT promote
 ```
 
-Flags are combinable: `/label-audit --recent --path=".claude/hooks/**/*.js"`
-runs the audit on hook files edited in the last 7 days.
+Flags are combinable: `/label-audit --recent --path=".claude/hooks/**/*.js"`.
+
+### Conversational form
+
+Claude MUST recognize these phrasings as `/label-audit` invocations and
+parse them into the equivalent flag set:
+
+| User says | Flags derived |
+| --- | --- |
+| "audit the labels" / "refresh the catalogs" | `/label-audit` (full pass) |
+| "audit recent changes" / "check what I edited this week" | `--recent` |
+| "check the hooks for drift" / "audit the hooks" | `--path=.claude/hooks/**/*` (path derived from the named area) |
+| "check skills edited in the last 3 days" | `--recent --days=3 --path=.claude/skills/**/*` |
+| "are there any stubs lingering?" / "audit stubs" | `--stub-only` |
+| "what's pending agent fill?" / "check pending" | `--pending-only` |
+| "find new composites" / "look for composite candidates" | `--composites` |
+| "re-check sections in CLAUDE.md" | `--sections --path=CLAUDE.md` |
+| "preview the audit without promoting" | `--dry-run` |
+
+**Disambiguation rule:** if the user's request is ambiguous — e.g., "audit
+the scripts" could mean `scripts/**/*` or just the `script` type — ask
+ONE clarifying question before dispatching agents. Never assume when an
+agent fleet spin-up is at stake.
+
+**Mid-flow course-correction:** the user can redirect at any phase:
+
+- During Phase 1 (scope) → "actually just the hooks" → reset and re-scope
+- During Phase 2 (batch preview) → "16 agents is too many, cap it at 4"
+  → repack with tighter TARGET_KB_PER_AGENT
+- During Phase 5 (synthesis) → "skip the composite findings for now" →
+  defer composite arbitration to a follow-up invocation
+- During Phase 6 (arbitration) → "change my mind, auto-derive type on
+  derive.js again" → remove `type` from that record's `manual_override`
+
+Treat the skill as an interactive partner, not a CLI. The flag form is
+a precision fallback for when you want to bypass the dialogue.
 
 ## When to Use
 
@@ -160,6 +201,72 @@ Like the back-fill orchestrator (§S8), `/label-audit` writes its resolved
 output to `.claude/sync/label/preview/` first. On user approval, the
 preview atomically promotes into the real catalog via `catalog-io.js`.
 
+### Phase 8 — Self-audit (MUST)
+
+Before declaring done, verify the run produced what it promised. Each
+item is a hard check — any failure blocks closure and surfaces via D15.
+
+**Coverage checks:**
+
+- [ ] **Every targeted file has an outcome.** The scoped target set
+      (Phase 1) equals the set of files that appear in the synthesis
+      summary. Missing files = silent drop = hard fail.
+- [ ] **No silent skips.** Every file is either `clean` / `needs_review` /
+      `unreachable` (D15-surfaced). There is no fourth state.
+- [ ] **Byte-weighted split within bounds.** Every batch's total weight
+      is ≥ 50 KB and ≤ 200 KB (outside the 120-150 target is fine; 0-byte
+      or huge-single-batch is not).
+
+**Invariant checks:**
+
+- [ ] **No `status: partial` in the preview.** `partial` is a transient
+      hook state; audit output must resolve to `active` / `stub` / etc.
+- [ ] **`manual_override` + `needs_review` are disjoint.** A field cannot
+      be both user-overridden AND flagged for review.
+- [ ] **Every arbitrated field has an audit-trail entry.**
+      `.claude/state/label-override-audit.jsonl` grew by exactly the
+      number of fields the user resolved in Phase 6.
+- [ ] **Agent independence preserved.** No agent's output references
+      another agent's output. (Verified by inspecting agent prompts +
+      the absence of cross-agent context in the input envelopes.)
+
+**Empty-output detection** (Windows 0-byte bug, per
+`feedback_agent_output_files_empty`):
+
+- [ ] **Zero agents returned a 0-byte output file.** Any that did were
+      retried once via task-notification result; persistent empties got
+      filed as `unreachable`.
+
+**Promotion checks** (if not `--dry-run`):
+
+- [ ] **Preview → real was atomic.** `catalog-io.safeRenameSync`
+      succeeded; no partial catalog state on disk.
+- [ ] **Real catalog passes `validate-catalog.js`.** Run the validator
+      against the promoted catalog; non-zero exit blocks closure.
+
+**Ledger check:**
+
+- [ ] **The agent-runner pending queue (`.claude/state/label-pending-
+      failures.jsonl`) has no NEW entries** from this run. Audit-skill
+      agents run inline (via the Task tool), not via the hook's detached
+      subprocess path — they should not touch the pending queue.
+
+Self-audit output format (append to the Phase 5 synthesis summary):
+
+```
+Self-audit
+  ✓ coverage: 37/37 files accounted for
+  ✓ invariants: status clean, overrides disjoint, trail complete (2 rows)
+  ✓ empty-output: 0 retries needed
+  ✓ promotion: atomic rename succeeded, validator clean
+  ✓ pending queue: no new entries
+  VERDICT: PASS
+```
+
+Any `✗` → VERDICT: FAIL → surface via D15, do NOT promote, present the
+failure list to the user with decision options (retry / rollback / defer
+the failing files).
+
 ## Arguments reference
 
 | Flag | Default | Effect |
@@ -234,3 +341,4 @@ confirmed clean.
 | Version | Date | Description |
 | --- | --- | --- |
 | 0.1 | 2026-04-20 | Initial scaffold — invocation patterns, phases, reference-file layout. Agent-fleet wiring lives in the back-fill orchestrator (§S8); this skill will import from there once §S8 lands. |
+| 0.2 | 2026-04-20 | Added conversational-invocation recognition table + mid-flow course-correction contract. Added Phase 8 self-audit (MUST) with coverage / invariant / empty-output / promotion / ledger checks + PASS/FAIL verdict shape. |

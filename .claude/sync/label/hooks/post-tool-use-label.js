@@ -127,8 +127,14 @@ function drainPendingQueue() {
           if (!cur) return cur;
           return { ...cur, pending_agent_fill: false };
         });
-      } catch {
-        // Non-fatal: the failure surfaces regardless.
+      } catch (err) {
+        // Non-fatal for user flow — the verdict is still surfaced via the
+        // failures array below. Log so operators can diagnose recurring
+        // catalog-write failures instead of silently swallowing them.
+        logger.error(
+          `label-hook catalog-clear failed for ${entry.file_path}`,
+          err
+        );
       }
     } else {
       remaining.push(entry);
@@ -353,6 +359,16 @@ function applyAgentOutput(entry) {
       return { ...cur, pending_agent_fill: false, status: cur.status || "partial" };
     });
     throw new Error(output.error);
+  }
+
+  // Reject null, arrays, and primitives — applying a non-object to the
+  // record would corrupt the catalog merge below.
+  if (!output || typeof output !== "object" || Array.isArray(output)) {
+    updateRecord(catalogFor(entry.file_path), entry.file_path, (cur) => {
+      if (!cur) return cur;
+      return { ...cur, pending_agent_fill: false, status: cur.status || "partial" };
+    });
+    throw new Error("agent output invalid (expected JSON object)");
   }
 
   updateRecord(catalogFor(entry.file_path), entry.file_path, (cur) => {

@@ -414,3 +414,67 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
   `console.log(e.message)` dump, so they weren't counted as propagation
   targets. Rule: propagation identifies the _pattern_, not the _token_ —
   context-check before fanning out.
+
+#### Review #6: Piece 3 labeling mechanism (PR #8) — Round 1 (2026-04-20)
+
+**Source:** Mixed — SonarCloud + Semgrep + Qodo Code Review + Qodo PR Suggestions + Qodo Compliance + Gemini
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 19 total (Critical: 0, Major: 6, Minor: 10, Trivial: 3)
+
+**Patterns Identified:**
+
+1. **Hook spawn paths need async-error wiring, not just sync try/catch.**
+   - Root cause: `agent-runner.defaultHeadlessSpawner` used `spawn()` with `detached + shell:true` but no `child.once('error', ...)`. Caller's try/catch only covers synchronous exceptions — async ENOENT/EACCES would crash the parent hook. Same bug shape as a generic-purpose agent spawn loop.
+   - Prevention: any `spawn()` in a hook context MUST attach an `error` listener AND persist the failure somewhere the next sweep will see (in this case, a `{ error }` marker at `outputPath` so `applyAgentOutput` surfaces it via its existing error path). Sync-only error handling is insufficient for detached children.
+
+2. **`shell:true` is a platform concession, not a default.**
+   - Root cause: `shell:true` was set unconditionally to handle `claude` → `claude.cmd` resolution on Windows. Semgrep flagged it as a generic injection surface even though the command name is a constant.
+   - Prevention: gate `shell:true` on `process.platform === "win32"` when the reason is Windows-specific `.cmd` resolution. On POSIX, `shell:false` removes the finding and reduces attack surface.
+
+3. **`existsSync + statSync` pre-check is a propagation target, not a single bug.**
+   - Root cause: Piece 3 new code repeated the TOCTOU pattern in **four** sites (`readQueue`, `classifyJob`, `appendQueueEntry`, `readCatalog`). Qodo Bug#1 only cited the first three; the fourth was found during the mandatory propagation sweep.
+   - Prevention: replace with `try { statSync(...) } catch (ENOENT → return default / ENOENT → fall through)`. Propagation sweep grep: `fs\.existsSync\s*\(.*fs\.statSync` across new diff files. Pre-existing defensive sites with downstream try/catch on the read (e.g. `session-end-commit.js:141`) are not propagation targets — context-check per Review #5.
+
+4. **Stale Gemini findings on already-wrapped code.**
+   - Root cause: Gemini flagged `mkdirSync` in `post-tool-use-label.js:220` and `catalog-io.js:109` as unwrapped — both are clearly inside `try { ... } catch (err) { throw new Error(...sanitize(err)) }` blocks. The finding referenced the right lines but missed the surrounding context.
+   - Prevention: multi-source convergence requires cross-checking the cited location against the current HEAD before acting. Two reviewer sources agreeing elevates; one reviewer disagreeing with the codebase is grounds for reject-with-evidence. Per Review #1 pattern #4, convergence works both ways.
+
+5. **Qodo Compliance ⚪ items are advisory, not action-required (same as Review #5 finding).**
+   - Root cause: four informational Compliance warnings (missing actor in audit, notification leaks internal paths, stderr path logging, shell-spawn usage). The ⚪ marker matches the Review #5 rule — no specific defect, context-dependent on threat model.
+   - Prevention: batch-reject informational Compliance items with a one-line threat-model rationale (single-user local-dev infrastructure, no multi-tenant audit requirement), file under Rejected in learning entry. Only escalate if a specific defect is named.
+
+6. **Dependency Review Scorecard warnings are posture, not vulnerabilities.**
+   - Root cause: Dependency Review flagged 3 low-Scorecard packages (`growly`, `node-notifier`, `shellwords`) — all transitive/direct deps of our single `node-notifier` devDep. Zero CVEs, zero license issues. Low scores reflect upstream maintenance signal.
+   - Prevention: treat Dependency Review Scorecard warnings as evaluation items (T31), not review items. Three paths to evaluate: replace with native platform calls, allowlist via `.github/dependency-review-config.yml`, or drop the feature. Out of scope for R1 fixes; tracked separately.
+
+**Resolution:** 19 parsed items → 13 fixed (15 fix actions including 2 propagation sites) + 3 rejected + 3 advisory-rejected = 19 dispositions ✓
+
+- **Fixed: 13 reviewer items (+2 propagation fixes = 15 total fix actions)**
+  - 6 MAJOR: spawn error handler + shell:true platform guard (Semgrep #22 / Qodo Bug#3 / Compliance shell-risk — three findings, one fix), readQueue TOCTOU (Qodo Bug#1a), classifyJob TOCTOU (Qodo Bug#1b), ReDoS hardening via globToRegex input validation (Semgrep #23), AppleScript injection via whitelist-by-removal (Qodo Compliance), applyAgentOutput null/array validation (Qodo Sugg#2).
+  - 5 MINOR (reviewer): logger.error in drainPendingQueue empty catch (Qodo Bug#2), ajv `allErrors: false` (Semgrep #24), husky validator existence check (Qodo Sugg#3), derive.js parseExistingFrontmatter repo-root enforcement (Qodo Sugg#4), SonarCloud S4036 code comment + user-side Mark-as-Safe.
+  - 2 MINOR (propagation-sweep, no reviewer cite): appendQueueEntry TOCTOU, readCatalog TOCTOU — same pattern as Qodo Bug#1, found via the MUST propagation step.
+  - 2 TRIVIAL: optional chain in session-end-commit.js:126 (SonarCloud code smell), buildFailureWarning CR/LF/tab strip (Qodo Sugg#5).
+  - **Bundled non-review work:** T30 (learnings-consumption system) + T31 (node-notifier supply-chain evaluation) created via `/todo`. Bundled with this commit per user instruction — not counted in the 19 review items.
+- **Deferred: 0 items**
+- **Rejected: 3 items** (with justification):
+  - **Gemini mkdirSync post-tool-use-label.js:220** — stale finding, code already wrapped in try/catch with `sanitize(err)`.
+  - **Gemini mkdirSync catalog-io.js:109** — stale finding, same as above.
+  - **Qodo Sugg#6 Husky SKIP_REASON redundant guard** — verified against `_shared.sh:33` — `require_skip_reason` already `exit 1`s on empty SKIP_REASON. Qodo's own note said "likely redundant." Confirmed redundant, no change.
+- **Advisory rejected: 3 items** (Qodo Compliance ⚪, per pattern #5):
+  - Missing actor in audit trail — single-user local-dev infra; no multi-tenant audit requirement.
+  - Notification leaks internal paths — operator-visible info on their own desktop; not multi-tenant.
+  - Stderr logging sensitive paths — same threat-model rationale; operator output, not remote log sink.
+
+**Pending user action:**
+
+- Mark SonarCloud S4036 hotspot (PATH-based `git` resolution in `session-end-commit.js`) as **Safe** in the SonarCloud UI with justification from the code comment.
+- Evaluate T31 (node-notifier supply-chain posture) — pick one of: replace with native platform calls, allowlist via `.github/dependency-review-config.yml`, or drop the ambient-notification feature.
+- Design T30 (learnings-consumption system) — needs `/deep-research` + `/deep-plan` before implementation.
+
+**Key Learnings:**
+
+- **Propagation sweep found one extra TOCTOU site beyond what Qodo cited.** Qodo Bug#1 flagged 3 locations in `agent-runner.js`; the sweep found a fourth in `appendQueueEntry` (same file) and a fifth matching pattern in `catalog-io.js:readCatalog`. Rule: do not trust reviewer site lists as exhaustive when the pattern is fs-level — always grep the new-diff surface.
+- **`process.platform === "win32"` is the clean fix for the shell:true findings.** Don't argue with the Semgrep / Qodo flag; accept that `shell:true` is a platform concession and gate it accordingly. Reduces finding + attack surface in one edit.
+- **Stale reviewer findings still count toward the dispositions total.** Gemini's two stale mkdirSync findings were rejected with evidence, not silently dropped. The three rejected items cover two stale findings + one confirmed-redundant suggestion. Step 7 count check: fixed(13 reviewer items) + rejected(3 primary) + advisory-rejected(3 Compliance) = 19 ✓ matches the 19 primary items parsed. The 2 propagation-sweep fixes are bonus work, not review items. Todos T30/T31 are bundled non-review work, not counted.
+- **Whitelist-by-removal beats escape-and-hope for quote-delimited DSL strings.** AppleScript `display notification` takes quote-delimited strings; escape rules are subtle and context-dependent (backslash, backtick, dollar, control chars). Stripping all of them outright (`/["`$\\\r\n\x00-\x1f\x7f]/g`) is easier to reason about than correctly-ordered escapes. Same pattern applies to `msg.exe` on Windows — both funneled through one `sanitizeForShellArg` helper.
+- **SonarCloud "Security Hotspot" ≠ "Security Bug."** S4036 (PATH-based command search) is a hotspot because it depends on your PATH hygiene. The finding is correct; the response is to add a code comment explaining the tradeoff and Mark-as-Safe in the UI, not to hardcode an absolute `git` path and break portability.

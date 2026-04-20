@@ -80,7 +80,11 @@ function getValidators() {
   // needs_review) so commit-time safety is unaffected.
   relaxFileRecordAdditionalProperties(schema);
 
-  const ajv = new Ajv({ allErrors: true, strict: false });
+  // allErrors:false — fail-fast on first validation error. Silences the
+  // ajv-allerrors-true DoS advisory (Semgrep) and matches production-grade
+  // usage; we still emit a specific diagnostic for the first failure, which
+  // is enough to guide a local-dev fix.
+  const ajv = new Ajv({ allErrors: false, strict: false });
   const validateFile = compileFileRecordValidator(ajv, schema);
   const validateComposite = compileCompositeValidator(ajv, schema);
   cachedValidator = { validateFile, validateComposite };

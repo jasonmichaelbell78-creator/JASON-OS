@@ -85,6 +85,12 @@ function buildFailureWarning(failures) {
   const sorted = [...failures].sort(
     (a, b) => Number(a.entry.spawned_at) - Number(b.entry.spawned_at)
   );
+  // Strip CR/LF/tabs and cap length so a poisoned queue entry can't break
+  // the warning's line structure or inject lines into the prompt surface.
+  const oneLine = (value, fallback) => {
+    if (typeof value !== "string" || value.length === 0) return fallback;
+    return value.replace(/[\r\n\t]/g, " ").slice(0, 500);
+  };
   const lines = [];
   lines.push("[LABEL-SYSTEM — acknowledgement required]");
   lines.push("Unresolved failures (oldest first):");
@@ -92,8 +98,8 @@ function buildFailureWarning(failures) {
     const when = Number.isFinite(Number(entry.spawned_at))
       ? new Date(Number(entry.spawned_at)).toISOString()
       : "<unknown-time>";
-    const file = typeof entry.file_path === "string" ? entry.file_path : "<no-path>";
-    const job = typeof entry.job_id === "string" ? entry.job_id : "<no-id>";
+    const file = oneLine(entry.file_path, "<no-path>");
+    const job = oneLine(entry.job_id, "<no-id>");
     lines.push(`- ${when}: ${verdict} — ${file} (job=${job})`);
   }
   lines.push(

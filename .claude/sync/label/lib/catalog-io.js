@@ -40,12 +40,12 @@ const STREAMING_THRESHOLD_BYTES = 1 * 1024 * 1024;
  */
 function readCatalog(catalogPath) {
   const abs = path.resolve(catalogPath);
-  if (!fs.existsSync(abs)) return [];
 
   let size;
   try {
     size = fs.statSync(abs).size;
   } catch (err) {
+    if (err && err.code === "ENOENT") return [];
     throw new Error(`catalog-io.readCatalog: stat failed: ${sanitize(err)}`);
   }
   if (size === 0) return [];

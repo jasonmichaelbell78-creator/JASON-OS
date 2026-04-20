@@ -246,7 +246,14 @@ function parseExistingFrontmatter(filePath, content) {
   let text = content;
   if (typeof text !== "string") {
     try {
-      text = readTextWithSizeGuard(filePath);
+      // Route through toRepoRelative to reject paths that escape the repo
+      // root before we hand them to the reader. Belt-and-braces: callers
+      // already supply repo-relative paths, but defence-in-depth here
+      // prevents regressions from a future caller reaching in with an
+      // absolute or traversal path.
+      const rel = toRepoRelative(filePath);
+      const abs = path.resolve(REPO_ROOT_SENTINEL, rel);
+      text = readTextWithSizeGuard(abs);
     } catch {
       return null;
     }

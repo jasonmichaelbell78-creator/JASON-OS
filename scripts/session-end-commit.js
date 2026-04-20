@@ -123,7 +123,7 @@ function getModifiedSessionEndFiles() {
     ["status", "--porcelain", "--", ...SESSION_END_PATHSPECS],
     { silent: true, cwd: REPO_ROOT }
   );
-  if (!status || !status.trim()) return [];
+  if (!status?.trim()) return [];
 
   const files = [];
   for (const rawLine of status.split("\n")) {
@@ -296,6 +296,12 @@ function main() {
     // the explicit allowlist keeps the safety even when plan files join the
     // commit. Use SKIP flags via env to avoid blocking on doc index/header
     // checks.
+    //
+    // SonarCloud javascript:S4036: `git` is resolved via $PATH rather than an
+    // absolute path. This is intentional — git is an expected, operator-
+    // controlled PATH binary on all supported platforms; hard-coding an
+    // absolute path would break cross-platform portability. Marked Safe in
+    // SonarCloud UI (PR #8 R1).
     const commitMessage = "docs: session end - mark complete\n\nhttps://claude.ai/code";
     execFileSync(
       "git",

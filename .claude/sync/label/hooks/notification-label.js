@@ -109,12 +109,19 @@ function defaultShellRunner({ title, body }) {
   return false;
 }
 
+// Strip characters that can break out of a shell/AppleScript string literal
+// OR carry control semantics. Quote-escaping alone is insufficient defence
+// against injection when the source string is not fully trusted.
+function sanitizeForShellArg(s) {
+  return String(s).replace(/["`$\\\r\n\x00-\x1f\x7f]/g, "");
+}
+
 function runPowerShellToast(title, body) {
   // BurntToast isn't universally installed; plain msg.exe always works on
   // Windows 10+. Message popup is blocking-on-user for 5s, which is fine
   // for failure surfacing.
-  const safeTitle = title.replace(/["`$]/g, "");
-  const safeBody = body.replace(/["`$]/g, "");
+  const safeTitle = sanitizeForShellArg(title);
+  const safeBody = sanitizeForShellArg(body);
   const child = spawn(
     "msg.exe",
     ["*", "/TIME:5", `${safeTitle}: ${safeBody}`],
@@ -125,8 +132,11 @@ function runPowerShellToast(title, body) {
 }
 
 function runOsascript(title, body) {
-  const safeTitle = title.replace(/"/g, '\\"');
-  const safeBody = body.replace(/"/g, '\\"');
+  // Reject quotes/backslashes/backticks/controls entirely — AppleScript
+  // string literals are quote-delimited and escape handling is subtle
+  // enough that whitelist-by-removal is safer than escape-and-hope.
+  const safeTitle = sanitizeForShellArg(title);
+  const safeBody = sanitizeForShellArg(body);
   const script = `display notification "${safeBody}" with title "${safeTitle}"`;
   const child = spawn("osascript", ["-e", script], { stdio: "ignore" });
   child.unref();

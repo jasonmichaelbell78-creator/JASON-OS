@@ -60,15 +60,30 @@ function newJobId() {
  * @returns {{pid: number | null, spawnedAt: number}} spawn metadata
  */
 function defaultHeadlessSpawner({ prompt, outputPath, timeoutMs, env }) {
-  // Windows surfaces `claude` as `claude.cmd`; spawn's `shell: true` resolves
-  // either. stdio: 'ignore' for stdout/stderr — the agent is expected to
-  // persist its own output via the prompt (we tell it to write to outputPath).
+  // shell:true is required on Windows so spawn resolves `claude` -> `claude.cmd`.
+  // On POSIX, `claude` is a regular executable — shell:false is safer and
+  // avoids the spawn-shell-true injection surface (Semgrep #22).
   const child = spawn("claude", ["-p", "--output-format=json"], {
     detached: true,
-    shell: true,
+    shell: process.platform === "win32",
     stdio: ["pipe", "ignore", "ignore"],
     env: { ...process.env, ...(env ?? {}), LABEL_AGENT_OUTPUT_PATH: outputPath },
     windowsHide: true,
+  });
+  // Async spawn failures (ENOENT, EACCES) arrive as 'error' events. Without
+  // a listener the event crashes the parent hook process. Persist a
+  // structured error marker at outputPath so the next Step-0 sweep reads it
+  // as complete-with-error via applyAgentOutput's `output.error` path.
+  child.once("error", (err) => {
+    try {
+      fs.writeFileSync(
+        outputPath,
+        JSON.stringify({ error: `spawn failed: ${sanitize(err)}` })
+      );
+    } catch {
+      // If marker write fails, the pending-queue sweep still classifies
+      // the entry as timed_out once spawnedAt + timeoutMs elapses.
+    }
   });
   if (child.stdin) {
     try {
@@ -154,7 +169,20 @@ function appendQueueEntry(queuePath, entry) {
   }
   withLock(abs, () => {
     let existing = "";
-    if (fs.existsSync(abs) && fs.statSync(abs).size > 0) {
+    let hasContent = false;
+    try {
+      hasContent = fs.statSync(abs).size > 0;
+    } catch (err) {
+      if (err && err.code === "ENOENT") {
+        // Missing file is fine — this is the first append.
+        hasContent = false;
+      } else {
+        throw new Error(
+          `agent-runner.appendQueueEntry: stat failed: ${sanitize(err)}`
+        );
+      }
+    }
+    if (hasContent) {
       try {
         existing = readTextWithSizeGuard(abs);
       } catch (err) {
@@ -176,7 +204,13 @@ function appendQueueEntry(queuePath, entry) {
  */
 function readQueue(queuePath = DEFAULT_PENDING_QUEUE) {
   const abs = path.resolve(queuePath);
-  if (!fs.existsSync(abs) || fs.statSync(abs).size === 0) return [];
+  try {
+    const st = fs.statSync(abs);
+    if (st.size === 0) return [];
+  } catch (err) {
+    if (err && err.code === "ENOENT") return [];
+    throw new Error(`agent-runner.readQueue: stat failed: ${sanitize(err)}`);
+  }
   let text;
   try {
     text = readTextWithSizeGuard(abs);
@@ -240,12 +274,22 @@ function classifyJob(entry, now = Date.now()) {
   const spawnedAt = Number(entry.spawned_at);
   const timeoutMs = Number(entry.timeout_ms) || DEFAULT_TIMEOUT_MS;
 
-  if (typeof outputPath === "string" && fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) {
+  if (typeof outputPath === "string") {
     try {
-      JSON.parse(readTextWithSizeGuard(outputPath));
-      return "complete";
-    } catch {
-      return "failed";
+      const st = fs.statSync(outputPath);
+      if (st.size > 0) {
+        try {
+          JSON.parse(readTextWithSizeGuard(outputPath));
+          return "complete";
+        } catch {
+          return "failed";
+        }
+      }
+    } catch (err) {
+      if (!err || (err.code !== "ENOENT" && err.code !== "ENOTDIR")) {
+        return "failed";
+      }
+      // ENOENT / ENOTDIR — fall through to timeout / running classification.
     }
   }
   if (!Number.isFinite(spawnedAt)) return "failed";

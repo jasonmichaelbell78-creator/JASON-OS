@@ -24,6 +24,34 @@ const DEFAULT_SCOPE_PATH = path.join(
   "scope.json"
 );
 
+const MAX_GLOB_LENGTH = 200;
+const MAX_PATH_LENGTH = 2048;
+
+/**
+ * Reject pathological glob inputs before we build a RegExp from them.
+ * Scope config is repo-controlled (commit-gated at scope.json), but the
+ * regex engine is still a DoS target if someone writes a catastrophic
+ * pattern — fail fast rather than spin the event loop.
+ * @param {string} glob
+ */
+function validateGlob(glob) {
+  if (glob.length > MAX_GLOB_LENGTH) {
+    throw new Error(
+      `scope-matcher.globToRegex: glob exceeds ${MAX_GLOB_LENGTH} chars`
+    );
+  }
+  if (/\*{3,}/.test(glob)) {
+    throw new Error(
+      "scope-matcher.globToRegex: 3+ consecutive '*' is not a supported pattern"
+    );
+  }
+  if (/[\x00-\x1f]/.test(glob)) {
+    throw new Error(
+      "scope-matcher.globToRegex: control characters are not allowed in globs"
+    );
+  }
+}
+
 /**
  * Convert a glob pattern into an anchored RegExp.
  * @param {string} glob
@@ -33,6 +61,7 @@ function globToRegex(glob) {
   if (typeof glob !== "string") {
     throw new TypeError("scope-matcher.globToRegex: glob must be a string");
   }
+  validateGlob(glob);
   const normalized = glob.replace(/\\/g, "/");
   let out = "^";
   let i = 0;
@@ -79,6 +108,7 @@ function compileScope(scope) {
   return {
     matches(relPath) {
       if (typeof relPath !== "string") return false;
+      if (relPath.length > MAX_PATH_LENGTH) return false;
       const normalized = relPath.replace(/\\/g, "/").replace(/^\.\//, "");
       if (normalized.length === 0) return false;
       if (!includeRes.some((re) => re.test(normalized))) return false;

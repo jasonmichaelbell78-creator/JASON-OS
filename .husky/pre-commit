@@ -39,14 +39,18 @@ if is_skipped "labels"; then
   require_skip_reason "SKIP_CHECKS=labels"
   echo "  label validation skipped (SKIP_REASON: $SKIP_REASON)"
 elif command -v node >/dev/null 2>&1; then
-  if ! node .claude/sync/label/lib/validate-catalog.js --staged; then
+  LABEL_VALIDATOR=".claude/sync/label/lib/validate-catalog.js"
+  if [ ! -f "$LABEL_VALIDATOR" ]; then
+    echo "  label validator not found ($LABEL_VALIDATOR) — label validation skipped (advisory)" >&2
+  elif ! node "$LABEL_VALIDATOR" --staged; then
     echo "" >&2
     echo "  Commit blocked by label validator" >&2
     echo "  See error details above. Fix and re-commit." >&2
     echo "  Skip (only if intentional): SKIP_CHECKS=labels SKIP_REASON=\"...\" git commit" >&2
     exit 1
+  else
+    echo "  labels: no unresolved needs_review or status:partial in staged catalogs"
   fi
-  echo "  labels: no unresolved needs_review or status:partial in staged catalogs"
 else
   echo "  node not available — label validation skipped (advisory)" >&2
 fi

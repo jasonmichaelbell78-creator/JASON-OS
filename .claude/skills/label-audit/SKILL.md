@@ -184,8 +184,7 @@ For each `needs_review` item the user arbitrates conversationally:
 
 > User: "type on .claude/sync/label/lib/derive.js should be script-lib, not script"
 
-Claude's response sequence (per `.claude/sync/label/docs/OVERRIDE_CONVERSATION_EXAMPLES.md`
-— file will land in §S9):
+Claude's response sequence (per `.claude/sync/label/docs/OVERRIDE_CONVERSATION_EXAMPLES.md`):
 
 1. Read the current catalog record.
 2. Update the specified field.

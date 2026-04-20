@@ -313,6 +313,15 @@ Layer 1 item 1.2. Reads `SESSION_CONTEXT.md`, composes the commit message,
 runs `git add` + `git commit`, and `git push origin HEAD` unless the
 `--no-push` argument is present.)
 
+**Script scope (T17):** The script's allowlist matches this skill's
+"Expected v0 session-end output files" contract —
+`SESSION_CONTEXT.md` + `.planning/<topic>/PLAN.md` +
+`.planning/<topic>/PORT_ANALYSIS.md`. Plan-file edits made during Step 3
+are staged and committed in the same atomic commit as `SESSION_CONTEXT.md`,
+so no follow-up commit is needed. The `--only -- <paths>` scope keeps other
+staged files out of the session-end commit (Step 9 pre-commit review still
+catches anything outside the allowlist).
+
 If `--no-push` was specified, skip the push; all prior steps still run —
 context is preserved locally without pushing.
 
@@ -424,6 +433,7 @@ so future invocations benefit from accumulated experience.
 
 | Version | Date | Description |
 | --- | --- | --- |
+| 2.2-jasonos-v0.2 | 2026-04-20 | T17: Step 10 note — session-end-commit.js now allowlists plan files (PLAN.md + PORT_ANALYSIS.md) alongside SESSION_CONTEXT.md so skill Step 3 edits land in the same atomic commit. Also wired `--no-push` argv parsing (skill already documented the flag; script now honors it). |
 | 2.2-jasonos-v0.1 | 2026-04-17 | JASON-OS port. Phase 3 stripped (SoNash tooling not in Foundation). Phase 2 annotated as Layer-2-gated with silent skips. Step 3 adapted to plan-file target per D33. SESSION_HISTORY / ROADMAP / TDMS refs removed. `npm run session:end` → `node scripts/session-end-commit.js`. AgentSkills fields added. Lineage preserved back to SoNash 2.2. |
 | 2.2 | 2026-03-13 | SoNash: Steps 4c (planning data) and 7g (commit analytics) — D26 Recall fixes |
 | 2.1 | 2026-03-13 | SoNash: Step 4b agent invocation summary (D26 data flow) |

@@ -66,7 +66,19 @@ function getValidators() {
 
   // Extend status enum in memory: add `partial` so schema-valid records can
   // be inflight; the rule layer below separately rejects them at commit.
+  // (Harmless now that schema-v1.json also carries `partial`; retained as
+  // belt-and-suspenders for pre-v1.1 schema files encountered during
+  // cross-repo sync windows.)
   extendStatusEnum(schema, "partial");
+
+  // Piece 3 adds machinery fields (`pending_agent_fill`, `manual_override`,
+  // `needs_review`, `last_hook_fire`, `schema_version`) on top of the Piece 2
+  // universal columns. Until those land as typed optional columns via a
+  // schema v1.2 bump (tracked in the /todo backlog), we relax the file_record
+  // subschema to allow additional properties. The rule layer below still
+  // enforces the semantic invariants (status:partial, pending_agent_fill,
+  // needs_review) so commit-time safety is unaffected.
+  relaxFileRecordAdditionalProperties(schema);
 
   const ajv = new Ajv({ allErrors: true, strict: false });
   const validateFile = compileFileRecordValidator(ajv, schema);
@@ -88,6 +100,35 @@ function extendStatusEnum(schema, value) {
     const def = container.enum_status;
     if (!def || !Array.isArray(def.enum)) continue;
     if (!def.enum.includes(value)) def.enum.push(value);
+  }
+}
+
+/**
+ * Relax `additionalProperties: false` on the file_record subschema so the
+ * Piece 3 machinery fields don't trip schema validation. Scoped narrowly —
+ * we only flip the file_record (and composite_record) definition, not the
+ * whole schema.
+ * @param {object} schema
+ */
+function relaxFileRecordAdditionalProperties(schema) {
+  const locations = [schema.definitions, schema.$defs];
+  for (const container of locations) {
+    if (!container) continue;
+    for (const key of [
+      "file_record",
+      "fileRecord",
+      "composite_record",
+      "compositeRecord",
+    ]) {
+      const def = container[key];
+      if (def && typeof def === "object" && def.additionalProperties === false) {
+        def.additionalProperties = true;
+      }
+    }
+  }
+  // Also relax at the top level in case the schema is authored flat.
+  if (schema && typeof schema === "object" && schema.additionalProperties === false) {
+    schema.additionalProperties = true;
   }
 }
 

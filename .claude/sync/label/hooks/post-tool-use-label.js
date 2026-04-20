@@ -438,7 +438,17 @@ function applyAgentOutput(entry) {
 function readStdinAndHandle() {
   process.stdin.setEncoding("utf8");
   let buffer = "";
-  process.stdin.on("error", () => {
+  process.stdin.on("error", (err) => {
+    // Hook must not crash Claude's flow — exit 0 — but log a sanitized
+    // one-liner so silent stdin failures are diagnosable when they recur.
+    // (Qodo Compliance R6: silent `process.exit(0)` was masking operational
+    // errors.)
+    const code = err && typeof err.code === "string" ? err.code : "UNKNOWN";
+    try {
+      process.stderr.write(`[label-hook] stdin ${code}\n`);
+    } catch {
+      // Stderr itself failed — nothing useful we can do.
+    }
     process.exit(0);
   });
   process.stdin.on("data", (chunk) => {
@@ -450,7 +460,13 @@ function readStdinAndHandle() {
       try {
         payload = JSON.parse(buffer);
       } catch {
-        // Invalid stdin — bail silently (hook must not break Claude's flow).
+        // Invalid stdin — bail without blocking Claude, but emit a
+        // diagnostic so this doesn't disappear silently (Qodo Compliance R6).
+        try {
+          process.stderr.write("[label-hook] invalid stdin payload (not JSON)\n");
+        } catch {
+          // Stderr itself failed — nothing useful we can do.
+        }
         process.exit(0);
       }
     }

@@ -104,9 +104,13 @@ After every field has been resolved:
 
 - **Record clean** (`needs_review: []`) → `status: active`, ready to
   promote to the real catalog on user approval.
-- **Record needs review** (`needs_review: [...]`) → `status: partial`
-  during preview. User arbitrates; each resolved field gets removed from
-  `needs_review`. When empty, status flips to `active`.
+- **Record needs review** (`needs_review: [...]`) → `status: active`
+  during preview. Preview records MUST NOT carry `status: partial` —
+  per SKILL.md §Invariants L222, `partial` is reserved for the live
+  PostToolUse transient async-fill window only; the `/label-audit`
+  preview is a synthesis artifact, not a live transient. User arbitrates
+  each field in `needs_review`; resolved fields get removed; when empty
+  the record is promotable.
 - **Record unreachable** (both agents threw / timed out / returned
   empty) → record is dropped from the preview and flagged as a failure
   for D15-path-1 surfacing.

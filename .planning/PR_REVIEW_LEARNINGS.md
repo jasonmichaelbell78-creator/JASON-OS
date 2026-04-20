@@ -672,3 +672,53 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
 - **Reviewer-implementation quality can improve across rounds without changing the underlying threat-model math.** Qodo's R5 git-status-z impl was correct; its R2 impl was admitted-broken. But the reason to reject wasn't "the impl is broken" — it was "the threat doesn't exist in this allowlist scenario." Document the threat-model argument once, reference it across rounds, and don't re-evaluate unless the threat model itself changed.
 - **Silent-drop error handlers should log one sanitized line, not zero.** The cost is negligible. The benefit is that "rare race-window failure" becomes diagnosable instead of phantom. Format: error code + binary basename, not full message or full path — minimizes leak surface while maximizing "I can tell this happened."
 - **R5 is peak irony: the highest-impact finding was a bug I caused by applying R4's defensive suggestion incorrectly.** This argues for stronger pre-commit self-review on defensive-code changes specifically: one question at commit-time — *does the clamped/validated value still meet the property the original code assumed?* For `Math.max(0, raw)`, the answer is obviously no for a downstream `> 0` check; asking the question would have caught it.
+
+#### Review #11: Piece 3 labeling mechanism (PR #8) — Round 6 (2026-04-20)
+
+**Source:** Mixed — SonarCloud (1 code smell) + Qodo (Compliance + PR Suggestions).
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 10 total (Critical: 0, Major: 0, Minor: 6, Trivial: 2, Advisory: 2).
+
+**Patterns Identified:**
+
+1. **Cross-file documentation contradictions are real bugs, not cosmetic drift.**
+   - Root cause: R6 surfaced *two* genuine doc contradictions in the `/label-audit` skill references. `DISAGREEMENT_RESOLUTION.md` said "Record needs review → `status: partial` during preview" while `SKILL.md` L222 explicitly lists "No `status: partial` in the preview" as an invariant. `DERIVATION_RULES.md` showed an agent output example with nested `{fields: {type: {value, confidence}}}` while `buildAgentPrompt` L337-348 tells the agent to return a flat record and `applyAgentOutput` spreads it flat. Both contradictions were shipped in prior commits without being caught by self-audit because the references are read by humans and agents but not by the runtime code.
+   - Prevention: reference docs that describe runtime contracts need at least one assertion that verifies the doc against the runtime. Options: (a) a lightweight convergence loop during skill-audit that greps invariant claims in SKILL.md against the actual code, (b) treat doc-contract as part of the same PR gates that block code-contract divergence. Not applied in R6 (out of scope), but candidate for a future /todo.
+
+2. **SonarCloud cognitive complexity caught an R5 overreach.**
+   - Root cause: R5's rewrite of `resolveExecutable` added a bunch of legitimate features (absolute-path handling, PATHEXT-skip for pre-extended names, exec-bit check, PATH/PATHEXT trim) but bundled them all into one function. Complexity climbed to 19 against a 15 threshold. SonarCloud's threshold is a style preference, but the underlying signal — "too many intertwined branches, hard to reason about one case without the others" — was real. R6 refactor splits the helpers into `isExecutableFile`, `getPathExts`, `getPathDirs`, `nameHasKnownExt`, `resolveFromProvidedPath`, `findInDir`, `findInPathDirs`; the main `resolveExecutable` now has 3 branches total.
+   - Prevention: when adding multiple defensive features to one function in a single commit, split them as they land instead of piling them. The rewrite was easier to review in helper-sized chunks anyway, and the pre-existing complexity headroom was small.
+
+3. **Fail-open on invalid config input is a latent bug class.**
+   - Root cause: `extractNeedsReview(fieldScores, threshold)` used `clamp01(threshold)` which maps negative/non-finite input to 0. Then `clamp01(score) < 0` is never true, so `needs_review` is always empty — the cross-check layer silently passes every record. A user who passes `threshold: undefined` (or a corrupted config loader) gets "everything looks fine" instead of the documented DEFAULT_THRESHOLD. The function failed OPEN where it was supposed to fail SAFE.
+   - Prevention: validate input → either clamp to a meaningful range AND fall back to default on non-meaningful input, or reject with a throw. Clamping alone can collapse to a technically-valid-but-semantically-broken value. Fixed via `Number.isFinite && > 0 ? clamp01 : DEFAULT_THRESHOLD`.
+
+4. **Silent `process.exit(0)` in hook entry-points is observability theft.**
+   - Root cause: `readStdinAndHandle` exited 0 on stdin errors and invalid-JSON payloads without any stderr output. Rationale was "hook must not break Claude's flow" — correct, but the rationale doesn't require zero observability. Qodo Compliance #3 R6 was right that this class of silent failure becomes impossible to diagnose when it recurs.
+   - Prevention: exit 0 is fine; zero output isn't. Added a sanitized stderr one-liner (`[label-hook] stdin <code>` / `[label-hook] invalid stdin payload`) before each exit. Same principle as the R5 notify-binary spawn-error observability fix: silence-for-robustness trades too aggressively against diagnosability.
+
+**Resolution:** 10 parsed items → 7 fixed + 3 rejected = 10 dispositions ✓
+
+- **Fixed: 7 items**
+  - 6 MINOR: SonarCloud cognitive-complexity refactor of `resolveExecutable` into helpers (SonarCloud); `readStdinAndHandle` stdin / parse-error diagnostics (Qodo Compliance #3); `DISAGREEMENT_RESOLUTION.md` contradiction with SKILL.md L222 invariant (Qodo Sugg#1); `extractNeedsReview` fail-safe to DEFAULT_THRESHOLD on invalid input (Qodo Sugg#2); `DERIVATION_RULES.md` agent output shape contract aligned to CATALOG_SHAPE.md + applyAgentOutput's flat-record merge (Qodo Sugg#3); `resolve-exec.js` PATHEXT fallback for provided absolute paths without extensions (Qodo Sugg).
+  - 1 TRIVIAL: `resolve-exec.js` always returns absolute resolved paths via `path.resolve()` wrap (Qodo Sugg).
+  - **Bundled gain:** the resolve-exec refactor addressed three R6 items in one pass (cognitive-complexity + PATHEXT-for-paths + absolute-paths).
+- **Deferred: 0 items**
+- **Rejected: 3 items**:
+  - **Qodo Compliance PATH hijack execution** — **cross-round dedup** (R2+R4). Same threat-model argument applies.
+  - **Qodo Compliance unstructured stderr logs** — **cross-round dedup** (R1+R2+R4+R5). Same rationale.
+  - **Qodo Sugg classifyEdit content_hash vs fingerprint** — **cross-round dedup** (R4 Sugg#6). Qodo self-refutes in "Why": "impact is negligible since the function returns MINOR in both branches."
+
+**Pending user action:**
+
+- Still pending from R1: SonarCloud S4036 Mark-as-Safe in UI. No new pending actions from R6.
+
+**Step 7.5 merge-trigger check (R6):** Fix rate = 7/10 = **70%**. Above thresholds. R6 surfaced two real doc-contract contradictions + a fail-open bug + a legitimate code-smell refactor pressure + an observability gap — all genuine, none redundant. Not a merge recommendation from the rule.
+
+**Key Learnings:**
+
+- **Doc contradictions between SKILL.md invariants and reference-doc examples are real bugs that the runtime doesn't catch.** The `partial` status contradiction between `DISAGREEMENT_RESOLUTION.md` and `SKILL.md` L222, and the flat-vs-nested output contradiction between `DERIVATION_RULES.md` and `buildAgentPrompt`+`applyAgentOutput`, would have silently confused agents reading those references. `skill-audit` doesn't currently cross-check invariants in SKILL.md against runtime code or against companion reference docs. Candidate for a future `skill-audit` enhancement.
+- **"Clamp to safe range" is not the same as "fail-safe on invalid input."** `clamp01(negative) = 0` is a valid clamp output, but `threshold: 0` means "no threshold" in `extractNeedsReview`'s semantics — fail-OPEN, not fail-safe. Input validation needs to separate "is this a meaningful value?" from "can I coerce this into the value type?" — the former rejects negative thresholds, the latter just zeros them. Applied the separation via `Number.isFinite(raw) && raw > 0 ? clamp01(raw) : DEFAULT_THRESHOLD`.
+- **Silent exits are worse than noisy ones in hook entry-points.** Hooks MUST NOT crash Claude's flow, so exit 0 is correct — but exit 0 *without* a diagnostic turns a transient error into a phantom. Same pattern as the R5 spawn-error silent-drop: one sanitized stderr line per exit is enough, and costs nothing.
+- **SonarCloud's 15-complexity threshold is an imperfect proxy for a real concern.** The 19-complexity resolveExecutable wasn't "broken" — it worked and passed tests — but the underlying "hard to reason about one branch without reading all of them" signal was true. Splitting into seven single-purpose helpers made the next R5-style expansion (which will happen when Windows adds new PATHEXT quirks or POSIX needs a symlink-follow option) easier to do without hitting the same refactor pressure again.
+- **Multi-round reviews have a secondary value beyond bug-catching: they stress-test your own consistency.** R6 flagged my own R5 refactor for complexity, which I hadn't noticed; R5 flagged my R4 clamp bug, which I definitely hadn't noticed. The review loop isn't "external scanner vs my code" — it's "two passes of external attention" that each catch stuff the prior pass left. Worth continuing as long as each round teaches something; worth stopping the moment it doesn't.

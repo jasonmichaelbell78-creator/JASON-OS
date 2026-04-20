@@ -59,7 +59,13 @@ function scoreField({ primary, secondary, agree = true }) {
  */
 function extractNeedsReview(fieldScores, threshold = DEFAULT_THRESHOLD) {
   if (fieldScores === null || typeof fieldScores !== "object") return [];
-  const t = clamp01(threshold);
+  // Fail-safe on malformed threshold: clamp01(negative) = 0, which would
+  // make the `< 0` check never fire and silently skip every review — a
+  // fail-open rather than fail-safe posture. Fall back to DEFAULT_THRESHOLD
+  // for non-positive / non-finite input so "invalid threshold" still
+  // produces the documented default behaviour. (Qodo Sugg R6.)
+  const rawT = Number(threshold);
+  const t = Number.isFinite(rawT) && rawT > 0 ? clamp01(rawT) : DEFAULT_THRESHOLD;
   const out = [];
   for (const [field, score] of Object.entries(fieldScores)) {
     if (clamp01(score) < t) out.push(field);

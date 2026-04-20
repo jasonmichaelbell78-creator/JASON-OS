@@ -156,21 +156,34 @@ Agents emit these unless the hook is managing them directly:
 Each field comes with a confidence score in [0.0, 1.0]. Fields where
 evidence is ambiguous (multiple plausible values, frontmatter conflicts
 with heuristic, etc.) should score **below 0.80** so the cross-check
-layer flags them. Return confidence alongside values:
+layer flags them.
+
+**Output shape (MUST be consistent with `CATALOG_SHAPE.md` and the hook's
+runtime `applyAgentOutput` merge).** Return a flat catalog record matching
+`CATALOG_SHAPE.md` §3 + the per-type extensions in `SCHEMA.md` §9, plus a
+top-level `confidence` object keyed by field name. The flat record spreads
+cleanly into the existing record; the `confidence` object is consumed
+separately by `confidence.js` for the cross-check layer.
 
 ```json
 {
   "path": ".claude/hooks/foo.js",
-  "fields": {
-    "type": {"value": "hook", "confidence": 0.98},
-    "source_scope": {"value": "universal", "confidence": 0.92},
-    "portability": {"value": "sanitize-then-portable", "confidence": 0.65}
+  "type": "hook",
+  "source_scope": "universal",
+  "portability": "sanitize-then-portable",
+  "purpose": "…",
+  "confidence": {
+    "type": 0.98,
+    "source_scope": 0.92,
+    "portability": 0.65
   }
 }
 ```
 
-The aggregator in `confidence.js` combines primary + secondary scores per
-the rules in `DISAGREEMENT_RESOLUTION.md`.
+The aggregator in `confidence.js` combines primary + secondary
+`confidence` values per the rules in `DISAGREEMENT_RESOLUTION.md`. Nested
+`{value, confidence}` shapes are NOT accepted — the flat record + separate
+confidence object is the one on-disk contract.
 
 ### Hard constraints
 

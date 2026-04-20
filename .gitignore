@@ -52,6 +52,7 @@ tools/statusline/config.local.toml
 .claude/session-activity.jsonl
 .claude/override-log.jsonl
 .claude/hooks/.*-state.json
+.claude/sync/label/preview/
 
 # claude code — machine-specific binaries (will rebuild per platform)
 tools/**/*.exe

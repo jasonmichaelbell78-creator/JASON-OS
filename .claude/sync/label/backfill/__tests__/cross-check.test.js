@@ -1,0 +1,273 @@
+/**
+ * cross-check.test.js — Field-level disagreement routing tests.
+ *
+ * One test per DISAGREEMENT_RESOLUTION.md case (A–G) plus:
+ *   - Record unreachable (primary null)
+ *   - crossCheckBatch routing across 3 pairs (A / B / C mix)
+ */
+
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const path = require("node:path");
+
+const MOD = path.join(__dirname, "..", "cross-check.js");
+
+// --- Case A: agreement + high confidence ---
+test("Case A: agreement + high confidence → committed, not in needsReview", () => {
+  const { crossCheck } = require(MOD);
+  const primary = {
+    path: "a.js",
+    type: "script-lib",
+    confidence: { type: 0.95 },
+  };
+  const secondary = {
+    path: "a.js",
+    type: "script-lib",
+    confidence: { type: 0.9 },
+  };
+  const { preview, needsReview, disagreements } = crossCheck({
+    primary,
+    secondary,
+  });
+  assert.equal(preview.type, "script-lib");
+  assert.equal(preview.confidence.type, 0.9); // min(0.95, 0.9)
+  assert.ok(!needsReview.includes("type"));
+  assert.deepEqual(preview.needs_review, []);
+  assert.deepEqual(disagreements, []);
+});
+
+// --- Case B: agreement + low confidence ---
+test("Case B: agreement + low confidence → committed, in needsReview", () => {
+  const { crossCheck } = require(MOD);
+  const primary = {
+    path: "b.js",
+    purpose: "helper",
+    confidence: { purpose: 0.7 },
+  };
+  const secondary = {
+    path: "b.js",
+    purpose: "helper",
+    confidence: { purpose: 0.75 },
+  };
+  const { preview, needsReview, disagreements } = crossCheck({
+    primary,
+    secondary,
+  });
+  assert.equal(preview.purpose, "helper");
+  assert.equal(preview.confidence.purpose, 0.7);
+  assert.ok(needsReview.includes("purpose"));
+  assert.deepEqual(disagreements, []);
+});
+
+// --- Case C: scalar disagreement ---
+test("Case C: scalar disagreement → candidates shape, null value, needsReview + disagreements", () => {
+  const { crossCheck } = require(MOD);
+  const primary = {
+    path: "c.js",
+    type: "script-lib",
+    confidence: { type: 0.92 },
+  };
+  const secondary = {
+    path: "c.js",
+    type: "script",
+    confidence: { type: 0.88 },
+  };
+  const { preview, needsReview, disagreements } = crossCheck({
+    primary,
+    secondary,
+  });
+  assert.equal(preview.type.value, null);
+  assert.equal(preview.type.candidates.length, 2);
+  assert.equal(preview.type.candidates[0].source, "primary");
+  assert.equal(preview.type.candidates[0].value, "script-lib");
+  assert.equal(preview.type.candidates[0].confidence, 0.92);
+  assert.equal(preview.type.candidates[1].source, "secondary");
+  assert.equal(preview.type.candidates[1].value, "script");
+  assert.equal(preview.confidence.type, 0);
+  assert.ok(needsReview.includes("type"));
+  assert.equal(disagreements.length, 1);
+  assert.equal(disagreements[0].field, "type");
+  assert.equal(disagreements[0].case, "C");
+});
+
+// --- Case D: array disagreement ---
+test("Case D: array disagreement → set-union value, needsReview, candidates preserved", () => {
+  const { crossCheck } = require(MOD);
+  const primary = {
+    path: "d.js",
+    deps: ["fs", "path"],
+    confidence: { deps: 0.9 },
+  };
+  const secondary = {
+    path: "d.js",
+    deps: ["path", "os"],
+    confidence: { deps: 0.85 },
+  };
+  const { preview, needsReview, disagreements } = crossCheck({
+    primary,
+    secondary,
+  });
+  assert.deepEqual(preview.deps.value, ["fs", "path", "os"]);
+  assert.equal(preview.deps.candidates.length, 2);
+  assert.deepEqual(preview.deps.candidates[0].value, ["fs", "path"]);
+  assert.deepEqual(preview.deps.candidates[1].value, ["path", "os"]);
+  assert.ok(needsReview.includes("deps"));
+  assert.equal(disagreements.length, 1);
+  assert.equal(disagreements[0].case, "D");
+});
+
+// --- Case E: one side null ---
+test("Case E: one side null → non-null committed, in needsReview", () => {
+  const { crossCheck } = require(MOD);
+  const primary = {
+    path: "e.js",
+    purpose: "utility helper",
+    confidence: { purpose: 0.9 },
+  };
+  const secondary = {
+    path: "e.js",
+    purpose: null,
+    confidence: { purpose: 0 },
+  };
+  const { preview, needsReview, disagreements } = crossCheck({
+    primary,
+    secondary,
+  });
+  assert.equal(preview.purpose, "utility helper");
+  assert.ok(needsReview.includes("purpose"));
+  assert.equal(disagreements.length, 1);
+  assert.equal(disagreements[0].case, "E");
+});
+
+// --- Case F: both null ---
+test("Case F: both null → null committed, in needsReview", () => {
+  const { crossCheck } = require(MOD);
+  const primary = {
+    path: "f.js",
+    purpose: null,
+    confidence: { purpose: 0 },
+  };
+  const secondary = {
+    path: "f.js",
+    purpose: null,
+    confidence: { purpose: 0 },
+  };
+  const { preview, needsReview, disagreements } = crossCheck({
+    primary,
+    secondary,
+  });
+  assert.equal(preview.purpose, null);
+  assert.ok(needsReview.includes("purpose"));
+  assert.deepEqual(disagreements, []); // F is a gap, not a disagreement
+});
+
+// --- Case G: type mismatch ---
+test("Case G: type mismatch → type_mismatch:true, in needsReview", () => {
+  const { crossCheck } = require(MOD);
+  const primary = {
+    path: "g.js",
+    type: "script",
+    confidence: { type: 0.9 },
+  };
+  const secondary = {
+    path: "g.js",
+    type: { kind: "script" }, // object vs string — Case G
+    confidence: { type: 0.85 },
+  };
+  const { preview, needsReview, disagreements } = crossCheck({
+    primary,
+    secondary,
+  });
+  assert.equal(preview.type.value, null);
+  assert.equal(preview.type.type_mismatch, true);
+  assert.equal(preview.type.candidates.length, 2);
+  assert.equal(preview.confidence.type, 0);
+  assert.ok(needsReview.includes("type"));
+  assert.equal(disagreements.length, 1);
+  assert.equal(disagreements[0].case, "G");
+});
+
+// --- Record unreachable: primary null ---
+test("Record unreachable: primary null → { unreachable: true }", () => {
+  const { crossCheck } = require(MOD);
+  const result = crossCheck({
+    primary: null,
+    secondary: {
+      path: "x.js",
+      type: "script",
+      confidence: { type: 0.9 },
+    },
+  });
+  assert.equal(result.preview, null);
+  assert.deepEqual(result.needsReview, []);
+  assert.deepEqual(result.disagreements, []);
+  assert.equal(result.unreachable, true);
+});
+
+// --- crossCheckBatch: 3 pairs A/B/C ---
+test("crossCheckBatch: 3 pairs A/B/C → correct routing per pair", () => {
+  const { crossCheckBatch } = require(MOD);
+  const pairs = [
+    {
+      path: "a.js",
+      primary: {
+        path: "a.js",
+        type: "script-lib",
+        confidence: { type: 0.95 },
+      },
+      secondary: {
+        path: "a.js",
+        type: "script-lib",
+        confidence: { type: 0.9 },
+      },
+    },
+    {
+      path: "b.js",
+      primary: {
+        path: "b.js",
+        purpose: "helper",
+        confidence: { purpose: 0.7 },
+      },
+      secondary: {
+        path: "b.js",
+        purpose: "helper",
+        confidence: { purpose: 0.75 },
+      },
+    },
+    {
+      path: "c.js",
+      primary: {
+        path: "c.js",
+        type: "script-lib",
+        confidence: { type: 0.92 },
+      },
+      secondary: {
+        path: "c.js",
+        type: "script",
+        confidence: { type: 0.88 },
+      },
+    },
+  ];
+  const results = crossCheckBatch(pairs);
+  assert.equal(results.length, 3);
+
+  // Pair A: agreement, high confidence → clean.
+  assert.equal(results[0].path, "a.js");
+  assert.equal(results[0].preview.type, "script-lib");
+  assert.deepEqual(results[0].needsReview, []);
+  assert.deepEqual(results[0].disagreements, []);
+
+  // Pair B: agreement, low confidence → committed + flagged.
+  assert.equal(results[1].path, "b.js");
+  assert.equal(results[1].preview.purpose, "helper");
+  assert.ok(results[1].needsReview.includes("purpose"));
+  assert.deepEqual(results[1].disagreements, []);
+
+  // Pair C: scalar disagreement → candidates + needsReview + disagreements.
+  assert.equal(results[2].path, "c.js");
+  assert.equal(results[2].preview.type.value, null);
+  assert.equal(results[2].preview.type.candidates.length, 2);
+  assert.ok(results[2].needsReview.includes("type"));
+  assert.equal(results[2].disagreements.length, 1);
+  assert.equal(results[2].disagreements[0].case, "C");
+});

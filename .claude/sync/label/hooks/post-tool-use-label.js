@@ -384,8 +384,14 @@ function applyAgentOutput(entry) {
     // Lock primary key — never let agent output rewrite the record's path.
     // A hallucinated `path` would mismatch updateRecord's lookup key and
     // stall the job permanently. Pin after spread, before any other
-    // protected-field logic.
-    merged.path = base.path;
+    // protected-field logic. If `base.path` is missing / empty (corrupted
+    // record), fall back to the queue entry's file_path so the pin never
+    // produces undefined and permanently breaks the primary key. (Qodo
+    // Sugg#1 R4.)
+    merged.path =
+      typeof base.path === "string" && base.path.length > 0
+        ? base.path
+        : entry.file_path;
     // Respect manual_override — don't let agent output clobber it.
     const protectedFields = new Set(
       Array.isArray(base.manual_override) ? base.manual_override : []

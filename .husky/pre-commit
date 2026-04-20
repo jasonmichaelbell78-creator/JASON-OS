@@ -46,7 +46,9 @@ elif command -v node >/dev/null 2>&1; then
     # non-empty needs_review) land in a commit. Block until the validator is
     # restored or the catalog changes are unstaged. Advisory skip only applies
     # when no catalog files are in the staged set.
-    if git diff --cached --name-only | grep -Eq '^\.claude/sync/label/([^/]+\.jsonl|preview/)'; then
+    # --diff-filter=ACMR excludes deletions (D) — a commit that only deletes
+    # stale catalog files should not be blocked by a missing validator.
+    if git diff --cached --name-only --diff-filter=ACMR | grep -Eq '^\.claude/sync/label/([^/]+\.jsonl|preview/)'; then
       echo "" >&2
       echo "  label validator missing ($LABEL_VALIDATOR) but label catalogs are staged" >&2
       echo "  Commit blocked to prevent invalid label-catalog state from landing." >&2

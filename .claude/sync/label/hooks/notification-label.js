@@ -25,6 +25,10 @@ const os = require("node:os");
 const path = require("node:path");
 
 const LABEL_ROOT = path.resolve(__dirname, "..");
+const REPO_ROOT = path.resolve(LABEL_ROOT, "..", "..", "..");
+const { resolveExecutable } = require(
+  path.join(REPO_ROOT, "scripts", "lib", "resolve-exec.js")
+);
 
 let helpers;
 function loadHelpers() {
@@ -118,45 +122,58 @@ function sanitizeForShellArg(s) {
   return String(s).replace(/["`$\\\r\n\u2028\u2029\x00-\x1f\x7f]/g, "");
 }
 
+// Pre-check that the notify binary exists before we spawn. Returning the
+// absolute path on success lets us spawn with shell:false (reduces
+// PATH-hijack attack surface per Compliance #2 R4). Returning null tells
+// the caller to fall back to stderr — closes the R4 Sugg#2 concern that
+// async-spawn silent-drop made notify() think it had succeeded when the
+// binary was missing.
 function runPowerShellToast(title, body) {
+  const bin = resolveExecutable("msg");
+  if (!bin) return false;
   // BurntToast isn't universally installed; plain msg.exe always works on
   // Windows 10+. Message popup is blocking-on-user for 5s, which is fine
   // for failure surfacing.
   const safeTitle = sanitizeForShellArg(title);
   const safeBody = sanitizeForShellArg(body);
   const child = spawn(
-    "msg.exe",
+    bin,
     ["*", "/TIME:5", `${safeTitle}: ${safeBody}`],
     { stdio: "ignore", windowsHide: true }
   );
-  // Silent-drop ENOENT / EACCES from missing notify binary — notifications
-  // are non-essential, and an unhandled 'error' event crashes the parent.
+  // Silent-drop post-check race failures (binary deleted between check and
+  // spawn). The pre-check above handles the common ENOENT path by
+  // returning false upstream.
   child.once("error", () => {});
   child.unref();
   return true;
 }
 
 function runOsascript(title, body) {
+  const bin = resolveExecutable("osascript");
+  if (!bin) return false;
   // Reject quotes/backslashes/backticks/controls entirely — AppleScript
   // string literals are quote-delimited and escape handling is subtle
   // enough that whitelist-by-removal is safer than escape-and-hope.
   const safeTitle = sanitizeForShellArg(title);
   const safeBody = sanitizeForShellArg(body);
   const script = `display notification "${safeBody}" with title "${safeTitle}"`;
-  const child = spawn("osascript", ["-e", script], { stdio: "ignore" });
+  const child = spawn(bin, ["-e", script], { stdio: "ignore" });
   child.once("error", () => {});
   child.unref();
   return true;
 }
 
 function runNotifySend(title, body) {
+  const bin = resolveExecutable("notify-send");
+  if (!bin) return false;
   // Sanitize like the other notify paths + use `--` to end option parsing
   // so a body/title starting with `-` can't be interpreted as a flag
   // (Qodo Sugg#5 R3).
   const safeTitle = sanitizeForShellArg(title);
   const safeBody = sanitizeForShellArg(body);
   const child = spawn(
-    "notify-send",
+    bin,
     ["--", safeTitle, safeBody],
     { stdio: "ignore" }
   );

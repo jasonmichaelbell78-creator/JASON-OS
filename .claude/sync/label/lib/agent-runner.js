@@ -30,6 +30,9 @@ const REPO_ROOT_SENTINEL = path.join(__dirname, "..", "..", "..", "..");
 const { safeAtomicWriteSync, readTextWithSizeGuard, withLock } = require(
   path.join(REPO_ROOT_SENTINEL, "scripts", "lib", "safe-fs.js")
 );
+const { resolveExecutable } = require(
+  path.join(REPO_ROOT_SENTINEL, "scripts", "lib", "resolve-exec.js")
+);
 const { sanitize } = require("./sanitize");
 
 const DEFAULT_TIMEOUT_MS = 120_000; // 2 min per agent (back-fill can override)
@@ -59,32 +62,6 @@ function newJobId() {
  * @param {object} [args.env]
  * @returns {{pid: number | null, spawnedAt: number}} spawn metadata
  */
-function resolveExecutable(name) {
-  // Walk process.env.PATH (honouring PATHEXT on Windows) to find `name`'s
-  // absolute path. Returning an absolute path lets us spawn with
-  // shell:false on every platform — Windows can then resolve .cmd/.bat
-  // without needing the shell, which closes the spawn-shell-true finding
-  // (Semgrep #25, R2 follow-up to R1 #22).
-  const pathEnv = process.env.PATH || "";
-  const sep = process.platform === "win32" ? ";" : ":";
-  const exts = process.platform === "win32"
-    ? (process.env.PATHEXT || ".COM;.EXE;.BAT;.CMD").split(";")
-    : [""];
-  const dirs = pathEnv.split(sep).filter(Boolean);
-  for (const dir of dirs) {
-    for (const ext of exts) {
-      const candidate = path.join(dir, name + ext);
-      try {
-        if (fs.statSync(candidate).isFile()) return candidate;
-      } catch {
-        // Not found in this dir, try next. Most PATH entries miss on any
-        // given name — the throw-per-miss is the hot loop, not an error.
-      }
-    }
-  }
-  return null;
-}
-
 function defaultHeadlessSpawner({ prompt, outputPath, timeoutMs, env }) {
   const claudeBinary = resolveExecutable("claude");
   if (!claudeBinary) {
@@ -310,7 +287,14 @@ function classifyJob(entry, now = Date.now()) {
   if (!entry || typeof entry !== "object") return "failed";
   const outputPath = entry.output_path;
   const spawnedAt = Number(entry.spawned_at);
-  const timeoutMs = Number(entry.timeout_ms) || DEFAULT_TIMEOUT_MS;
+  // Clamp timeout_ms to a finite non-negative number so a corrupted queue
+  // entry with negative / NaN / -Infinity doesn't immediately mark every
+  // job past-deadline. Positive-but-huge values are fine — they just
+  // mean the job has a longer grace window. (Qodo Sugg#3 R4.)
+  const timeoutRaw = Number(entry.timeout_ms);
+  const timeoutMs = Number.isFinite(timeoutRaw)
+    ? Math.max(0, timeoutRaw)
+    : DEFAULT_TIMEOUT_MS;
 
   if (!Number.isFinite(spawnedAt)) return "failed";
   const pastDeadline = now - spawnedAt > timeoutMs;

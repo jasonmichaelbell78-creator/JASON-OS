@@ -574,3 +574,51 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
 - **Existing tests passing doesn't mean the case you're fixing has coverage.** The test "parseExistingFrontmatter yaml + lineage body" passed throughout R1, R2, R3 — while the bug in question silently dropped nested keys under `metadata:`. When Qodo flagged the regex, grep-checking the test for specifically `metadata.*` access revealed zero coverage. Always read the test for the case being fixed, not just the function under fix — and if the test doesn't cover the case, add a regression line before committing.
 - **Parallel sanitizer paths need per-path audit, not batch trust.** R1 added `sanitizeForShellArg` across platforms but skipped `runNotifySend`. The mental model "we sanitize notifications" was true; the implementation "every notify path sanitizes" was false. For any N-platform code with parallel paths, verify each path explicitly.
 - **Bidi control stripping is cheap defense against a real spoofing surface.** U+202E (right-to-left override) and its siblings can rearrange terminal output so the displayed string doesn't match the underlying bytes. For strings that appear on the prompt surface before a user decision, always include the bidi-control range `[\u200e\u200f\u202a-\u202e\u2066-\u2069]` alongside ASCII control stripping. One extra `.replace` call, covers a class of attack that's hard to diagnose if it happens.
+
+#### Review #9: Piece 3 labeling mechanism (PR #8) — Round 4 (2026-04-20)
+
+**Source:** Qodo (Compliance + PR Suggestions). Still no new Semgrep / SonarCloud / Gemini items since R3.
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 9 total (Critical: 0, Major: 0, Minor: 4, Trivial: 3, Advisory: 3, of which 2 are R2+R3 repeats).
+
+**Patterns Identified:**
+
+1. **A "cross-round dedup" reject doesn't always mean the concern is wrong — only that the *previously proposed fix* was.**
+   - Root cause: R2 rejected Qodo Sugg#5 (`spawnSync` for `runNotifySend`) because the proposed fix would block the event loop. R2's bonus fix added a silent-drop `child.once('error', () => {})` listener that prevented the parent crash — but `runNotifySend` still returned `true` on ENOENT, so `notify()`'s stderr fallback never triggered. Qodo Sugg#2 in R4 surfaced the same concern in a fresh way, and its "Why" field correctly identified the gap the silent-drop left.
+   - Prevention: when rejecting a proposed fix for being problematic, separately verify that the *underlying concern* is addressed — either by the existing code or by an alternative fix. Log the underlying concern in the learning entry so future rounds have the full picture. In R4 I re-opened with a better fix: `resolveExecutable` pre-check → return `false` if the binary is missing, so the caller's stderr fallback actually triggers. Keep the silent-drop listener for race-window post-check failures.
+
+2. **Shared helpers earn their keep when a "new surface" review framing matches an existing code pattern.**
+   - Root cause: R4 Compliance item #2 (external command execution on notify binaries) was a fresh framing of the R2 PATH-hijack concern but now targeted `msg.exe` / `osascript` / `notify-send` instead of `claude`. Rather than duplicate the R2 `resolveExecutable` logic into `notification-label.js`, extracted it into `scripts/lib/resolve-exec.js` as a shared helper. One fix now partially mitigates two pieces of advisory feedback across two files, and any future hook that spawns an external binary can reuse it.
+   - Prevention: when a R-N+1 review reframes an R-N concern across a new surface, check whether the R-N mitigation can be extracted into a helper before applying it inline to the new site. The cost (one small file) is minor; the coverage gain is meaningful.
+
+3. **Qodo's "self-refute in Why" pattern has a third variant: "no functional impact."**
+   - Root cause: R4 Sugg#6 (`classifyEdit` should prefer `content_hash` over `fingerprint`) conceded in its own "Why" field that the fix has "no functional impact because both branches of the condition currently return MINOR." The deeper finding — that `classifyEdit` has a dead-code conditional (both branches return the same value) — is a real code smell, but Qodo's proposed field-name fix doesn't address that; it just paints over it.
+   - Prevention: when Qodo proposes a fix that it itself calls "no functional impact," reject the fix but note whether the underlying code smell warrants a follow-up todo. In R4 the smell (dead-code conditional in `classifyEdit`) is minor enough to leave as-is, but could be filed as a cleanup todo if the field-name drift matters for Piece 3's downstream consumers.
+
+**Resolution:** 9 parsed items → 5 reviewer fixes + 1 bonus propagation = 6 fix actions + 1 rejected + 3 advisory-rejected = 9 dispositions ✓
+
+- **Fixed: 5 reviewer items (+ 1 propagation, + 1 shared-helper extraction)**
+  - 4 MINOR: `applyAgentOutput` path fallback to `entry.file_path` when `base.path` missing (Qodo Sugg#1); `runNotifySend` pre-checks binary via `resolveExecutable`, returns false if missing so `notify()` stderr fallback triggers (Qodo Sugg#2 — modified fix, not Qodo's spawnSync); `.husky/pre-commit` `--diff-filter=ACMR` on staged-catalog check (Qodo Sugg#4); `scope-matcher` explicit escape of `[` inside character class (Qodo Sugg#5).
+  - 1 TRIVIAL: `classifyJob` timeout clamp to `Math.max(0, Number.isFinite(raw))` (Qodo Sugg#3).
+  - **1 propagation:** applied the `resolveExecutable` pre-check to `runPowerShellToast` + `runOsascript` (parallel-paths gap, R3 pattern).
+  - **1 shared-helper extraction:** moved `resolveExecutable` from `agent-runner.js` into `scripts/lib/resolve-exec.js`; both hook and library now import from there.
+- **Deferred: 0 items**
+- **Rejected: 1 item** (Qodo self-refute):
+  - **Qodo Sugg#6 `classifyEdit` content_hash vs fingerprint** — Qodo's "Why" concedes "no functional impact because both branches of the condition currently return MINOR." The real smell (dead-code conditional) isn't what the fix addresses. Rejected; optional follow-up todo if the field-name drift matters downstream.
+- **Advisory-rejected: 3 items** (Qodo Compliance ⚪):
+  - **PATH binary hijack (`agent-runner.js`)** — **cross-round dedup**, repeat of R2 PATH-hijack advisory. Same threat-model argument applies.
+  - **External command execution (notify binaries)** — new framing, same threat-model argument, BUT partially mitigated by the R4 `resolveExecutable` extension to notify binaries. Residual risk (attacker with write to expected bin path) remains theoretical and unavoidable without hardcoded paths.
+  - **Path data in logs** — **cross-round dedup**, repeat of R1+R2 advisory. Same rationale (operator-visible stderr, not remote log sink).
+
+**Pending user action:**
+
+- Still pending from R1: SonarCloud S4036 Mark-as-Safe in UI. No new pending actions from R4.
+
+**Step 7.5 merge-trigger check (R4+):** Fix rate = 5/9 = 56% (6/9 = 67% counting propagation). Both above the 30-50% "one more round max" flag. Not yet at merge recommendation. R5, if it happens, I'll watch for <30%.
+
+**Key Learnings:**
+
+- **Reject-for-bad-fix ≠ reject-for-bad-concern.** R2's reject of Qodo Sugg#5 (spawnSync) was the right call on the fix but left the underlying concern unaddressed. My bonus `child.once('error')` prevented the crash but didn't propagate failure to the caller. R4 re-framed the same concern and I applied a better fix: pre-check via `resolveExecutable`, return false if missing, fall through to stderr. **Rule:** when rejecting a proposed fix, write the underlying concern into the learning entry so future rounds (or future me) can tell whether it was address or only deflected.
+- **Extract shared helpers when cross-file reviewer framings point at the same pattern.** R4's Compliance item #2 (notify-binary PATH-hijack) was a fresh framing of R2's concern at a new call site. Rather than duplicating the R2 `resolveExecutable` into notification-label.js, moved it to `scripts/lib/resolve-exec.js` and imported from both. One file added, reduces future duplication for any hook that spawns an external binary.
+- **"No functional impact" in a reviewer's own rationale is a clear reject signal.** Applying a fix with no functional impact adds churn without value and can mask the deeper smell the reviewer almost saw. Log the smell as a follow-up candidate; don't paint over it with a cosmetic field-name change.
+- **R4 fix rate trend (56–67%) challenges the "signal-to-noise decays linearly across rounds" mental model.** Noise is stochastic; signal is whatever the reviewer catches. R4 caught two real defects (path-fallback edge case, notify-binary false-success), one propagation-worthy concern (PATH-hijack on notify binaries), and one code smell (dead-code conditional). Decay isn't the right frame — the right question is "did this round teach me something I didn't already know?" R4 did.

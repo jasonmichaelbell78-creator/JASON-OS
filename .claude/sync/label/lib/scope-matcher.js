@@ -82,7 +82,7 @@ function globToRegex(glob) {
     } else if (c === "?") {
       out += "[^/]";
       i += 1;
-    } else if (/[.$+()|[\]{}^]/.test(c)) {
+    } else if (/[.$+()|\[\]{}^]/.test(c)) {
       out += `\\${c}`;
       i += 1;
     } else {

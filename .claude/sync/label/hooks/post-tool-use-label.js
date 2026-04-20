@@ -422,10 +422,20 @@ function applyAgentOutput(entry) {
     for (const field of protectedFields) {
       if (field in base) merged[field] = base[field];
     }
+    // Coerce agent-controlled structural fields back to arrays so a
+    // wrong-type agent output can't bypass the rule-layer's array-length
+    // semantics. `needs_review` coerces to `["needs_review"]` (a
+    // self-naming sentinel) rather than `[]` so bad-typed output doesn't
+    // silently become `status:active`. `manual_override` coerces to `[]`
+    // so protected-field logic can't crash. (Qodo Sugg R7.)
+    if (!Array.isArray(merged.needs_review)) {
+      merged.needs_review = ["needs_review"];
+    }
+    if (!Array.isArray(merged.manual_override)) {
+      merged.manual_override = [];
+    }
     merged.pending_agent_fill = false;
-    merged.status = Array.isArray(merged.needs_review) && merged.needs_review.length > 0
-      ? "partial"
-      : "active";
+    merged.status = merged.needs_review.length > 0 ? "partial" : "active";
     merged.last_hook_fire = new Date().toISOString();
     return merged;
   });
@@ -439,17 +449,23 @@ function readStdinAndHandle() {
   process.stdin.setEncoding("utf8");
   let buffer = "";
   process.stdin.on("error", (err) => {
-    // Hook must not crash Claude's flow — exit 0 — but log a sanitized
-    // one-liner so silent stdin failures are diagnosable when they recur.
-    // (Qodo Compliance R6: silent `process.exit(0)` was masking operational
-    // errors.)
+    // Hook must not crash Claude's flow, but stdin failure must NOT skip
+    // Step 0 (drainPendingQueue) — D15 contract requires past-job
+    // failures to surface even when the current-edit payload is
+    // unavailable. Run handleHook({}) so drainPendingQueue still fires;
+    // current-edit processing gets a no-op empty payload. (Qodo Sugg R7
+    // — real D15 contract gap my R6 fix left.)
     const code = err && typeof err.code === "string" ? err.code : "UNKNOWN";
     try {
       process.stderr.write(`[label-hook] stdin ${code}\n`);
     } catch {
       // Stderr itself failed — nothing useful we can do.
     }
-    process.exit(0);
+    try {
+      process.exit(handleHook({}));
+    } catch {
+      process.exit(0);
+    }
   });
   process.stdin.on("data", (chunk) => {
     buffer += chunk;
@@ -460,14 +476,18 @@ function readStdinAndHandle() {
       try {
         payload = JSON.parse(buffer);
       } catch {
-        // Invalid stdin — bail without blocking Claude, but emit a
-        // diagnostic so this doesn't disappear silently (Qodo Compliance R6).
+        // Invalid stdin — still drain Step 0 so D15 failures surface.
+        // current-edit side gets no-op via empty payload. (Qodo Sugg R7.)
         try {
           process.stderr.write("[label-hook] invalid stdin payload (not JSON)\n");
         } catch {
           // Stderr itself failed — nothing useful we can do.
         }
-        process.exit(0);
+        try {
+          process.exit(handleHook({}));
+        } catch {
+          process.exit(0);
+        }
       }
     }
     try {

@@ -82,9 +82,14 @@ function evaluate(options = {}) {
  * @returns {string}
  */
 function buildFailureWarning(failures) {
-  const sorted = [...failures].sort(
-    (a, b) => Number(a.entry.spawned_at) - Number(b.entry.spawned_at)
-  );
+  // NaN-safe sort key: invalid / missing spawned_at sinks to the end
+  // deterministically instead of producing a NaN diff that gives the sort
+  // engine undefined behaviour. (Qodo Sugg R7.)
+  const sortKey = (row) => {
+    const n = Number(row?.entry?.spawned_at);
+    return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+  };
+  const sorted = [...failures].sort((a, b) => sortKey(a) - sortKey(b));
   // Strip all ASCII controls (ANSI escapes, NUL, DEL), Unicode line and
   // paragraph separators (which JS/shell parsers may treat as line breaks),
   // and Unicode bidi control chars (LRM/RLM/LRE/RLE/PDF/LRO/RLO/LRI/RLI/FSI/
@@ -143,7 +148,17 @@ function buildOwnFailureWarning(sanitizedMessage) {
 function readStdinAndHandle() {
   process.stdin.setEncoding("utf8");
   let buffer = "";
-  process.stdin.on("error", () => {
+  process.stdin.on("error", (err) => {
+    // Hook must not crash Claude's flow — exit 0 — but log a sanitized
+    // one-liner so silent stdin failures are diagnosable when they recur.
+    // Propagates the same pattern as post-tool-use-label readStdinAndHandle
+    // (R6 fix). (Qodo Compliance + Sugg R7.)
+    const code = err && typeof err.code === "string" ? err.code : "UNKNOWN";
+    try {
+      process.stderr.write(`[label-warn] stdin ${code}\n`);
+    } catch {
+      // Stderr itself failed — nothing useful we can do.
+    }
     process.exit(0);
   });
   process.stdin.on("data", (chunk) => {
@@ -151,12 +166,18 @@ function readStdinAndHandle() {
   });
   process.stdin.on("end", () => {
     // Parse for side-effect only (future-proofing: we may want to scope
-    // warnings to specific agents or sessions). Invalid JSON → silent bail
-    // so we never block Claude's flow on bad stdin.
+    // warnings to specific agents or sessions). Invalid JSON → exit 0 but
+    // keep one line of observability so we don't silently mask operational
+    // errors (Qodo Compliance + Sugg R7).
     if (buffer.trim().length > 0) {
       try {
         JSON.parse(buffer);
       } catch {
+        try {
+          process.stderr.write("[label-warn] invalid stdin payload (not JSON)\n");
+        } catch {
+          // Stderr itself failed — nothing useful we can do.
+        }
         process.exit(0);
       }
     }

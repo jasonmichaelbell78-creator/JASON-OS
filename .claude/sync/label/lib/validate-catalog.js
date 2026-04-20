@@ -130,10 +130,13 @@ function relaxFileRecordAdditionalProperties(schema) {
       }
     }
   }
-  // Also relax at the top level in case the schema is authored flat.
-  if (schema && typeof schema === "object" && schema.additionalProperties === false) {
-    schema.additionalProperties = true;
-  }
+  // NOTE: we deliberately do NOT relax `schema.additionalProperties` at the
+  // top level. A flat-authored schema would mean "additionalProperties
+  // applies to the whole document," and flipping it globally dilutes
+  // strict-schema checks for every consumer — a fail-open posture. If a
+  // future schema is authored flat, add the targeted relaxation at the
+  // record-definition that actually needs it, not the document root.
+  // (Qodo Sugg R7 — removed top-level fallback.)
 }
 
 /**

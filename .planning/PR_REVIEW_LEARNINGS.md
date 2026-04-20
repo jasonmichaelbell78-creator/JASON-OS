@@ -722,3 +722,57 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
 - **Silent exits are worse than noisy ones in hook entry-points.** Hooks MUST NOT crash Claude's flow, so exit 0 is correct — but exit 0 *without* a diagnostic turns a transient error into a phantom. Same pattern as the R5 spawn-error silent-drop: one sanitized stderr line per exit is enough, and costs nothing.
 - **SonarCloud's 15-complexity threshold is an imperfect proxy for a real concern.** The 19-complexity resolveExecutable wasn't "broken" — it worked and passed tests — but the underlying "hard to reason about one branch without reading all of them" signal was true. Splitting into seven single-purpose helpers made the next R5-style expansion (which will happen when Windows adds new PATHEXT quirks or POSIX needs a symlink-follow option) easier to do without hitting the same refactor pressure again.
 - **Multi-round reviews have a secondary value beyond bug-catching: they stress-test your own consistency.** R6 flagged my own R5 refactor for complexity, which I hadn't noticed; R5 flagged my R4 clamp bug, which I definitely hadn't noticed. The review loop isn't "external scanner vs my code" — it's "two passes of external attention" that each catch stuff the prior pass left. Worth continuing as long as each round teaches something; worth stopping the moment it doesn't.
+
+#### Review #12: Piece 3 labeling mechanism (PR #8) — Round 7 (2026-04-20)
+
+**Source:** Mixed — Qodo (Compliance + PR Suggestions). SonarCloud Quality Gate PASSED (0 new issues, 0 hotspots — S4036 cleared). All CI checks green. PR mergeable.
+**PR/Branch:** PR #8 / `piece-3-labeling-mechanism` → `main`
+**Items:** 13 total (Critical: 0, Major: 0, Minor: 5, Trivial: 3, Advisory: 5).
+
+**Patterns Identified:**
+
+1. **Propagation gaps across parallel hook entry-points are easy to miss.**
+   - Root cause: R6 added stdin-error + invalid-JSON diagnostics to `post-tool-use-label.js readStdinAndHandle`, but `user-prompt-submit-label.js readStdinAndHandle` had the identical silent-exit pattern and was left untouched. Two parallel hook entry-points, one got the fix, the other didn't. Qodo R7 caught the gap as Compliance 🔴 + Sugg#5 (same underlying finding in two flavors).
+   - Prevention: when fixing a pattern at one hook entry-point, grep every `readStdinAndHandle` / `process.stdin.on("error"` / similar load-bearing entry-point pattern across the codebase before committing. Same category of propagation I added to the Step 4 discipline in Review #5, but now applied to hook entry-points specifically.
+
+2. **The D15 contract survives stdin failure — Step 0 must always run.**
+   - Root cause: my R6 fix added observability (stderr one-liner) but still called `process.exit(0)` on stdin error. That means `drainPendingQueue` — which is the D15 mechanism for surfacing past agent failures — never ran when the current-edit stdin was broken. Past failures silently accumulated. Qodo Sugg#1 (imp 9) correctly identified this as breaking the D15 acknowledgement contract.
+   - Prevention: for hook entry-points with both "process current payload" AND "drain backlog" responsibilities, stdin failure must NOT skip the drain leg. Changed `process.exit(0)` → `process.exit(handleHook({}))` so `drainPendingQueue` runs with empty payload; `processCurrentEdit({})` safely no-ops via `extractFilePath` returning null.
+
+3. **Wrong-type agent output can bypass array-based rule-layer semantics.**
+   - Root cause: `applyAgentOutput` checked `Array.isArray(merged.needs_review) && merged.needs_review.length > 0` to set `status: partial`. If agent output gave `needs_review: "string"` or `needs_review: {something: true}`, `Array.isArray` was false, so `status: active` was set — bypassing the rule-layer's intent that `active` means "needs_review is empty." Same class of issue as R5 prototype-pollution: agent output is semi-trusted and can violate type contracts.
+   - Prevention: coerce structural fields to their rule-layer-expected type after the spread merge. `needs_review` → array (with `["needs_review"]` sentinel on bad type so status stays `partial`, not silently `active`); `manual_override` → `[]` on bad type. Coercion AFTER the prototype-pollution strip and path-pin, so all structural invariants are established in a predictable order before the rule-layer reads them.
+
+4. **Global schema relaxation as a fallback is a fail-open posture.**
+   - Root cause: `relaxFileRecordAdditionalProperties` also relaxed `schema.additionalProperties` at the top level "in case the schema is authored flat." For any schema that's flat-authored, this flips the whole document's strictness. A flat-authored schema where `additionalProperties: false` was a deliberate strict check would be silently loosened by our validator. Qodo Sugg R7 (imp 5) correctly flagged this.
+   - Prevention: relaxation fallbacks need to fail closed, not open. Removed the top-level relaxation entirely; any future flat-authored schema needs explicit record-scoped relaxation via a new code path, not an auto-flip.
+
+**Resolution:** 13 parsed items → 6 fixes (covering 7 findings) + 6 rejected = 13 dispositions ✓
+
+- **Fixed: 6 fixes covering 7 findings**
+  - MINOR: `post-tool-use-label readStdinAndHandle` — `process.exit(handleHook({}))` instead of `process.exit(0)` so D15 drain runs on stdin failure (Qodo Sugg#1 imp 9, real contract gap).
+  - MINOR: `user-prompt-submit-label readStdinAndHandle` — propagation of R6's stdin diagnostics + covers Qodo Compliance Silent-stdin + Sugg#5.
+  - MINOR: `applyAgentOutput` — coerce `needs_review` to `["needs_review"]` sentinel on wrong-type agent output, `manual_override` to `[]` (Qodo Sugg R7, real rule-bypass defence).
+  - MINOR: `buildFailureWarning` sort — NaN-safe via `Number.isFinite(n) ? n : +Infinity` (Qodo Sugg imp 7).
+  - MINOR: `validate-catalog relaxFileRecordAdditionalProperties` — drop top-level fallback; keep record-scoped relaxation only (Qodo Sugg imp 5).
+  - TRIVIAL: `resolve-exec getPathDirs` — filter PATH entries with `path.isAbsolute` (Qodo Sugg imp 4).
+- **Deferred: 0 items**
+- **Rejected: 6 items**:
+  - **Qodo Compliance PATH-hijacked binary** — **cross-round dedup** (R2+R4+R6). Same threat-model argument.
+  - **Qodo Compliance PATH-hijacked git** — S4036 already cleared in SonarCloud UI + Quality Gate now passes; compliance framing is advisory.
+  - **Qodo Compliance unstructured log output (validate-catalog)** — **cross-round dedup** (R1+R2+R4+R5+R6). Operator-visible stderr, not remote log sink.
+  - **Qodo Compliance missing audit context** — **cross-round dedup** (R1+R2). Single-user local-dev infra.
+  - **Qodo Sugg iterate safe own keys (confidence.js)** — Qodo self-refutes: `Object.entries` already iterates only own enumerable properties; reading `__proto__` as key doesn't cause pollution.
+  - **Qodo Sugg create output dirs early** — **cross-round dedup** (R2 Sugg#4, repeated in R3 Sugg#8). Caller `processCurrentEdit` already mkdirs `AGENT_OUTPUT_DIR` before runAgentAsync.
+
+**Pending user action:** Nothing new. R1's SonarCloud S4036 Mark-as-Safe is CLEARED (Quality Gate passes).
+
+**Step 7.5 merge-trigger check (R7):** Fix rate = 7/13 = **54%**. Just above the 50% "one more round max" boundary; technically "continue normally" per rule. **But the environmental context overrides the rule:** SonarCloud PASSED, all 6 CI checks green, PR auto-mergeable. R7 caught real gaps (propagation + D15 contract + structural bypass + global-relaxation fail-open). **Recommendation: merge after this R7 commit.** Any R8 will almost certainly be cross-round dedup.
+
+**Key Learnings:**
+
+- **Propagate hook-entry-point fixes to every hook entry-point, not just the one currently under review.** R6's stdin diagnostics were a good fix on `post-tool-use-label.js`; the identical pattern on `user-prompt-submit-label.js` got the same treatment a round later only because Qodo caught it. Better discipline: when fixing a pattern on a hook entry-point, grep the whole `/hooks/` directory for the same pattern before committing.
+- **Observability and drain-on-failure are separate concerns.** R6's stderr one-liner answered "can I see that stdin failed?" but not "did the D15 contract still run?" The fixes compose: log the failure AND still do the load-bearing drain. `process.exit(handleHook({}))` gives both — observable exit + drained queue.
+- **Structural-field type coercion belongs on the output-apply boundary.** Agent output crosses a trust boundary. Inside that boundary we can assume types (spreads, merges, rule checks all depend on it). So the coercion — `Array.isArray || default` — needs to happen at the boundary, not scattered through downstream reads. Added to `applyAgentOutput` alongside prototype-key stripping and path-pinning; all three boundary concerns now live in one place.
+- **Fail-safe schema validators don't take "any schema shape" — they take the schemas they were designed for.** My global-relaxation fallback ("in case the schema is authored flat") was trying to be forgiving, but forgiving validators are fail-open validators. If a future schema is flat-authored, it needs an explicit record-scoped relaxation, not a document-wide flip.
+- **The R7 data says "merge now" more clearly than the Step 7.5 rule does.** 54% fix rate technically says "continue normally," but SonarCloud-clear + CI-green + auto-mergeable + R7's unique findings all being real follow-ups (not new defect classes) all say "this PR is done." Adding the environmental context to Step 7.5 logic would help: `if mergeable && quality-gate-passed && fix-rate > 50% && round >= 4 → recommend merge after commit.` Candidate skill-audit enhancement.

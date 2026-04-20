@@ -57,7 +57,12 @@ function getPathDirs() {
   return pathEnv
     .split(sep)
     .map((d) => d.trim().replace(/^"(.*)"$/, "$1"))
-    .filter(Boolean);
+    .filter(Boolean)
+    // Drop relative PATH entries (`.`, `./local/bin`). Relative entries
+    // mean "resolve against cwd at spawn time" — which is the classic
+    // PATH-hijack vector when cwd happens to be attacker-controlled.
+    // Cheap hardening; absolute-path entries remain. (Qodo Sugg R7.)
+    .filter((d) => path.isAbsolute(d));
 }
 
 function nameHasKnownExt(name, exts) {

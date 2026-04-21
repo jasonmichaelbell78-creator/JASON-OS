@@ -226,16 +226,19 @@ function crossCheck({ primary, secondary } = {}) {
 
     // Case G — type mismatch (string vs object, array vs object, etc.).
     // Only matters when both are non-null (Case E handled null asymmetry).
+    //
+    // R1 G1: preview value MUST stay schema-compliant (v1.2 enforces
+    // additionalProperties: false). Store `null` in the preview record and
+    // move candidates/type_mismatch onto the disagreements sidecar — the
+    // synthesis agent reads that path for arbitration context.
     if (pType !== sType) {
-      committed[field] = {
-        value: null,
-        candidates: candidatesFor(primary, secondary, field),
-        type_mismatch: true,
-      };
+      committed[field] = null;
       fieldScores[field] = 0;
       disagreements.push({
         field,
         case: "G",
+        type_mismatch: true,
+        candidates: candidatesFor(primary, secondary, field),
         primary: { value: pVal, confidence: pConf },
         secondary: { value: sVal, confidence: sConf },
       });
@@ -244,15 +247,15 @@ function crossCheck({ primary, secondary } = {}) {
 
     // From here, pType === sType and both non-null.
 
-    // Case D — array disagreement (set-union).
+    // Case D — array disagreement (set-union). Union value IS schema-
+    // compliant (array of strings vs array of strings, etc.), so the
+    // preview carries the merged array directly; candidates for which
+    // agent contributed what go on the disagreements sidecar.
     if (pType === "array") {
       if (deepEqual(pVal, sVal)) {
         // Array agreement falls through to the A/B scalar-agreement branch.
       } else {
-        committed[field] = {
-          value: arrayUnion(pVal, sVal),
-          candidates: candidatesFor(primary, secondary, field),
-        };
+        committed[field] = arrayUnion(pVal, sVal);
         fieldScores[field] = scoreField({
           primary: pConf,
           secondary: sConf,
@@ -261,6 +264,7 @@ function crossCheck({ primary, secondary } = {}) {
         disagreements.push({
           field,
           case: "D",
+          candidates: candidatesFor(primary, secondary, field),
           primary: { value: pVal, confidence: pConf },
           secondary: { value: sVal, confidence: sConf },
         });
@@ -283,10 +287,10 @@ function crossCheck({ primary, secondary } = {}) {
     }
 
     // Case C — scalar / object disagreement, both non-null, same type.
-    committed[field] = {
-      value: null,
-      candidates: candidatesFor(primary, secondary, field),
-    };
+    // Store null in the preview (cannot arbitrate automatically; user
+    // picks via conversational override or /label-audit). Candidates
+    // preserved on the disagreements sidecar, not inside the record.
+    committed[field] = null;
     fieldScores[field] = scoreField({
       primary: pConf,
       secondary: sConf,
@@ -295,6 +299,7 @@ function crossCheck({ primary, secondary } = {}) {
     disagreements.push({
       field,
       case: "C",
+      candidates: candidatesFor(primary, secondary, field),
       primary: { value: pVal, confidence: pConf },
       secondary: { value: sVal, confidence: sConf },
     });

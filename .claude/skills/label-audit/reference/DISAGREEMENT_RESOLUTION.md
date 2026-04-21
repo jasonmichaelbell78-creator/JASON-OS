@@ -36,20 +36,33 @@ field**. Each comparison falls into one of the cases below.
 field is a simple scalar (type, status, source_scope, etc.).
 
 **Action:**
-- Preview stores BOTH candidates under a discriminated shape:
+- Preview stores `null` for the field — the schema (v1.2+) enforces
+  `additionalProperties: false` on every scalar enum field, so any
+  non-null non-enum shape would fail validation at pre-commit. The
+  value is `null` in the preview record itself:
   ```json
-  "type": {
-    "value": null,
+  "type": null
+  ```
+- Candidates are preserved on the **disagreements sidecar** returned
+  alongside the preview record (not inside it):
+  ```json
+  {
+    "field": "type",
+    "case": "C",
     "candidates": [
       {"source": "primary",   "value": "script-lib", "confidence": 0.92},
       {"source": "secondary", "value": "script",     "confidence": 0.88}
-    ]
+    ],
+    "primary":   {"value": "script-lib", "confidence": 0.92},
+    "secondary": {"value": "script",     "confidence": 0.88}
   }
   ```
-- Field IS added to `needs_review`
+- Field IS added to `needs_review`.
 - Per `confidence.scoreField({primary, secondary, agree: false})`, the
   combined score drops to **0.0** — disagreement forces review.
-- Synthesis Phase 5 surfaces the disagreement in the summary.
+- Synthesis Phase 5 reads the `disagreements` array for context,
+  surfaces the disagreement in the summary, and the user arbitrates
+  via conversational override (`OVERRIDE_CONVERSATION_EXAMPLES.md`).
 
 ### Case D — Agents disagree on an array field
 
@@ -57,12 +70,17 @@ field is a simple scalar (type, status, source_scope, etc.).
 contents.
 
 **Action:**
-- Use **set-union semantics** as the preview value — any dep either agent
-  found is retained (false negatives on missing deps are worse than false
-  positives on extra deps)
+- Preview value IS the set-union of both arrays — this is
+  schema-compliant (array-of-strings stays array-of-strings). Any dep
+  either agent found is retained (false negatives on missing deps are
+  worse than false positives on extra deps):
+  ```json
+  "dependencies": [{"name": "fs", ...}, {"name": "path", ...}, {"name": "os", ...}]
+  ```
 - Field is STILL added to `needs_review` so the user confirms the union
-  is right
-- Preview's `candidates` records which source contributed which elements
+  is right.
+- Candidates recording which source contributed which elements live on
+  the disagreements sidecar (same shape as Case C).
 
 ### Case E — One agent returns null / missing, the other returns a value
 
@@ -90,11 +108,13 @@ that should have a value.
 **Trigger:** `typeof primary.value !== typeof secondary.value`.
 
 **Action:**
-- Treat as hard failure (Case C but more severe)
-- Preview stores BOTH candidates with a `type_mismatch: true` marker
-- `needs_review` includes the field with a note
+- Treat as hard failure (Case C but more severe).
+- Preview stores `null` for the field (schema-compliant scalar).
+- Disagreements sidecar entry carries `case: "G"`, `type_mismatch: true`,
+  and the same `candidates` shape as Case C.
+- `needs_review` includes the field.
 - Synthesis summary flags this prominently — it usually indicates one
-  agent misunderstood the schema
+  agent misunderstood the schema.
 
 ---
 
@@ -136,9 +156,14 @@ Fields present in an existing record's `manual_override` array are
 
 ## Writing disagreement records to the preview
 
-Preview records MAY carry `candidates` sub-objects as shown in Case C.
-Once the user arbitrates, the `candidates` array is dropped and the
-chosen value is inlined:
+Preview records **never** carry `candidates` / `type_mismatch` sub-objects —
+the v1.2 schema forbids it (`additionalProperties: false` on each record).
+Instead, the preview value is always schema-compliant (null for scalar
+disagreements, merged array for array disagreements), and all arbitration
+context lives on the `disagreements[]` array returned from `crossCheck()`
+alongside the preview. The synthesis agent reads `disagreements[]` to
+present candidates to the user; arbitration writes the chosen value back
+to the preview record via conversational override:
 
 ```json
 "type": "script-lib"

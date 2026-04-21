@@ -60,7 +60,7 @@ test("Case B: agreement + low confidence → committed, in needsReview", () => {
 });
 
 // --- Case C: scalar disagreement ---
-test("Case C: scalar disagreement → candidates shape, null value, needsReview + disagreements", () => {
+test("Case C: scalar disagreement → null in preview, candidates on disagreements sidecar", () => {
   const { crossCheck } = require(MOD);
   const primary = {
     path: "c.js",
@@ -76,22 +76,25 @@ test("Case C: scalar disagreement → candidates shape, null value, needsReview 
     primary,
     secondary,
   });
-  assert.equal(preview.type.value, null);
-  assert.equal(preview.type.candidates.length, 2);
-  assert.equal(preview.type.candidates[0].source, "primary");
-  assert.equal(preview.type.candidates[0].value, "script-lib");
-  assert.equal(preview.type.candidates[0].confidence, 0.92);
-  assert.equal(preview.type.candidates[1].source, "secondary");
-  assert.equal(preview.type.candidates[1].value, "script");
+  // Preview value is schema-compliant null (scalar field stays a scalar).
+  assert.equal(preview.type, null);
   assert.equal(preview.confidence.type, 0);
   assert.ok(needsReview.includes("type"));
   assert.equal(disagreements.length, 1);
-  assert.equal(disagreements[0].field, "type");
-  assert.equal(disagreements[0].case, "C");
+  const d = disagreements[0];
+  assert.equal(d.field, "type");
+  assert.equal(d.case, "C");
+  // Candidates now live on the disagreement sidecar, not inside the record.
+  assert.equal(d.candidates.length, 2);
+  assert.equal(d.candidates[0].source, "primary");
+  assert.equal(d.candidates[0].value, "script-lib");
+  assert.equal(d.candidates[0].confidence, 0.92);
+  assert.equal(d.candidates[1].source, "secondary");
+  assert.equal(d.candidates[1].value, "script");
 });
 
 // --- Case D: array disagreement ---
-test("Case D: array disagreement → set-union value, needsReview, candidates preserved", () => {
+test("Case D: array disagreement → set-union in preview (schema-compliant), candidates on sidecar", () => {
   const { crossCheck } = require(MOD);
   const primary = {
     path: "d.js",
@@ -107,13 +110,15 @@ test("Case D: array disagreement → set-union value, needsReview, candidates pr
     primary,
     secondary,
   });
-  assert.deepEqual(preview.deps.value, ["fs", "path", "os"]);
-  assert.equal(preview.deps.candidates.length, 2);
-  assert.deepEqual(preview.deps.candidates[0].value, ["fs", "path"]);
-  assert.deepEqual(preview.deps.candidates[1].value, ["path", "os"]);
+  // Preview value IS the merged array — schema validates (array of strings).
+  assert.deepEqual(preview.deps, ["fs", "path", "os"]);
   assert.ok(needsReview.includes("deps"));
   assert.equal(disagreements.length, 1);
-  assert.equal(disagreements[0].case, "D");
+  const d = disagreements[0];
+  assert.equal(d.case, "D");
+  assert.equal(d.candidates.length, 2);
+  assert.deepEqual(d.candidates[0].value, ["fs", "path"]);
+  assert.deepEqual(d.candidates[1].value, ["path", "os"]);
 });
 
 // --- Case E: one side null ---
@@ -162,7 +167,7 @@ test("Case F: both null → null committed, in needsReview", () => {
 });
 
 // --- Case G: type mismatch ---
-test("Case G: type mismatch → type_mismatch:true, in needsReview", () => {
+test("Case G: type mismatch → null in preview (schema-compliant), type_mismatch on sidecar", () => {
   const { crossCheck } = require(MOD);
   const primary = {
     path: "g.js",
@@ -178,13 +183,16 @@ test("Case G: type mismatch → type_mismatch:true, in needsReview", () => {
     primary,
     secondary,
   });
-  assert.equal(preview.type.value, null);
-  assert.equal(preview.type.type_mismatch, true);
-  assert.equal(preview.type.candidates.length, 2);
+  // Preview stores null (scalar schema-compliant); sidecar flags the
+  // type_mismatch so the synthesis agent surfaces it prominently.
+  assert.equal(preview.type, null);
   assert.equal(preview.confidence.type, 0);
   assert.ok(needsReview.includes("type"));
   assert.equal(disagreements.length, 1);
-  assert.equal(disagreements[0].case, "G");
+  const d = disagreements[0];
+  assert.equal(d.case, "G");
+  assert.equal(d.type_mismatch, true);
+  assert.equal(d.candidates.length, 2);
 });
 
 // --- Record unreachable: primary null ---
@@ -263,11 +271,11 @@ test("crossCheckBatch: 3 pairs A/B/C → correct routing per pair", () => {
   assert.ok(results[1].needsReview.includes("purpose"));
   assert.deepEqual(results[1].disagreements, []);
 
-  // Pair C: scalar disagreement → candidates + needsReview + disagreements.
+  // Pair C: scalar disagreement → null in preview, candidates on sidecar.
   assert.equal(results[2].path, "c.js");
-  assert.equal(results[2].preview.type.value, null);
-  assert.equal(results[2].preview.type.candidates.length, 2);
+  assert.equal(results[2].preview.type, null);
   assert.ok(results[2].needsReview.includes("type"));
   assert.equal(results[2].disagreements.length, 1);
   assert.equal(results[2].disagreements[0].case, "C");
+  assert.equal(results[2].disagreements[0].candidates.length, 2);
 });

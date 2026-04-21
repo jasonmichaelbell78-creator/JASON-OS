@@ -776,3 +776,24 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
 - **Structural-field type coercion belongs on the output-apply boundary.** Agent output crosses a trust boundary. Inside that boundary we can assume types (spreads, merges, rule checks all depend on it). So the coercion — `Array.isArray || default` — needs to happen at the boundary, not scattered through downstream reads. Added to `applyAgentOutput` alongside prototype-key stripping and path-pinning; all three boundary concerns now live in one place.
 - **Fail-safe schema validators don't take "any schema shape" — they take the schemas they were designed for.** My global-relaxation fallback ("in case the schema is authored flat") was trying to be forgiving, but forgiving validators are fail-open validators. If a future schema is flat-authored, it needs an explicit record-scoped relaxation, not a document-wide flip.
 - **The R7 data says "merge now" more clearly than the Step 7.5 rule does.** 54% fix rate technically says "continue normally," but SonarCloud-clear + CI-green + auto-mergeable + R7's unique findings all being real follow-ups (not new defect classes) all say "this PR is done." Adding the environmental context to Step 7.5 logic would help: `if mergeable && quality-gate-passed && fix-rate > 50% && round >= 4 → recommend merge after commit.` Candidate skill-audit enhancement.
+
+#### Review #13: PR #9 — Round 1 (2026-04-20)
+
+**Source:** Mixed — Qodo (primary) + Gemini Code Assist
+**PR/Branch:** PR #9 / `piece-3-labeling-mechanism` → `main`
+**Items:** 16 unique after dedup (Critical: 1, Major: 4, Minor: 10, Trivial: 1; 1 rejected)
+
+_Full commit SHAs + per-item resolutions added after Step 8._
+
+**Patterns Identified (expanded in Step 6):**
+
+1. **Schema tightening exposes pre-existing output-shape violations.**
+2. **LLM-output equality requires stable stringification.**
+3. **Checkpoint-based resume is only correctness-safe when per-batch outputs persist.**
+4. **New modules bypassing `scripts/lib/safe-fs.js` is a recurring CLAUDE.md §2 violation.**
+
+**Resolution (draft):**
+
+- Fixed: TBD items
+- Deferred: TBD
+- Rejected: 1 item (Q8 trusted-input — scope.json is tracked in-repo config, not external-input)

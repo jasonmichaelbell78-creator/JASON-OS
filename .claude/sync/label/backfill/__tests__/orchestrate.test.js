@@ -206,9 +206,10 @@ test("e2e: approveAndPromote writes real catalog atomically", async () => {
   const realLocal = catalogIo.readCatalog(promoted.localPath);
   assert.equal(realShared.length + realLocal.length, 6);
 
-  // R1 Q7 + R2 Compliance: promote audit row must exist with expected
-  // schema, including R2's `operator_id` field for forensic actor
-  // reconstruction.
+  // R1 Q7 + R2 Compliance + R3 PII-hash: promote audit row must exist
+  // with expected schema. operator_id is either a `sha256:<hex>` hash of
+  // the OS username (R3) or literal `"unknown"` when no username
+  // available — never the raw username itself.
   assert.ok(fs.existsSync(auditPath), "promote audit file must be created");
   const auditLines = fs.readFileSync(auditPath, "utf8").trim().split("\n");
   assert.equal(auditLines.length, 1);
@@ -219,11 +220,73 @@ test("e2e: approveAndPromote writes real catalog atomically", async () => {
   assert.equal(auditEntry.counts.shared + auditEntry.counts.local, 6);
   assert.ok(
     typeof auditEntry.operator_id === "string" && auditEntry.operator_id.length > 0,
-    "audit row must include operator_id (R2 Comprehensive Audit Trails)"
+    "audit row must include operator_id"
+  );
+  assert.ok(
+    auditEntry.operator_id === "unknown" ||
+      /^sha256:[0-9a-f]{64}$/.test(auditEntry.operator_id),
+    `operator_id must be sha256 hash or "unknown" (R3 PII — got "${auditEntry.operator_id}")`
   );
 
   const latest = orch.loadCheckpoint({ path: checkpointPath });
   assert.equal(latest.phase, "promoted");
+
+  rmrf(root);
+});
+
+test("e2e: approveAndPromote failure writes a failure audit row + rethrows", async () => {
+  // R3 Q6: failed promotions should be audited too, not only successes.
+  const { root, scopePath } = makeFixture();
+  const previewDir = path.join(root, "preview");
+  const realDir = path.join(root, "real");
+  const checkpointPath = path.join(root, "backfill-checkpoint.jsonl");
+  const auditPath = path.join(root, "promote-audit.jsonl");
+
+  const recordFn = (f) => ({
+    path: f.path,
+    type: "script",
+    source_scope: scopeForPath(f.path),
+    confidence: { type: 0.95, source_scope: 0.92 },
+  });
+
+  await orch.runBackfill({
+    scanOpts: { scopePath, rootDir: root },
+    dispatchPrimary: buildDispatcher(recordFn, "primary"),
+    dispatchSecondary: buildDispatcher(recordFn, "secondary"),
+    previewDir,
+    checkpointPath,
+  });
+
+  // Force promotePreview to fail: pre-create realDir/local.jsonl as a
+  // read-only file so the rename-over target fails at the SECOND write.
+  fs.mkdirSync(realDir, { recursive: true });
+  const realLocal = path.join(realDir, "local.jsonl");
+  fs.writeFileSync(realLocal, "");
+  fs.chmodSync(realLocal, 0o444);
+
+  try {
+    assert.throws(
+      () => orch.approveAndPromote({ previewDir, realDir, checkpointPath, auditPath }),
+      /real local write failed/i
+    );
+  } finally {
+    fs.chmodSync(realLocal, 0o644);
+  }
+
+  // Audit file must exist with a single failure row.
+  assert.ok(fs.existsSync(auditPath));
+  const entry = JSON.parse(fs.readFileSync(auditPath, "utf8").trim());
+  assert.equal(entry.action, "promote-preview-to-real");
+  assert.equal(entry.outcome, "failure");
+  assert.ok(typeof entry.error === "string" && entry.error.length > 0);
+  assert.ok(
+    entry.operator_id === "unknown" ||
+      /^sha256:[0-9a-f]{64}$/.test(entry.operator_id)
+  );
+  // No "promoted" checkpoint phase — the promotion aborted, so
+  // approveAndPromote's checkpoint write never ran.
+  const latest = orch.loadCheckpoint({ path: checkpointPath });
+  assert.notEqual(latest.phase, "promoted");
 
   rmrf(root);
 });

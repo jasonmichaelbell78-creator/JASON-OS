@@ -295,28 +295,38 @@ async function runBackfill(opts) {
  * @returns {{sharedPath, localPath, counts}}
  */
 function approveAndPromote(opts = {}) {
-  const result = previewMod.promotePreview(opts);
   const ts = new Date().toISOString();
+  const operatorId = deriveOperatorId();
+
+  // R3 Q6 / Qodo Sugg #6: wrap the promotion in try/catch so failed
+  // attempts also get audited. Forensic trail should record both
+  // successful and failed catalog-mutation attempts, not just successes.
+  let result;
+  try {
+    result = previewMod.promotePreview(opts);
+  } catch (err) {
+    const failureEntry = {
+      ts,
+      action: "promote-preview-to-real",
+      outcome: "failure",
+      operator_id: operatorId,
+      error: sanitize(err),
+    };
+    try {
+      appendPromoteAudit(failureEntry, opts.auditPath);
+    } catch (auditErr) {
+      logger.error(
+        `approveAndPromote: failure-audit append failed: ${sanitize(auditErr)}`
+      );
+    }
+    throw err;
+  }
+
   checkpointMod.saveCheckpoint(
     { ts, phase: "promoted", artifacts: result },
     opts.checkpointPath ? { path: opts.checkpointPath } : {}
   );
 
-  // R2 Compliance (Comprehensive Audit Trails / Qodo ⚪): include an
-  // operator identity so audit rows are reconstructable per-actor. For
-  // JASON-OS (single-user dev CLI) this is the OS-level username from
-  // `os.userInfo().username`, with env-var fallback. Not a security-
-  // bearing identity (no auth system exists); it's forensic signal.
-  let operatorId = "unknown";
-  try {
-    operatorId =
-      require("node:os").userInfo().username ||
-      process.env.USER ||
-      process.env.USERNAME ||
-      "unknown";
-  } catch {
-    operatorId = process.env.USER || process.env.USERNAME || "unknown";
-  }
   const auditEntry = {
     ts,
     action: "promote-preview-to-real",
@@ -334,6 +344,50 @@ function approveAndPromote(opts = {}) {
     logger.error(`approveAndPromote: audit append failed: ${sanitize(err)}`);
   }
   return result;
+}
+
+/**
+ * Derive a forensic operator identifier suitable for audit logs.
+ *
+ * R3 PII compliance / Qodo ⚪: R2 stored the raw `os.userInfo().username`
+ * in the promote-audit JSONL. Qodo R3 flagged that as PII (username
+ * leakage if the audit log is ever shared/uploaded/exfiltrated). We
+ * still want per-actor traceability — same actor → same identifier —
+ * but without leaking the literal username. The fix is to hash the
+ * username with SHA-256 and prefix with `sha256:` so the shape is
+ * explicit. The audit log now contains an opaque token that is
+ * deterministic per-user but not reversible.
+ *
+ * Fallback chain: `os.userInfo().username` → `$USER` / `$USERNAME` →
+ * `"unknown"`. Hash applied to whichever tier produced a non-empty
+ * value. `"unknown"` stays un-hashed so analytics can distinguish
+ * "couldn't identify" from "identified as unknown-user".
+ *
+ * @returns {string}
+ */
+function deriveOperatorId() {
+  let raw = "";
+  try {
+    raw =
+      require("node:os").userInfo().username ||
+      process.env.USER ||
+      process.env.USERNAME ||
+      "";
+  } catch {
+    raw = process.env.USER || process.env.USERNAME || "";
+  }
+  if (!raw) return "unknown";
+  try {
+    const hash = require("node:crypto")
+      .createHash("sha256")
+      .update(raw)
+      .digest("hex");
+    return `sha256:${hash}`;
+  } catch {
+    // If crypto is unavailable (shouldn't happen on Node 22), fall back
+    // to "unknown" rather than leaking the raw username.
+    return "unknown";
+  }
 }
 
 /**

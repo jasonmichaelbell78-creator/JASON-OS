@@ -935,3 +935,81 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
 - "Machinery-layer fields belong to the orchestrator — cross-check
   filters them" → sync-mechanism convention; consider a
   MACHINERY_FIELDS constant in a shared module if the pattern recurs.
+
+#### Review #15: PR #9 — Round 3 (2026-04-20)
+
+**Source:** Qodo (only)
+**PR/Branch:** PR #9 / `piece-3-labeling-mechanism` → `main`
+**Items:** 10 unique after dedup (Minor: 7, Compliance: 3; 0 Critical / 0 Major / 0 Trivial)
+
+**Resolution:**
+
+- Fixed: 6 items (1 commit — MINOR batch)
+  - R3-Q1/Q2 machinery field count "6 → 5" (propagation: 2 templates + DERIVATION_RULES.md)
+  - R3-Q4 undefined → null normalization in cross-check.js
+  - R3-Q5 prompts.js `sanitizeError(string)` misuse
+  - R3-Q6 audit failed promotion attempts (try/catch + failure row)
+  - R3 PII compliance — hash operator_id with SHA-256 (replaces R2's plain username)
+- Rejected: 4 items
+  - **Path traversal writes** / **Path trust contract** — cross-round dedup ≡ R1 Q4/Q5 + R2 path-injection
+    (3rd iteration of same speculative concern; trust model docblock already explains)
+  - **R3-Q3 RESUME.md port-skill paths** — **STALE**: paste was from an earlier file version; current RESUME.md already uses `migration-skill` in instruction text; remaining `port-skill` references are intentional rename-documentation (lines 53-55) and historical transcript notes
+  - **R3 Partial audit coverage** — architecturally scoped: promote has explicit JSONL audit (this PR); override audit is documented in `OVERRIDE_CONVERSATION_EXAMPLES.md` as Claude-runtime behavior (not code to commit); hook writes ARE the catalog (the record IS the audit; no secondary log needed)
+
+**Patterns Identified:**
+
+1. **Reviewer contradicts itself across rounds.** R2 Qodo asked to add
+   `operator_id` to the audit row (Comprehensive Audit Trails). R3 Qodo
+   flagged the same `operator_id` as PII risk. Both are valid concerns
+   from different angles; the fix is to do BOTH (actor identity +
+   non-reversible). SHA-256 hash with explicit `sha256:` prefix
+   satisfies: same actor → same hash (forensic signal preserved) AND
+   username never leaks. Key learning: when reviewer round-over-round
+   concerns look contradictory, check if the underlying
+   compliance objectives can be harmonized before rejecting either. A
+   hash is often the bridge.
+
+2. **Stale reviewer diffs persist even within active PR rounds.** R3-Q3
+   flagged `port-skill` paths in RESUME.md that the user had already
+   corrected. Qodo was reviewing an earlier version of the file than
+   current HEAD. My stale-HEAD check (skill MUST) caught it, but only
+   after I started investigating. Pre-Step-2 would have been faster.
+   Consider: for every code-snippet item, grep current HEAD for the
+   flagged pattern BEFORE triaging — if absent, auto-classify as stale.
+
+3. **Speculative-attacker concerns recur across rounds despite explicit
+   rejection.** Path traversal / path trust has now been flagged on
+   R1 / R2 / R3. Each rejection documented a specific trust model.
+   Each round Qodo re-surfaces the same underlying advisory. The
+   skill's cross-round dedup correctly auto-rejects, but the reviewer
+   cycle costs attention. Candidate mitigation: a project-local
+   `.qodo/` suppression config entry that silences the rule for the
+   specific files whose trust model is documented. Would require
+   operator authorization (not a code change). /todo candidate.
+
+4. **Word-count inaccuracies in LLM-prompt text are high-impact.** R3-Q1
+   ("6 machinery fields" → "5") is rated 9/10 by Qodo. The reasoning:
+   the prompt goes to derivation agents, and an inaccurate field count
+   can cause the agent to hallucinate a missing field. Prevention:
+   when updating schema counts in code (e.g. T27 added 5 machinery
+   fields), grep for every text reference that mentions the count —
+   `grep -rn "N Piece 3"` after any schema-adjacent change.
+
+5. **`undefined` has lossy JSON serialization.** R3-Q4 caught a subtle
+   bug: my cross-check field-read assumed `hasOwnProperty` implied
+   non-undefined, but a record with an explicit `foo: undefined`
+   property passes hasOwnProperty and carries `undefined` forward.
+   `JSON.stringify` drops `undefined` values → the field silently
+   vanishes during serialization. Always normalize `undefined → null`
+   at the boundary when the target format is JSON. Worth adding to
+   project anti-patterns if recurrent.
+
+**Key learnings to promote to memory (candidates):**
+
+- "Reviewer concerns that look contradictory can sometimes harmonize via
+  hashing / tokenization" → process learning.
+- "Stale-HEAD pre-check: grep the flagged snippet at current HEAD before
+  triaging" → `/pr-review` Step 1 enhancement candidate.
+- "Prompt-text word-count inaccuracies are high-impact — LLMs infer
+  structure from the count" → document in sync-mechanism prompt-
+  engineering notes when they exist.

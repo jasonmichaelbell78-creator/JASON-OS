@@ -68,9 +68,17 @@ function readTemplate(templatePath) {
 function assertFullyHydrated(rendered) {
   const match = PLACEHOLDER_PATTERN.exec(rendered);
   if (match) {
-    throw new Error(
-      `Unfilled placeholder in prompt template: ${sanitizeError(match[0])}`
-    );
+    // R3 Q5 / Qodo Sugg #5: `sanitizeError` is designed for Error objects,
+    // not strings. Passing `match[0]` (the raw placeholder text) to it is a
+    // conceptual misuse. Format the token directly: JSON-escape + truncate
+    // overly-long matches so the error message stays readable without
+    // needing error-object sanitization.
+    const token = String(match[0]);
+    const safeToken =
+      token.length > 200
+        ? `${JSON.stringify(token.slice(0, 200))}…`
+        : JSON.stringify(token);
+    throw new Error(`Unfilled placeholder in prompt template: ${safeToken}`);
   }
 }
 

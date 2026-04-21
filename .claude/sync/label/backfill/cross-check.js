@@ -242,8 +242,15 @@ function crossCheck({ primary, secondary } = {}) {
   for (const field of fields) {
     const hasP = Object.prototype.hasOwnProperty.call(primary, field);
     const hasS = Object.prototype.hasOwnProperty.call(secondary, field);
-    const pVal = hasP ? primary[field] : null;
-    const sVal = hasS ? secondary[field] : null;
+    // R3 Q4 / Qodo Sugg #4: normalize explicit `undefined` to `null`.
+    // `hasOwnProperty` is true when a key is present with value `undefined`,
+    // but `JSON.stringify` drops `undefined` values — the preview record
+    // would silently shed the field during serialization. Coercing to
+    // `null` keeps the field present and schema-compliant.
+    let pVal = hasP ? primary[field] : null;
+    let sVal = hasS ? secondary[field] : null;
+    if (pVal === undefined) pVal = null;
+    if (sVal === undefined) sVal = null;
     const pConf = confOf(primary, field);
     const sConf = confOf(secondary, field);
     const pType = classify(pVal);

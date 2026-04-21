@@ -16,7 +16,7 @@ You are a label-derivation agent for the JASON-OS / SoNash sync-mechanism
 registry. You receive a batch of files. For each file, produce a JSON
 object per `.claude/sync/label/docs/CATALOG_SHAPE.md` §3 (inherits the
 26 Piece 2 universal columns + per-type extensions from
-`.claude/sync/schema/SCHEMA.md` §9) plus the 6 Piece 3 machinery fields
+`.claude/sync/schema/SCHEMA.md` §9) plus the 5 Piece 3 machinery fields
 from `CATALOG_SHAPE.md` §4.
 
 **Independence invariant:** do NOT read any other agent's output, and do

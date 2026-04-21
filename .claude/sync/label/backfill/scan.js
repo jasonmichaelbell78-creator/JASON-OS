@@ -43,6 +43,12 @@ const { sanitize } = require(path.join(
   "lib",
   "sanitize.js"
 ));
+const { readTextWithSizeGuard } = require(path.join(
+  REPO_ROOT_SENTINEL,
+  "scripts",
+  "lib",
+  "safe-fs.js"
+));
 
 // Defaults per BYTE_WEIGHTED_SPLITS.md.
 const DEFAULT_TARGET_KB = 135;
@@ -68,13 +74,17 @@ const PRUNE_DIRS = new Set([
 const PRUNE_PATH_PREFIXES = [".claude/state"];
 
 /**
- * Read a file as JSON, wrapping any failure in a sanitized Error.
+ * Read a file as JSON via `scripts/lib/safe-fs.readTextWithSizeGuard` —
+ * the vetted helper that enforces a 2 MiB size ceiling and routes errors
+ * through sanitize. Strips a leading BOM if present before parsing.
+ * Wraps any failure in a sanitized Error. (PR #9 R1 Qodo #2 — CLAUDE.md
+ * §5 "File reads" anti-pattern row requires safe-fs helpers.)
  * @param {string} filePath
  * @returns {object}
  */
 function readJsonSafe(filePath) {
   try {
-    const raw = fs.readFileSync(filePath, "utf8");
+    const raw = readTextWithSizeGuard(filePath);
     const stripped = raw.codePointAt(0) === 0xfeff ? raw.slice(1) : raw;
     return JSON.parse(stripped);
   } catch (err) {

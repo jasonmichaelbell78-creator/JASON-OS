@@ -73,9 +73,11 @@ async function runBackfill(opts) {
     );
 
   let resumeState = null;
+  let resumeHistory = null;
   if (resume) {
     try {
       resumeState = checkpointMod.loadCheckpoint(checkpointPath ? { path: checkpointPath } : {});
+      resumeHistory = checkpointMod.loadCheckpointHistory(checkpointPath ? { path: checkpointPath } : {});
     } catch (err) {
       throw new Error(`runBackfill: resume checkpoint load failed: ${sanitize(err)}`);
     }
@@ -87,10 +89,60 @@ async function runBackfill(opts) {
   const batches = scanMod.splitBatches(scanResult.files, splitOpts);
   cp("split", { batch_total: batches.length });
 
+  // R1 Q1 / Gemini G1: resume is only correctness-safe when per-batch
+  // cross-check outputs persist, otherwise skipped batches produce a
+  // preview missing their records. We checkpoint each batch's results
+  // under phase:"cross-check-result" below, and here we rehydrate
+  // allCrossChecked from history before dispatching remaining batches.
+  //
+  // Rehydration rule: only pull in cross-check-result entries whose
+  // `batch_index` is in completedBatches — otherwise a checkpoint file
+  // that survived a fuller prior run (then got overwritten with a
+  // smaller completed_batches set) would cause us to rehydrate batches
+  // that will ALSO be re-dispatched below, producing duplicates.
   const allCrossChecked = [];
-  const completedBatches = Array.isArray(resumeState?.completed_batches)
-    ? new Set(resumeState.completed_batches)
-    : new Set();
+  let completedBatches;
+  if (resume && Array.isArray(resumeState?.completed_batches)) {
+    completedBatches = new Set(resumeState.completed_batches);
+    // Newest wins on batch_index: scan from most-recent entry backward,
+    // keep the first result seen per batch_index, gated on the claimed
+    // completedBatches set. Dedupe by path within kept batches.
+    const seenBatchIdx = new Set();
+    const seenPaths = new Set();
+    if (Array.isArray(resumeHistory)) {
+      for (let i = resumeHistory.length - 1; i >= 0; i--) {
+        const entry = resumeHistory[i];
+        if (!entry || entry.phase !== "cross-check-result") continue;
+        if (!Array.isArray(entry.results)) continue;
+        const idx = Number(entry.batch_index);
+        if (!Number.isFinite(idx)) continue;
+        if (!completedBatches.has(idx)) continue;
+        if (seenBatchIdx.has(idx)) continue;
+        seenBatchIdx.add(idx);
+        for (const r of entry.results) {
+          if (!r || typeof r !== "object") continue;
+          const key = r.path || null;
+          if (key && seenPaths.has(key)) continue;
+          if (key) seenPaths.add(key);
+          allCrossChecked.push(r);
+        }
+      }
+    }
+    // Safety: if history failed to restore any results for claimed
+    // completed batches, drop the skip set so those batches re-dispatch.
+    // Prevents silent record loss if the checkpoint file was truncated.
+    const claimedBatchCount = completedBatches.size;
+    if (claimedBatchCount > 0 && allCrossChecked.length === 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[label] runBackfill: resume claimed ${claimedBatchCount} completed ` +
+          `batches but no matching cross-check-result entries found — re-dispatching all`
+      );
+      completedBatches = new Set();
+    }
+  } else {
+    completedBatches = new Set();
+  }
 
   for (let i = 0; i < batches.length; i++) {
     if (completedBatches.has(i)) continue;
@@ -108,6 +160,21 @@ async function runBackfill(opts) {
       throw new Error(`runBackfill: dispatch for ${batchId} failed: ${sanitize(err)}`);
     }
 
+    // R1 Gemini G3: dispatcher contract promises an array per file. A
+    // callback that returns null / error-object / undefined would crash
+    // .find() below. Validate at the trust boundary so the message names
+    // the offending dispatcher instead of surfacing as a TypeError.
+    if (!Array.isArray(primaryRecords)) {
+      throw new TypeError(
+        `runBackfill: dispatchPrimary for ${batchId} must return an array, got ${typeof primaryRecords}`
+      );
+    }
+    if (!Array.isArray(secondaryRecords)) {
+      throw new TypeError(
+        `runBackfill: dispatchSecondary for ${batchId} must return an array, got ${typeof secondaryRecords}`
+      );
+    }
+
     const pairs = batch.files.map((f) => {
       const p = primaryRecords.find((r) => r && r.path === f.path) ?? null;
       const s = secondaryRecords.find((r) => r && r.path === f.path) ?? null;
@@ -118,6 +185,14 @@ async function runBackfill(opts) {
     for (const r of results) allCrossChecked.push(r);
 
     completedBatches.add(i);
+    // Persist per-batch outputs so a crashed session can resume without
+    // losing these records. Kept as a separate phase entry so the resume
+    // path can scan loadCheckpointHistory() for exactly these rows.
+    cp("cross-check-result", {
+      batch_index: i,
+      batch_total: batches.length,
+      results,
+    });
     cp("cross-checking", {
       batch_index: i,
       batch_total: batches.length,

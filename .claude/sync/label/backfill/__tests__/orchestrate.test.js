@@ -263,7 +263,7 @@ test("e2e: reject + re-run with corrected dispatchers produces new preview", asy
   rmrf(root);
 });
 
-test("e2e: checkpoint recovery — resume skips completed batches", async () => {
+test("e2e: checkpoint recovery — resume skips completed batches AND preserves their records", async () => {
   const { root, scopePath } = makeFixture();
   const previewDir = path.join(root, "preview");
   const checkpointPath = path.join(root, "backfill-checkpoint.jsonl");
@@ -275,12 +275,36 @@ test("e2e: checkpoint recovery — resume skips completed batches", async () => 
     confidence: { type: 0.95, source_scope: 0.92 },
   });
 
+  // First run: execute a complete back-fill so we can then simulate a
+  // mid-way crash and verify that resume recovers ALL records — not just
+  // the freshly-dispatched ones. (R1 Q1 regression coverage.)
+  await orch.runBackfill({
+    scanOpts: { scopePath, rootDir: root },
+    dispatchPrimary: buildDispatcher(recordFn, "primary"),
+    dispatchSecondary: buildDispatcher(recordFn, "secondary"),
+    previewDir,
+    checkpointPath,
+  });
+
+  // Snapshot the complete-run preview counts for comparison with resume.
+  const fullShared = catalogIo.readCatalog(path.join(previewDir, "shared.jsonl"));
+  const fullLocal = catalogIo.readCatalog(path.join(previewDir, "local.jsonl"));
+  const fullTotal = fullShared.length + fullLocal.length;
+  assert.equal(fullTotal, 6, "baseline run must produce all 6 fixture records");
+
+  // Now wipe preview + simulate a mid-flight crash after batch 0: the
+  // checkpoint file already holds real cross-check-result entries from
+  // the baseline run. Overlay a "cross-checking" checkpoint claiming only
+  // batch 0 is done; resume must skip batch 0 but still end up with ALL
+  // original records in the new preview (rehydrated from the baseline
+  // cross-check-result history).
+  orch.rejectAndClear({ previewDir });
   orch.saveCheckpoint(
     {
       ts: new Date().toISOString(),
       phase: "cross-checking",
       batch_index: 0,
-      batch_total: 2,
+      batch_total: null,
       completed_batches: [0],
     },
     { path: checkpointPath }
@@ -314,6 +338,39 @@ test("e2e: checkpoint recovery — resume skips completed batches", async () => 
     );
     assert.equal(primaryCalls, secondaryCalls);
   }
+
+  // R1 Q1 regression: preview must contain records from ALL batches —
+  // the skipped one rehydrated from checkpoint history, the remaining
+  // ones freshly dispatched. Previously this would silently drop batch 0.
+  const resumedShared = catalogIo.readCatalog(path.join(previewDir, "shared.jsonl"));
+  const resumedLocal = catalogIo.readCatalog(path.join(previewDir, "local.jsonl"));
+  const resumedTotal = resumedShared.length + resumedLocal.length;
+  assert.equal(
+    resumedTotal,
+    fullTotal,
+    `resumed preview must contain all ${fullTotal} records (got ${resumedTotal}); rehydration from checkpoint history dropped records`
+  );
+
+  rmrf(root);
+});
+
+test("e2e: dispatchers returning non-array throw at trust boundary", async () => {
+  // R1 Gemini G3: validate dispatcher return shape before .find() crashes.
+  const { root, scopePath } = makeFixture();
+  const previewDir = path.join(root, "preview");
+  const checkpointPath = path.join(root, "backfill-checkpoint.jsonl");
+
+  await assert.rejects(
+    () =>
+      orch.runBackfill({
+        scanOpts: { scopePath, rootDir: root },
+        dispatchPrimary: async () => null, // Should crash cleanly, not TypeError.
+        dispatchSecondary: async () => [],
+        previewDir,
+        checkpointPath,
+      }),
+    /dispatchPrimary.*must return an array/
+  );
 
   rmrf(root);
 });

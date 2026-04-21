@@ -72,9 +72,29 @@ function confOf(record, field) {
 }
 
 /**
- * Deep-equality helper for scalar / array / object field values. Uses JSON
- * shape for complex structures; cheap and deterministic for the primitive
- * + record shapes produced by derivation agents.
+ * Key-sorted JSON stringifier for stable equality comparison. LLM-generated
+ * records have unpredictable key ordering (Gemini R1 G2 / Qodo Sugg #10),
+ * so a plain JSON.stringify would report spurious disagreements when both
+ * agents emit logically identical objects. Recursive; handles arrays, plain
+ * objects, and primitives. Throws on circular refs (caller catches).
+ * @param {unknown} v
+ * @returns {string}
+ */
+function stableStringify(v) {
+  if (v === null || typeof v !== "object") return JSON.stringify(v);
+  if (Array.isArray(v)) {
+    return `[${v.map((x) => stableStringify(x)).join(",")}]`;
+  }
+  const keys = Object.keys(v).sort();
+  return `{${keys
+    .map((k) => `${JSON.stringify(k)}:${stableStringify(v[k])}`)
+    .join(",")}}`;
+}
+
+/**
+ * Deep-equality helper for scalar / array / object field values. Uses
+ * stable (key-sorted) JSON shape for objects — critical for LLM-generated
+ * records where key order is non-deterministic.
  * @param {unknown} a
  * @param {unknown} b
  * @returns {boolean}
@@ -85,7 +105,7 @@ function deepEqual(a, b) {
   if (typeof a !== typeof b) return false;
   if (typeof a !== "object") return false;
   try {
-    return JSON.stringify(a) === JSON.stringify(b);
+    return stableStringify(a) === stableStringify(b);
   } catch (err) {
     // Circular refs / non-serializable → treat as unequal, log sanitized.
     // eslint-disable-next-line no-console
@@ -147,7 +167,9 @@ function arrayUnion(a, b) {
     let key;
     if (el !== null && typeof el === "object") {
       try {
-        key = "J:" + JSON.stringify(el);
+        // Stable stringify so `{a:1,b:2}` and `{b:2,a:1}` dedupe together
+        // — LLM output key order is not deterministic (R1 G2 / Qodo #10).
+        key = "J:" + stableStringify(el);
       } catch {
         key = "O:" + String(el);
       }

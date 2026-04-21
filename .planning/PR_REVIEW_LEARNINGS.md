@@ -1,5 +1,115 @@
 # PR Review Learnings
 
+#### Review #16: Piece 3 structural-fix + migration-skill deep-research (PR #10) — Round 1 (2026-04-21)
+
+**Source:** Mixed — Qodo + Gemini Code Assist
+**PR/Branch:** PR #10 / `piece-3-labeling-mechanism` → `main`
+**Items:** 13 total (Critical: 1, Major: 2, Minor: 6, Trivial: 4)
+
+**Patterns Identified:**
+
+1. **Trust-boundary code skipping helper stack (recurring).** `verify.js` is
+   a verifier at the agent-output trust boundary, yet it did ad-hoc
+   `process.argv` parsing and raw `fs.readFileSync` — exactly the pattern
+   flagged in Review #1 on the bootstrap port. The per-skill self-audit
+   pattern (MI-5) still does not catch helper-bypass in new files.
+   - Root cause: `scripts/lib/` helpers are discoverable-by-convention only;
+     authors default to `node:fs` when sketching a verifier.
+   - Prevention: this is the second PR surfacing the exact same anti-pattern
+     (PR #3 R1 L1, PR #10 R1 Qodo #1). Candidate for an ESLint `no-restricted-
+     imports` rule banning `node:fs`/`process.argv` in `.claude/**/*.js` and
+     `scripts/**/*.js` once the lint stack lands — honor-only discipline is
+     losing this bet.
+
+2. **Path-traversal at agent-output boundary (new pattern).** `record.path`
+   is agent-supplied relative path; prior code did `path.join(repoRoot,
+   record.path)` then ran `fs.existsSync/statSync/readFileSync` on the
+   result with no traversal guard. Fixed by adding `validatePathInDir`
+   from security-helpers BEFORE any fs ops. Hoisting the abs resolution
+   meant both 2a (existence) and 2b (type heuristic) share one guard.
+   - Prevention: for any future trust-boundary code reading paths from
+     agent output, `validatePathInDir` MUST run first. Add to the
+     security-helpers usage doc.
+
+3. **Multi-source convergence rule fired again.** Qodo #3 (existsSync +
+   swallowed catch) and Gemini inline comment on lines 127-129 both flagged
+   the same block. Second PR where multi-source convergence pointed at a
+   real reliability issue (Review #1 had M1/M2/M3 elevations). The rule is
+   paying its keep.
+
+4. **Branch divergence across locales was a pre-edit blocker.** Local
+   `piece-3-labeling-mechanism` HEAD was 8 commits behind remote (work done
+   on another locale and pushed). `verify.js` did not exist locally despite
+   being in the PR diff. Detected via `gh pr view --json files` showing
+   ADDED files absent from working tree, then `git fetch` + fast-forward
+   merge. Fast-forward was clean (no conflicts, no lost work) because local
+   had zero divergent commits — the cross-locale pattern works when each
+   locale pulls before pushing.
+   - Prevention: PR-review Step 0 should include `git fetch origin
+     <branch> && git status -uno` to detect behind-remote state before any
+     fs operation. Current skill assumes working tree matches the PR diff.
+
+5. **Non-destructive content normalization via scripted transformer.**
+   User accepted items 6-8 (claims.jsonl edits) with the constraint "fix
+   as long as it's not destructive." Solved via a one-shot Node transformer
+   that: (a) normalized `"MEDIUM-HIGH"` → `"MEDIUM"` preserving the
+   downgrade narrative in the `evidence` field, (b) split `G1`/`GV1` gap-
+   pursuit refs out of `sourceIds` into a new `gapPursuitRefs` sibling
+   field (all info preserved, none dropped), (c) added `supersededBy` to
+   C-091 without deleting the superseded claim. 21 of 156 claims touched;
+   0 information loss. Backup `.bak` kept during the run, deleted after
+   verification.
+
+6. **Gemini IS in the active reviewer set** (D23 stale). pr-review skill
+   v4.6-jasonos-v0.1 scope note claims CodeRabbit + Gemini excluded; user
+   confirmed Gemini runs on every review. Memory updated.
+
+**Resolution:**
+
+- **Fixed: 13 items** (across 3 commits — CRITICAL separate, MAJOR batch,
+  MINOR+TRIVIAL+content batch)
+- **Deferred: 0 items**
+- **Rejected: 2 items** (with justification):
+  - **Qodo compliance #4** (speculative `sanitize(err)` leak in CLI stderr):
+    `sanitize()` routes through canonical `scripts/lib/sanitize-error.cjs`
+    which applies SENSITIVE_PATTERNS redaction (home paths, credentials,
+    bearer tokens, DB connection strings, env var refs, internal IPs).
+    Not a raw-message leak. The Qodo finding was conditional on impl;
+    verified impl is correct.
+  - **Qodo compliance #5** (speculative `formatReport` record-path logging):
+    Printing record paths IS the verifier's core function — the whole point
+    is to show which records failed verification and why. Paths are the
+    identification unit for human operators triaging bad agent output.
+    Repo-relative paths, not filesystem-absolute.
+
+**Commit breakdown:**
+
+- `8a65129` CRITICAL: path traversal guard (item 2)
+- `11cac84` MAJOR: scripts/lib helpers for CLI + content read (items 1, 3)
+- `<commit-C>` MINOR + TRIVIAL + content (items 4/5 rejected, 6-10, 12-14)
+
+**Key Learnings:**
+
+- **Second confirmation that external review catches helper-bypass that
+  self-audit misses.** Same verify.js author wrote safe-fs.js consumers
+  correctly in other files but reverted to `node:fs` here. The anti-pattern
+  isn't a knowledge gap — it's a vigilance gap. Mechanical enforcement
+  (ESLint) is the lever; docs and self-audits aren't.
+- **Cross-locale divergence is a quiet PR-review failure mode.** "Fast-
+  forward from remote first" should be in Step 0, not discovered at edit
+  time when Edit/Read errors surface a missing file.
+- **Content transforms on research output need a tight non-destructive
+  contract.** Adding fields, renaming enum values when narrative preserved
+  elsewhere, and marking supersession relationships are all safe. Dropping
+  claims, overwriting evidence text, or inventing S-NNN mappings (Qodo
+  suggested the latter for item 7) would be destructive and were refused.
+  Codify this for any future `/pr-review` round touching `.research/*.jsonl`.
+- **Oversize-file test needs an in-repo >256 KB candidate.** First pass
+  skipped the test; second pass found `.research/sync-mechanism/.../D20d-
+  dep-map-merged.jsonl`. Worth documenting in REFERENCE for future
+  verifier test authors.
+
+
 #### Review #1: Foundation milestone PR (PR #3) — Round 1 (2026-04-17)
 
 **Source:** Mixed — SonarCloud + Semgrep + Gemini Code Assist + Qodo

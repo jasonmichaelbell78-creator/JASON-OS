@@ -51,6 +51,22 @@ const { readTextWithSizeGuard } = require(
 // rather than a hard error.
 const MAX_CONTENT_READ_SIZE_BYTES = 256 * 1024;
 
+// Minimum characters in a record.purpose before we stop warning about
+// suspiciously-short agent output (below this, the heuristic flags but does
+// not error).
+const MIN_PURPOSE_LENGTH_CHARS = 15;
+
+// Statistical-sanity thresholds: below these record counts, we skip the
+// degenerate-distribution check because the sample size is too small to be
+// meaningful.
+const MIN_RECORDS_FOR_DEGENERATE_CHECK = 3;
+const MIN_RECORDS_FOR_STDDEV_CHECK = 5;
+
+// Maximum stddev (in characters) on purpose length before we flag the batch
+// as suspiciously uniform — agents that generate templated purposes tend to
+// produce near-identical lengths.
+const MAX_PURPOSE_LENGTH_STDDEV = 5;
+
 // Known well-formed values — used for sanity-but-not-reject warnings.
 const KNOWN_TOOL_DEPS = new Set([
   "node", "npm", "bash", "sh", "git", "gh", "go", "python", "python3",
@@ -89,9 +105,11 @@ function verifyRecord(record, opts = {}) {
   // raw record for sanity checks below.
   try {
     const { validateFile } = getValidators();
-    const toValidate = record && typeof record === "object" && "confidence" in record
-      ? (() => { const { confidence: _conf, ...rest } = record; return rest; })()
-      : record;
+    let toValidate = record;
+    if (record && typeof record === "object" && "confidence" in record) {
+      const { confidence: _conf, ...rest } = record;
+      toValidate = rest;
+    }
     const ok = validateFile(toValidate);
     if (!ok) {
       for (const e of validateFile.errors || []) {
@@ -210,7 +228,7 @@ function verifyRecord(record, opts = {}) {
   // 2f. purpose non-empty and not suspiciously short
   if (typeof record?.purpose !== "string" || record.purpose.trim().length === 0) {
     sanityErrors.push("purpose is empty or not a string");
-  } else if (record.purpose.trim().length < 15) {
+  } else if (record.purpose.trim().length < MIN_PURPOSE_LENGTH_CHARS) {
     sanityWarnings.push(`purpose is suspiciously short (${record.purpose.trim().length} chars)`);
   }
 
@@ -305,8 +323,8 @@ function statisticalSanity(records) {
     }
   }
 
-  // Flag: if we have >3 records and all share one type/portability value, that's suspicious.
-  if (records.length > 3) {
+  // Flag: if we have enough records and all share one type/portability value, that's suspicious.
+  if (records.length > MIN_RECORDS_FOR_DEGENERATE_CHECK) {
     if (Object.keys(typeDistribution).length === 1) {
       flags.push(`all ${records.length} records share type="${Object.keys(typeDistribution)[0]}"`);
     }
@@ -317,13 +335,14 @@ function statisticalSanity(records) {
     }
   }
 
-  // Flag: suspiciously uniform purpose length (std dev < 5 chars on ≥5 records)
-  if (purposeLengths.length >= 5) {
+  // Flag: suspiciously uniform purpose length (std dev below threshold
+  // on at least MIN_RECORDS_FOR_STDDEV_CHECK records)
+  if (purposeLengths.length >= MIN_RECORDS_FOR_STDDEV_CHECK) {
     const mean = purposeLengths.reduce((a, b) => a + b, 0) / purposeLengths.length;
     const variance =
       purposeLengths.reduce((a, b) => a + (b - mean) ** 2, 0) / purposeLengths.length;
     const stddev = Math.sqrt(variance);
-    if (stddev < 5) {
+    if (stddev < MAX_PURPOSE_LENGTH_STDDEV) {
       flags.push(
         `purpose-length stddev=${stddev.toFixed(1)} on ${purposeLengths.length} records — suspiciously uniform`
       );

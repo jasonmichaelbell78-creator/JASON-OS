@@ -535,22 +535,69 @@ pattern correctly.
 
 Execute S8 against JASON-OS itself.
 
-**Command:**
+**Invocation (Claude-driven — NOT a standalone CLI):**
 
-```sh
-node .claude/sync/label/backfill/orchestrate.js --repo=jason-os
-```
+`orchestrate.js` is a library, not an executable. Agent dispatch is
+**injected** — a live Claude session provides `dispatchPrimary` /
+`dispatchSecondary` / `synthesize` callbacks that spawn Task-tool agents
+and return parsed JSON records. See `orchestrate.js` header docstring
+and `runBackfill()` JSDoc for the callback contract.
+
+The live Claude session is the driver. In practice that means Claude:
+
+1. Calls `scan()` + `splitBatches()` via `node -e` to get the batch allocation
+2. For each batch, spawns primary + secondary Task-tool agents (in parallel
+   within a batch); parses their JSON output; schema-validates at the trust
+   boundary before handing to `crossCheckBatch()`
+3. Appends per-batch results to a running cross-checked array; writes a
+   checkpoint entry via `saveCheckpoint()` after each batch
+4. After all batches: calls `writePreview()` + optionally spawns a synthesis
+   agent over disagreements
+5. Presents the preview to the user with counts + disagreement summary +
+   verification report
+6. On user approve: calls `approveAndPromote()` → atomic rename of preview
+   to real catalog + promote-audit row
+
+**Actual allocation (2026-04-21):** 167 in-scope files → 17 byte-weighted
+batches → **34 agents total** (17 primary + 17 secondary). See
+`BYTE_WEIGHTED_SPLITS.md` for the packing rules. B01 is a single 96 KB
+file (`.planning/PR_REVIEW_LEARNINGS.md`); B17 is 4 tiny files; the
+middle is ~135 KB each.
+
+**Verification stack (per S10 run, not part of orchestrate.js):**
+
+1. **Schema validation** via ajv against `schema-v1.json` on every agent's
+   output BEFORE cross-check — malformed JSON fails loud at trust boundary
+2. **Per-field sanity** — `path` exists on disk; `type` agrees with
+   `derive.js` heuristics; dependency names resolve or are flagged as
+   explicitly external; `tool_deps` are recognizable CLIs; `required_secrets`
+   follow `SHOUTING_SNAKE_CASE`
+3. **Cross-batch consistency** (once all batches complete) — no duplicate
+   paths, `supersedes`/`superseded_by` reverse pairs valid, dependency graph
+   has no dangling pointers
+4. **Spot-check** — per batch, pick 1-2 random files, read them, compare
+   to agent derivation. Catches hallucination that cross-check is blind to
+   (both primary + secondary agreeing on something wrong)
+5. **Statistical sanity** — type distribution, portability distribution,
+   purpose-field length distribution should not collapse to a single value
+6. **Dogfood** — run the preview through `/label-audit` before promotion
 
 **Process:**
 
-1. Orchestrator scans JASON-OS files (~187 units per Piece 1a census + any
-   since added)
-2. Byte-weighted splits produce ~6–8 batches (estimate)
-3. Primary + secondary agents dispatched (~12–16 agents total)
-4. Cross-check + synthesis runs
-5. Preview presented to user in conversation with summary
+1. Orchestrator scans (167 files at census time; exact count derived live)
+2. Byte-weighted splits produce 17 batches (15-file cap, ~135 KB target)
+3. Primary + secondary agents dispatched (34 agents total, batches
+   processed one-at-a-time with primary+secondary in parallel within each)
+4. Cross-check per batch; checkpoint between batches; synthesis over all
+   disagreements after loop
+5. Preview + verification report presented to user
 6. User reviews, approves, or rejects-with-corrections
-7. On approve: real catalog written
+7. On approve: real catalog written + `S10_LEARNINGS.md` finalized
+
+**Learning log:** `.planning/piece-3-labeling-mechanism/S10_LEARNINGS.md`
+captures what this run teaches about the catalog mechanism, agent prompts,
+schema gaps, and the eventual `/sync` skill design. Committed alongside
+the catalog.
 
 **Done when:**
 - `.claude/sync/label/shared.jsonl` + `local.jsonl` exist

@@ -39,6 +39,9 @@ const { detectType } = require(
 const { sanitize } = require(
   path.join(REPO_ROOT_SENTINEL, ".claude", "sync", "label", "lib", "sanitize.js")
 );
+const { validatePathInDir } = require(
+  path.join(REPO_ROOT_SENTINEL, "scripts", "lib", "security-helpers.js")
+);
 
 // Known well-formed values — used for sanity-but-not-reject warnings.
 const KNOWN_TOOL_DEPS = new Set([
@@ -99,9 +102,20 @@ function verifyRecord(record, opts = {}) {
   }
 
   // Layer 2: per-field sanity
-  // 2a. path exists on disk (treat missing as hard error — agent hallucinated)
+  // Validate path stays within repo root BEFORE any fs ops (trust boundary —
+  // agent output is untrusted; `../` traversal could probe files outside repo).
+  let abs = null;
   if (record && typeof record.path === "string" && record.path.length > 0) {
-    const abs = path.join(repoRoot, record.path);
+    try {
+      validatePathInDir(repoRoot, record.path);
+      abs = path.join(repoRoot, record.path);
+    } catch {
+      sanityErrors.push(`path escapes repo root: ${record.path}`);
+    }
+  }
+
+  // 2a. path exists on disk (treat missing as hard error — agent hallucinated)
+  if (abs !== null) {
     try {
       if (!fs.existsSync(abs)) {
         sanityErrors.push(`path does not exist on disk: ${record.path}`);
@@ -112,10 +126,9 @@ function verifyRecord(record, opts = {}) {
   }
 
   // 2b. type agrees with derive.js heuristic
-  if (record && typeof record.path === "string" && typeof record.type === "string") {
+  if (abs !== null && typeof record.type === "string") {
     try {
       let content = "";
-      const abs = path.join(repoRoot, record.path);
       try {
         if (fs.existsSync(abs)) {
           const stat = fs.statSync(abs);

@@ -365,6 +365,102 @@ test("e2e: checkpoint recovery — resume skips completed batches AND preserves 
   rmrf(root);
 });
 
+test("e2e: partial resume — only missing batches re-dispatch, rehydrated ones don't", async () => {
+  // R2 Q1: when checkpoint claims N completed batches but history only
+  // has results for a subset, we should re-dispatch ONLY the missing
+  // batch_indexes, not blow away the entire skip set.
+  const { root, scopePath } = makeFixture();
+  const previewDir = path.join(root, "preview");
+  const checkpointPath = path.join(root, "backfill-checkpoint.jsonl");
+
+  const recordFn = (f) => ({
+    path: f.path,
+    type: "script",
+    source_scope: scopeForPath(f.path),
+    confidence: { type: 0.95, source_scope: 0.92 },
+  });
+
+  // Baseline run to populate per-batch results.
+  await orch.runBackfill({
+    scanOpts: { scopePath, rootDir: root },
+    dispatchPrimary: buildDispatcher(recordFn, "primary"),
+    dispatchSecondary: buildDispatcher(recordFn, "secondary"),
+    previewDir,
+    checkpointPath,
+  });
+
+  // Inspect what batches exist. If only 1 batch, skip this test variant
+  // (partial-resume is only meaningful with 2+ batches).
+  const history = orch.loadCheckpointHistory({ path: checkpointPath });
+  const crossCheckEntries = history.filter((h) => h.phase === "cross-check-result");
+  if (crossCheckEntries.length < 2) {
+    rmrf(root);
+    return;
+  }
+
+  const batchIndexes = crossCheckEntries.map((e) => e.batch_index);
+  const claimedButMissingIdx = batchIndexes[batchIndexes.length - 1]; // drop the last one
+
+  // Rewrite history file: remove the cross-check-result for
+  // `claimedButMissingIdx` (simulates truncation). Then overlay a
+  // "cross-checking" checkpoint claiming ALL batches are done, so the
+  // resume path sees: "claim=all, history-has-N-1=missing-one".
+  const rawHistory = require("node:fs")
+    .readFileSync(checkpointPath, "utf8")
+    .trim()
+    .split("\n")
+    .map((l) => JSON.parse(l));
+  const filtered = rawHistory.filter(
+    (e) =>
+      !(e.phase === "cross-check-result" && e.batch_index === claimedButMissingIdx)
+  );
+  orch.rejectAndClear({ previewDir });
+  require("node:fs").writeFileSync(
+    checkpointPath,
+    filtered.map((e) => JSON.stringify(e)).join("\n") + "\n"
+  );
+  orch.saveCheckpoint(
+    {
+      ts: new Date().toISOString(),
+      phase: "cross-checking",
+      batch_index: batchIndexes[batchIndexes.length - 1],
+      batch_total: batchIndexes.length,
+      completed_batches: batchIndexes, // claim ALL
+    },
+    { path: checkpointPath }
+  );
+
+  let primaryCalls = 0;
+  const countingPrimary = async (batch, batchId) => {
+    primaryCalls += 1;
+    return buildDispatcher(recordFn, "primary")(batch, batchId);
+  };
+
+  await orch.runBackfill({
+    scanOpts: { scopePath, rootDir: root },
+    dispatchPrimary: countingPrimary,
+    dispatchSecondary: buildDispatcher(recordFn, "secondary"),
+    previewDir,
+    checkpointPath,
+    resume: true,
+  });
+
+  // Only the single missing batch should re-dispatch (not all batches,
+  // which was the R1 behaviour when any batch was missing).
+  assert.equal(
+    primaryCalls,
+    1,
+    `expected exactly 1 re-dispatch for the single missing batch; got ${primaryCalls}`
+  );
+
+  // Preview must still carry all records (rehydrated + re-dispatched).
+  const shared = catalogIo.readCatalog(path.join(previewDir, "shared.jsonl"));
+  const local = catalogIo.readCatalog(path.join(previewDir, "local.jsonl"));
+  assert.equal(shared.length + local.length, 6);
+
+  rmrf(root);
+});
+
 test("e2e: dispatchers returning non-array throw at trust boundary", async () => {
   // R1 Gemini G3: validate dispatcher return shape before .find() crashes.
   const { root, scopePath } = makeFixture();

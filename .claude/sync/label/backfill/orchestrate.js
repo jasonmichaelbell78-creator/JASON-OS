@@ -149,16 +149,23 @@ async function runBackfill(opts) {
         }
       }
     }
-    // Safety: if history failed to restore any results for claimed
-    // completed batches, drop the skip set so those batches re-dispatch.
-    // Prevents silent record loss if the checkpoint file was truncated.
-    const claimedBatchCount = completedBatches.size;
-    if (claimedBatchCount > 0 && allCrossChecked.length === 0) {
+    // R2 Q1: per-batch missing-rehydration detection. The R1 safety
+    // valve was "if ANY claimed batch is missing results, drop the
+    // ENTIRE skip set" — correct but wasteful: a partial-truncation
+    // that drops one batch's results would force re-dispatch of every
+    // completed batch. Now we detect the specific missing batch_index
+    // set and only re-dispatch those, preserving rehydrated batches.
+    // Qodo Sugg #1 R2 (9/10).
+    const missing = [...completedBatches].filter(
+      (idx) => !seenBatchIdx.has(idx)
+    );
+    if (missing.length > 0) {
       logger.warn(
-        `runBackfill: resume claimed ${claimedBatchCount} completed ` +
-          `batches but no matching cross-check-result entries found — re-dispatching all`
+        `runBackfill: resume claimed ${completedBatches.size} completed ` +
+          `batches, but cross-check-result rows missing for batches: ` +
+          `${missing.join(", ")} — re-dispatching missing batches only`
       );
-      completedBatches = new Set();
+      for (const idx of missing) completedBatches.delete(idx);
     }
   } else {
     completedBatches = new Set();

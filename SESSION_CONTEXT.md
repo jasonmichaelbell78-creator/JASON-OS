@@ -1,7 +1,7 @@
 # Session Context — JASON-OS
 
 ## Current Session Counter
-12
+13
 
 ## Uncommitted Work
 No
@@ -80,6 +80,35 @@ canon, derive.js, templates, re-run strategy, hook wiring,
 covering all structural fixes. One session for discovery+lock, plus
 implementation sessions (re-run S10 after fixes land).
 
+### Step 2b — PARALLEL WORK: `/brainstorm migration-skill` re-entry
+
+`/deep-research migration-skill` COMPLETED 2026-04-21 on this branch
+(commits `62edfd4` + `a51845a` + `558b063`). Full output at
+`.research/migration-skill/RESEARCH_OUTPUT.md` (733 lines, 156 claims,
+119 sources). Research surfaced 3+ premise-shifters that deserve
+`/brainstorm` re-entry BEFORE `/deep-plan migration-skill`:
+
+1. **D19 "CAS-port-as-first-job" is axiomatic, not derived** — ~160-170h
+   commitment rests on an unexamined assumption. If JASON-OS is content-
+   agnostic and CAS is SoNash's domain, CAS port may be unnecessary for v1.
+2. **Codemod-library alternative** — jscodeshift / Rector / OpenRewrite
+   suggest `/migration` could be a thin orchestrator over proven codemod
+   runners rather than a heavy 7-phase skill. Premise-shift worth examining.
+3. **D1 + D23 gaps** — family/project unit-type missing from D1;
+   greenfield-clone verdict missing from D23.
+
+Re-entry is scoped: bring BRAINSTORM.md in as input, focus on these
+premise-shifters, produce either a reframed BRAINSTORM.md (D28 authorizes)
+or confirm the existing decisions hold. One focused session.
+
+**Alternative path:** skip the brainstorm re-entry and go direct to
+`/deep-plan migration-skill` if the premise-shifters are acceptable as
+"noted but not acted on." Faster; 29 BRAINSTORM + ~20 research decisions
+are enough to plan against.
+
+Recommendation: brainstorm re-entry first — CAS-port-as-first-job alone
+is worth a second look before locking ~160h of commitment.
+
 ### Step 3 — after /deep-plan implementation
 
 - Re-run S10 on fixed foundation (~416 files, 30–50 batches, 60–100
@@ -98,9 +127,15 @@ implementation sessions (re-run S10 after fixes land).
 - **SoNash-backport queue:** T25 (session-end T17 port), T26 (schema
   mirror — NOW expanded to include schema v1.3 + all structural fixes),
   T29 (`feedback_pr_body_file` memory mirror)
-- **/deep-research migration-skill** — still queued from session 11
-  Next Session Goals. Blocked on Piece 5 /sync for execution; design
-  work can proceed independently.
+- **/deep-research migration-skill** — COMPLETED 2026-04-21 (commits
+  `62edfd4` + `a51845a` + `558b063`). Output: 733-line RESEARCH_OUTPUT.md
+  + 156 claims + 119 sources + full challenge/dispute/gap-pursuit trail.
+  Next step is Step 2b (`/brainstorm` re-entry on premise-shifters) OR
+  direct `/deep-plan`. Execution still blocked on Piece 5 `/sync` + CAS
+  port; design + planning can proceed independently.
+- **T32 SoNash mirror (new, P3)** — SonarCloud two-variant data-integrity
+  bug + port grep-scope-narrowness verifier rule to SoNash /deep-research.
+  Both surfaced by /deep-research migration-skill methodology lessons.
 
 ## Key artifact paths (for resume)
 
@@ -114,12 +149,18 @@ implementation sessions (re-run S10 after fixes land).
 - Per-batch state (gitignored, local): `.claude/state/s10-results/*`,
   `.claude/state/s10-prompts/*`
 
-**Migration-skill (crystallized; ready for /deep-research when Piece 3 clean):**
+**Migration-skill (/deep-research complete 2026-04-21; next = /brainstorm re-entry or /deep-plan):**
 
-- Canonical: `.research/migration-skill/BRAINSTORM.md`
-- Handoff: `.research/migration-skill/NEXT_SESSION_HANDOFF.md`
-- Findings: `.research/migration-skill/findings/` (30 files from earlier
-  /deep-research run)
+- Canonical brainstorm: `.research/migration-skill/BRAINSTORM.md` (29 decisions)
+- Research output: `.research/migration-skill/RESEARCH_OUTPUT.md` (733 lines,
+  156 claims, 119 sources; 12 themes incl. Theme 12 loop-control)
+- Claims + sources + metadata: `.research/migration-skill/{claims,sources}.jsonl`,
+  `metadata.json`
+- Findings: `.research/migration-skill/findings/` (45 files — 35 D-agents +
+  4 V-agents + 2 G-agents + 2 GV-agents + 2 dispute-resolvers)
+- Challenges: `.research/migration-skill/challenges/{contrarian,otb}.md`
+- Handoff (pre-research): `.research/migration-skill/NEXT_SESSION_HANDOFF.md`
+- State file: `.claude/state/deep-research.migration-skill.state.json` (complete)
 
 **Piece 3 committed artifacts (S0–S9 + T27 via PR #9):**
 
@@ -134,4 +175,4 @@ implementation sessions (re-run S10 after fixes land).
 - JASON-OS: `piece-3-labeling-mechanism` — all Session 12 work committed
 - SoNash: `CAS-41826` unchanged since Session 8
 
-**Active todos:** `.planning/todos.jsonl` (31 entries).
+**Active todos:** `.planning/todos.jsonl` (32 entries; T32 appended 2026-04-21).

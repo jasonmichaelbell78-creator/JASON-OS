@@ -104,17 +104,20 @@ the ~milliseconds-to-seconds window before the async agent returns.
 
 `stub` is already in the Piece 2 enum — no action needed for that value.
 
-**Schema-bump status (2026-04-20):** ✓ **LANDED.** Schema v1.0 → v1.1.
-`partial` is now present in `.claude/sync/schema/enums.json`,
-`schema-v1.json`, and documented in `SCHEMA.md` §8.4 + §11. Every record
-Piece 3 writes should stamp `schema_version: "1.1"`. The in-memory
-`extendStatusEnum` fallback in `validate-catalog.js` is retained as
-belt-and-suspenders so older schema files still validate cleanly during
-cross-repo sync windows.
+**Schema-bump status (2026-04-20):** ✓ **LANDED.** Schema v1.0 → v1.1 →
+v1.2. v1.1 added the `partial` status enum; v1.2 added the 5 Piece 3
+machinery fields (`pending_agent_fill`, `manual_override`, `needs_review`,
+`last_hook_fire`, `schema_version`) as typed optional columns on both
+`file_record` and `composite_record`, replacing the earlier
+`relaxFileRecordAdditionalProperties` patch. Every record Piece 3 writes
+should stamp `schema_version: "1.2"`. The in-memory `extendStatusEnum`
+fallback in `validate-catalog.js` is retained as belt-and-suspenders so
+older schema files still validate cleanly during cross-repo sync windows.
 
-Per Piece 2 `EVOLUTION.md` §8 (mirror rule): SoNash must receive the same
-v1.1 bump when Piece 2 is ported there (Piece 5.5 and onward). Tracked in
-the `/todo` backlog.
+Per Piece 2 `EVOLUTION.md` §8 (mirror rule): SoNash must receive both the
+v1.1 (status:partial) and v1.2 (machinery fields) bumps when Piece 2 is
+ported there (Piece 5.5 and onward). Tracked in `/todo` backlog (T26 +
+T27 mirror).
 
 **Invariant:** `status: partial` records are **rejected at commit time** by
 the pre-commit validator (Plan §S6, D3). They are valid in the live catalog
@@ -289,7 +292,7 @@ all 26 universal columns plus any per-type extensions per Piece 2 §9.
   "manual_override": [],
   "needs_review": [],
   "last_hook_fire": "2026-04-20T15:42:18.123Z",
-  "schema_version": "1.1"
+  "schema_version": "1.2"
 }
 ```
 

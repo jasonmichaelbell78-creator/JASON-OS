@@ -54,10 +54,14 @@ split.
 
 ---
 
-## §3 Universal File-Level Columns (26)
+## §3 Universal File-Level Columns (26 + 5 machinery)
 
-Every file record carries these 26 columns. Required columns must be present
-with non-null values; optional columns may be null or empty.
+Every file record carries these 26 universal columns. Required columns must
+be present with non-null values; optional columns may be null or empty.
+
+Piece 3 adds 5 more universal fields — all optional — for the labeling
+machinery that keeps the catalog fresh automatically. They are documented
+in §3.10 below (details in `.claude/sync/label/docs/CATALOG_SHAPE.md` §4).
 
 ### §3.1 Identity (required)
 
@@ -151,6 +155,24 @@ skill-port model.
 Only ~10–20 files across both repos have mixed content warranting sections
 (CLAUDE.md, specific memory files flagged by Piece 1a Finding #5.1). For all
 other files, `sections: []` is the norm.
+
+### §3.10 Piece 3 machinery fields (optional, added in v1.2)
+
+All 5 are optional. Defaults assumed when absent: `false`, `[]`, `[]`,
+`null`, and the current schema string respectively.
+
+| Column | Type | Description | Rationale |
+|---|---|---|---|
+| `pending_agent_fill` | boolean | Async-fill marker: `true` while the PostToolUse hook's derivation agent is still in flight for this record. Rejected at commit time (pre-commit validator). | Piece 3 D11 |
+| `manual_override` | array of strings | Field names the user explicitly set via conversational override. The PostToolUse hook skips these fields when re-deriving. | Piece 3 D12a |
+| `needs_review` | array of strings | Field names whose derivation produced low confidence or unresolved primary/secondary disagreement. Non-empty blocks the pre-commit validator. | Piece 3 D3 + D8 |
+| `last_hook_fire` | ISO-8601 string or null | Most recent timestamp at which any hook touched this record. Used by fingerprint re-check and audit-skill `--recent` filter. | Piece 3 D6 |
+| `schema_version` | string | Schema version under which this record was last derived/validated (e.g. `"1.2"`). Enables cross-version read during migration windows. | Piece 3 machinery |
+
+Details — invariants, consumers, audit trail — live in
+`.claude/sync/label/docs/CATALOG_SHAPE.md` §4.1 through §4.5. These fields
+are mirrored on composite records so the same labeling machinery applies to
+composites.
 
 ---
 
@@ -520,6 +542,7 @@ repo before the next sync cycle.
 |---|---|---|
 | 1.0 | 2026-04-19 | Initial release. 26 universal columns + 41 per-type fields + sections + migration-metadata + composites catalog. Decisions D1–D32 in `.planning/piece-2-schema-design/DECISIONS.md`. |
 | 1.1 | 2026-04-20 | Added `status` value: `partial` (transient async-fill state, rejected at commit time). Driven by Piece 3 labeling mechanism — decisions D2, D3, D11 in `.planning/piece-3-labeling-mechanism/DECISIONS.md`; shape detail in `.claude/sync/label/docs/CATALOG_SHAPE.md` §4.1. |
+| 1.2 | 2026-04-20 | Added 5 Piece 3 machinery fields as optional typed columns on both `file_record` and `composite_record`: `pending_agent_fill` (boolean), `manual_override` (string[]), `needs_review` (string[]), `last_hook_fire` (string\|null), `schema_version` (string). Replaces the `relaxFileRecordAdditionalProperties` patch in `validate-catalog.js` — schema now strictly enforces field shape. Minor bump per EVOLUTION.md §3 (optional with defaults); T27 in `.planning/todos.jsonl`. |
 
 ---
 

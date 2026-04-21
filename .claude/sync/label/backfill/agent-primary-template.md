@@ -1,9 +1,12 @@
-# Derivation Rules — `/label-audit` agent fleet
+# Primary Derivation Agent — Batch {{BATCH_ID}}
 
-This document is the prompt-input contract for **both** primary and
-secondary derivation agents dispatched by `/label-audit` (§S7) and the
-back-fill orchestrator (§S8). Agents MUST NOT see each other's output —
-that independence is the whole point of the D8 cross-check.
+You are the **primary** label-derivation agent for this batch. You work
+**independently** of any other agent. You MUST NOT read, wait for, or consult
+the output of any secondary agent, prior primary run, or existing catalog
+record for any file in this batch. Derive every field from first principles
+using only the file path, file content, and any in-file frontmatter. Your
+independence is the entire point of the D8 cross-check — if you peek at
+another derivation, the cross-check becomes meaningless.
 
 ---
 
@@ -195,3 +198,11 @@ confidence object is the one on-disk contract.
   escape-valve is `type: other` (§7 of EVOLUTION.md) — don't invent.
 - **No silent elisions.** Every field in §3 must be present in the
   output, even if empty or null.
+
+---
+
+## Files in this batch
+
+{{BATCH_FILES_LIST}}
+
+Produce one JSON record per file matching the contract above. Return as a JSON array.

@@ -30,7 +30,7 @@ const {
   mergeNeedsReview,
   DEFAULT_THRESHOLD,
 } = require("../lib/confidence");
-const { sanitize } = require("../lib/sanitize");
+const { sanitize, logger } = require("../lib/sanitize");
 
 /**
  * Extract the set of field names to cross-check — union of primary &
@@ -107,9 +107,9 @@ function deepEqual(a, b) {
   try {
     return stableStringify(a) === stableStringify(b);
   } catch (err) {
-    // Circular refs / non-serializable → treat as unequal, log sanitized.
-    // eslint-disable-next-line no-console
-    console.error(`[label] cross-check deepEqual: ${sanitize(err)}`);
+    // Circular refs / non-serializable → treat as unequal, log through
+    // the label-prefixed structured logger (R1 Q6 propagation).
+    logger.error(`cross-check deepEqual: ${sanitize(err)}`);
     return false;
   }
 }
@@ -381,8 +381,7 @@ function crossCheckBatch(pairs) {
       });
       out.push({ path, ...result });
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(`[label] crossCheckBatch: ${sanitize(err)}`);
+      logger.error(`crossCheckBatch: ${sanitize(err)}`);
       out.push({
         path,
         preview: null,

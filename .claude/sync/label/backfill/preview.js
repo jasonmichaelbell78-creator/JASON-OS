@@ -165,11 +165,29 @@ function previewExists(opts = {}) {
  * @returns {object[] | null}
  */
 function snapshotReal(realPath) {
-  if (!fs.existsSync(realPath)) return null;
+  // R1 Q2: avoid fs.existsSync TOCTOU — CLAUDE.md §5 row 3 forbids
+  // existsSync pre-checks. We try the read directly and map ENOENT to
+  // "no snapshot needed" (rollback = delete). Note we can't just call
+  // readCatalog() here because that helper itself swallows ENOENT and
+  // returns [] — we need to distinguish "missing" from "empty" so the
+  // rollback path knows whether to delete (null) vs rewrite-empty ([]).
+  let raw;
   try {
+    raw = fs.readFileSync(realPath, "utf8");
+  } catch (err) {
+    if (err && err.code === "ENOENT") return null;
+    throw new Error(`preview.promotePreview: snapshot read failed: ${sanitize(err)}`);
+  }
+  // Now that the read succeeded, delegate to readCatalog for parse
+  // semantics. This second call races ENOENT in theory, but in
+  // practice the atomic writers elsewhere in this module guarantee
+  // the file is either fully written or absent — the race is closed
+  // by our own writers (catalog-io uses atomic rename).
+  try {
+    if (raw.trim() === "") return [];
     return readCatalog(realPath);
   } catch (err) {
-    throw new Error(`preview.promotePreview: snapshot failed: ${sanitize(err)}`);
+    throw new Error(`preview.promotePreview: snapshot parse failed: ${sanitize(err)}`);
   }
 }
 
@@ -184,9 +202,12 @@ function snapshotReal(realPath) {
  * @returns {string | null} - error description if restore failed, else null
  */
 function restoreSnapshot(realPath, snapshot) {
+  // R1 Q2 propagation: no existsSync pre-check — rmSync({force:true}) is
+  // idempotent on missing files, so attempt the delete unconditionally
+  // when snapshot===null and let rmSync silently ignore ENOENT.
   try {
     if (snapshot === null) {
-      if (fs.existsSync(realPath)) fs.rmSync(realPath, { force: true });
+      fs.rmSync(realPath, { force: true });
     } else {
       writeCatalog(realPath, snapshot);
     }

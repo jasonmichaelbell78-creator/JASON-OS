@@ -35,7 +35,7 @@ const { compileScope } = require(path.join(
   "lib",
   "scope-matcher.js"
 ));
-const { sanitize } = require(path.join(
+const { sanitize, logger } = require(path.join(
   REPO_ROOT_SENTINEL,
   ".claude",
   "sync",
@@ -111,9 +111,11 @@ function walk(rootDir, relDir, out) {
   try {
     entries = fs.readdirSync(absDir, { withFileTypes: true });
   } catch (err) {
-    // An unreadable directory (permission, race) shouldn't abort the whole
-    // scan — log via sanitize() and continue. Observer surfaces via D15.
-    console.warn(`scan: skipping ${relDir || "<root>"}: ${sanitize(err)}`);
+    // An unreadable directory (permission, race) shouldn't abort the
+    // whole scan — log via the label-prefixed structured `logger` (R1 Q6
+    // secure-logging compliance: routes through sanitize() + [label]
+    // prefix for grep-ability) and continue. Observer surfaces via D15.
+    logger.warn(`scan: skipping ${relDir || "<root>"}: ${sanitize(err)}`);
     return;
   }
   for (const entry of entries) {
@@ -163,7 +165,7 @@ function scan(opts = {}) {
     try {
       st = fs.statSync(abs);
     } catch (err) {
-      console.warn(`scan: stat failed for ${rel}: ${sanitize(err)}`);
+      logger.warn(`scan: stat failed for ${rel}: ${sanitize(err)}`);
       continue;
     }
     const sizeBytes = st.size;

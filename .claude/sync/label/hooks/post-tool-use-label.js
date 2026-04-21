@@ -322,7 +322,12 @@ function mergeRecord(existing, cheap, classification) {
   }
   merged.content_hash = cheap.fingerprint;
   merged.last_hook_fire = now;
-  merged.schema_version = base.schema_version || "1.2";
+  // R1 Q11 / Qodo Sugg #3: always upgrade to the current schema_version
+  // on every hook-fired merge, even if `base.schema_version` was an older
+  // value (e.g. "1.1"). Records are being rewritten with v1.2 machinery
+  // fields populated here — the stamp must reflect the write-time schema,
+  // not the pre-existing read-time schema.
+  merged.schema_version = "1.2";
   merged.manual_override = Array.isArray(base.manual_override) ? base.manual_override : [];
   merged.needs_review = Array.isArray(base.needs_review) ? base.needs_review : [];
   merged.pending_agent_fill = false;

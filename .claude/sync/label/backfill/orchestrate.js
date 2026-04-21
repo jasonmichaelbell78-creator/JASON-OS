@@ -27,10 +27,31 @@ const crossCheckMod = require("./cross-check");
 const checkpointMod = require("./checkpoint");
 const previewMod = require("./preview");
 
-const { sanitize } = require("../lib/sanitize");
+const { sanitize, logger } = require("../lib/sanitize");
 
 /**
  * Drive the back-fill end-to-end with injected agent dispatchers.
+ *
+ * **Trust model (R1 Q4/Q5 — Qodo compliance advisory):** The path
+ * options below — `previewDir`, `checkpointPath`, and the
+ * `opts.previewDir` / `opts.realDir` / `opts.auditPath` paths forwarded
+ * to `approveAndPromote` — are expected to come from one of three
+ * trusted sources:
+ *
+ *   1. Module-internal defaults (`PREVIEW_DIR`, `REAL_DIR`,
+ *      `CHECKPOINT_PATH`, `PROMOTE_AUDIT_PATH`) derived from
+ *      `__dirname` — not user input.
+ *   2. Test fixtures authored by operators — tmpdir paths, not user
+ *      input.
+ *   3. Caller-side code in a live Claude session which itself does not
+ *      accept user-prompt paths.
+ *
+ * No call site in this codebase passes a user-prompt-derived path
+ * into these options. Path confinement against an allowedRoot was
+ * evaluated and declined for R1 as speculative-attacker hardening
+ * (Qodo ⚪ advisory, not 🔴). If a caller ever begins accepting
+ * user-prompt paths, this contract MUST change — add an `allowedRoot`
+ * option that rejects paths resolving outside it.
  *
  * @param {object} opts
  * @param {object} [opts.scanOpts] - passed to scan()
@@ -133,9 +154,8 @@ async function runBackfill(opts) {
     // Prevents silent record loss if the checkpoint file was truncated.
     const claimedBatchCount = completedBatches.size;
     if (claimedBatchCount > 0 && allCrossChecked.length === 0) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        `[label] runBackfill: resume claimed ${claimedBatchCount} completed ` +
+      logger.warn(
+        `runBackfill: resume claimed ${claimedBatchCount} completed ` +
           `batches but no matching cross-check-result entries found — re-dispatching all`
       );
       completedBatches = new Set();
@@ -254,19 +274,70 @@ async function runBackfill(opts) {
  * Approve the current preview → atomic promotion to real catalog.
  * Convenience wrapper; callers can also call previewMod.promotePreview() directly.
  *
+ * Appends a promotion audit row to `.claude/state/label-promote-audit.jsonl`
+ * alongside the checkpoint write, so critical catalog-change actions have
+ * a reconstructable trail separate from the (transient) checkpoint file
+ * (R1 Q7 — Generic: Comprehensive Audit Trails compliance). The
+ * `auditPath` option overrides the default location for tests.
+ *
  * @param {object} [opts]
  * @param {string} [opts.previewDir]
  * @param {string} [opts.realDir]
  * @param {string} [opts.checkpointPath]
+ * @param {string} [opts.auditPath] - Override default promote-audit log path
  * @returns {{sharedPath, localPath, counts}}
  */
 function approveAndPromote(opts = {}) {
   const result = previewMod.promotePreview(opts);
+  const ts = new Date().toISOString();
   checkpointMod.saveCheckpoint(
-    { ts: new Date().toISOString(), phase: "promoted", artifacts: result },
+    { ts, phase: "promoted", artifacts: result },
     opts.checkpointPath ? { path: opts.checkpointPath } : {}
   );
+
+  const auditEntry = {
+    ts,
+    action: "promote-preview-to-real",
+    outcome: "success",
+    shared_path: result.sharedPath,
+    local_path: result.localPath,
+    counts: result.counts,
+  };
+  try {
+    appendPromoteAudit(auditEntry, opts.auditPath);
+  } catch (err) {
+    // Audit-trail failure is surfaced but not fatal — the promotion
+    // itself succeeded. Sanitized.
+    logger.error(`approveAndPromote: audit append failed: ${sanitize(err)}`);
+  }
   return result;
+}
+
+/**
+ * Default promote-audit log path. `.claude/state/` is gitignored.
+ */
+const PROMOTE_AUDIT_PATH = require("node:path").join(
+  __dirname,
+  "..",
+  "..",
+  "..",
+  "..",
+  ".claude",
+  "state",
+  "label-promote-audit.jsonl"
+);
+
+/**
+ * Append a JSONL audit row. Creates the directory on first write.
+ * @param {object} entry
+ * @param {string} [overridePath]
+ */
+function appendPromoteAudit(entry, overridePath) {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const abs = overridePath || PROMOTE_AUDIT_PATH;
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  fs.appendFileSync(abs, JSON.stringify(entry) + "\n", "utf8");
 }
 
 /**
@@ -283,6 +354,7 @@ module.exports = {
   runBackfill,
   approveAndPromote,
   rejectAndClear,
+  PROMOTE_AUDIT_PATH,
 
   // scan
   scan: scanMod.scan,

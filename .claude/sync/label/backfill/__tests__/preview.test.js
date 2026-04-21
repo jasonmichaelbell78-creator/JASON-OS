@@ -166,41 +166,57 @@ test("promotePreview: rollback restores prior shared when local write fails", ()
   // Write a valid preview.
   writePreview(sampleRecords(), { previewDir });
 
-  // Force the local write to fail by replacing realDir/local.jsonl with a
-  // DIRECTORY of the same name. writeCatalog will succeed writing its tmp
-  // file but safeRenameSync will refuse to rename over a directory, causing
-  // the atomic write to throw. This simulates "second write fails after
-  // first succeeded" — triggers the rollback path.
-  fs.rmSync(path.join(realDir, "local.jsonl"), { force: true });
-  fs.mkdirSync(path.join(realDir, "local.jsonl"));
+  // Force the local write to fail by making realDir/local.jsonl read-only.
+  // snapshotReal reads the file successfully first (R1 Q2 post-fix: no
+  // pre-flight existsSync; reads are direct), then writeCatalog's
+  // safeAtomicWriteSync attempts the rename over the read-only target and
+  // fails. This triggers the step-4 rollback path the test is verifying.
+  fs.chmodSync(path.join(realDir, "local.jsonl"), 0o444);
 
-  assert.throws(
-    () => promotePreview({ previewDir, realDir }),
-    /real local write failed/i
-  );
+  try {
+    assert.throws(
+      () => promotePreview({ previewDir, realDir }),
+      /real local write failed/i
+    );
 
-  // After rollback, real shared.jsonl should be back to the PRIOR content
-  // (not the new preview content).
-  const sharedAfter = readCatalog(path.join(realDir, "shared.jsonl"));
-  assert.deepEqual(sharedAfter, priorShared);
+    // After rollback, real shared.jsonl should be back to the PRIOR content
+    // (not the new preview content).
+    const sharedAfter = readCatalog(path.join(realDir, "shared.jsonl"));
+    assert.deepEqual(sharedAfter, priorShared);
+  } finally {
+    // Restore perms so tmpdir cleanup doesn't choke on read-only files.
+    fs.chmodSync(path.join(realDir, "local.jsonl"), 0o644);
+  }
 });
 
 test("promotePreview: rollback when no prior real existed → shared deleted", () => {
   const { writePreview, promotePreview } = require(MOD);
   const { previewDir, realDir } = mkWorkspace();
 
-  // No prior real catalog. Force local write failure via directory trick.
+  // No prior real catalog. Pre-create realLocal as an empty read-only file
+  // so snapshotReal reads it successfully (as `[]`) while the subsequent
+  // writeCatalog rename fails — forcing the rollback path with
+  // sharedSnapshot = null (ENOENT). Same trigger as the "prior exists"
+  // sibling test, different prior state for coverage.
+  fs.mkdirSync(realDir, { recursive: true });
+  const realLocal = path.join(realDir, "local.jsonl");
+  fs.writeFileSync(realLocal, "");
+  fs.chmodSync(realLocal, 0o444);
+
   writePreview(sampleRecords(), { previewDir });
-  fs.mkdirSync(path.join(realDir, "local.jsonl"));
 
-  assert.throws(
-    () => promotePreview({ previewDir, realDir }),
-    /real local write failed/i
-  );
+  try {
+    assert.throws(
+      () => promotePreview({ previewDir, realDir }),
+      /real local write failed/i
+    );
 
-  // Shared.jsonl was written during step 3 but must be deleted on rollback
-  // (prior snapshot was null → rollback = delete).
-  assert.equal(fs.existsSync(path.join(realDir, "shared.jsonl")), false);
+    // Shared.jsonl was written during step 3 but must be deleted on rollback
+    // (prior snapshot was null → rollback = delete).
+    assert.equal(fs.existsSync(path.join(realDir, "shared.jsonl")), false);
+  } finally {
+    fs.chmodSync(realLocal, 0o644);
+  }
 });
 
 test("clearPreview: removes preview dir; previewExists → false", () => {

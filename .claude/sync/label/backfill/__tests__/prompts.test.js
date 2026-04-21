@@ -102,25 +102,28 @@ test("unfilled placeholder: hydrator throws when template is missing a token", (
   // Write a fixture template into a tmp dir that references {{UNKNOWN_TOKEN}},
   // which the builder has no substitution for — must trigger the guard.
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "label-backfill-prompts-"));
-  const fakeTemplate = path.join(tmpDir, "fake-template.md");
-  fs.writeFileSync(
-    fakeTemplate,
-    "# Fake {{BATCH_ID}}\n\nUnknown: {{UNKNOWN_TOKEN}}\n\n{{BATCH_FILES_LIST}}\n",
-    "utf8"
-  );
+  try {
+    const fakeTemplate = path.join(tmpDir, "fake-template.md");
+    fs.writeFileSync(
+      fakeTemplate,
+      "# Fake {{BATCH_ID}}\n\nUnknown: {{UNKNOWN_TOKEN}}\n\n{{BATCH_FILES_LIST}}\n",
+      "utf8"
+    );
 
-  assert.throws(
-    () =>
-      buildPrimaryPrompt(SAMPLE_BATCH, {
-        batchId: "B1",
-        templatePath: fakeTemplate,
-      }),
-    /Unfilled placeholder/,
-    "must throw when an unrecognized {{TOKEN}} survives substitution"
-  );
-
-  // Cleanup
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+    assert.throws(
+      () =>
+        buildPrimaryPrompt(SAMPLE_BATCH, {
+          batchId: "B1",
+          templatePath: fakeTemplate,
+        }),
+      /Unfilled placeholder/,
+      "must throw when an unrecognized {{TOKEN}} survives substitution"
+    );
+  } finally {
+    // R1 Q12 (Qodo Sugg #4): try/finally ensures the tmpdir is cleaned up
+    // even if an assertion throws. Prevents test-run artifact leakage.
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
 });
 
 test("default templates exist and are readable on disk", () => {

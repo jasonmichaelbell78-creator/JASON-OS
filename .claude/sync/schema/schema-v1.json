@@ -251,6 +251,32 @@
       },
       "additionalProperties": false
     },
+    "piece3_machinery_fields": {
+      "$comment": "Piece 3 machinery columns (v1.2). Referenced via allOf from file_record + composite_record to keep a single source of truth for these fields (PR #9 R1 Qodo Sugg #6).",
+      "type": "object",
+      "properties": {
+        "pending_agent_fill": { "type": "boolean" },
+        "manual_override": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "needs_review": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "last_hook_fire": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "schema_version": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        }
+      }
+    },
     "section_record": {
       "type": "object",
       "required": [
@@ -470,19 +496,21 @@
           "items": { "$ref": "#/definitions/action_pin_entry" }
         },
         "secret_bearing": { "type": "boolean" },
-        "pending_agent_fill": { "type": "boolean" },
+        "pending_agent_fill": {
+          "$ref": "#/definitions/piece3_machinery_fields/properties/pending_agent_fill"
+        },
         "manual_override": {
-          "type": "array",
-          "items": { "type": "string" }
+          "$ref": "#/definitions/piece3_machinery_fields/properties/manual_override"
         },
         "needs_review": {
-          "type": "array",
-          "items": { "type": "string" }
+          "$ref": "#/definitions/piece3_machinery_fields/properties/needs_review"
         },
         "last_hook_fire": {
-          "type": ["string", "null"]
+          "$ref": "#/definitions/piece3_machinery_fields/properties/last_hook_fire"
         },
-        "schema_version": { "type": "string" }
+        "schema_version": {
+          "$ref": "#/definitions/piece3_machinery_fields/properties/schema_version"
+        }
       },
       "allOf": [
         {
@@ -670,19 +698,21 @@
           "type": "array",
           "items": { "$ref": "#/definitions/external_dep_entry" }
         },
-        "pending_agent_fill": { "type": "boolean" },
+        "pending_agent_fill": {
+          "$ref": "#/definitions/piece3_machinery_fields/properties/pending_agent_fill"
+        },
         "manual_override": {
-          "type": "array",
-          "items": { "type": "string" }
+          "$ref": "#/definitions/piece3_machinery_fields/properties/manual_override"
         },
         "needs_review": {
-          "type": "array",
-          "items": { "type": "string" }
+          "$ref": "#/definitions/piece3_machinery_fields/properties/needs_review"
         },
         "last_hook_fire": {
-          "type": ["string", "null"]
+          "$ref": "#/definitions/piece3_machinery_fields/properties/last_hook_fire"
         },
-        "schema_version": { "type": "string" }
+        "schema_version": {
+          "$ref": "#/definitions/piece3_machinery_fields/properties/schema_version"
+        }
       },
       "additionalProperties": false
     }

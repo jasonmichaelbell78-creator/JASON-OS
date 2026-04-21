@@ -197,13 +197,24 @@ test("e2e: approveAndPromote writes real catalog atomically", async () => {
   });
 
   fs.mkdirSync(realDir, { recursive: true });
-  const promoted = orch.approveAndPromote({ previewDir, realDir, checkpointPath });
+  const auditPath = path.join(root, "promote-audit.jsonl");
+  const promoted = orch.approveAndPromote({ previewDir, realDir, checkpointPath, auditPath });
 
   assert.ok(fs.existsSync(promoted.sharedPath));
   assert.ok(fs.existsSync(promoted.localPath));
   const realShared = catalogIo.readCatalog(promoted.sharedPath);
   const realLocal = catalogIo.readCatalog(promoted.localPath);
   assert.equal(realShared.length + realLocal.length, 6);
+
+  // R1 Q7: promote audit row must exist with expected schema.
+  assert.ok(fs.existsSync(auditPath), "promote audit file must be created");
+  const auditLines = fs.readFileSync(auditPath, "utf8").trim().split("\n");
+  assert.equal(auditLines.length, 1);
+  const auditEntry = JSON.parse(auditLines[0]);
+  assert.equal(auditEntry.action, "promote-preview-to-real");
+  assert.equal(auditEntry.outcome, "success");
+  assert.ok(typeof auditEntry.ts === "string" && auditEntry.ts.length > 0);
+  assert.equal(auditEntry.counts.shared + auditEntry.counts.local, 6);
 
   const latest = orch.loadCheckpoint({ path: checkpointPath });
   assert.equal(latest.phase, "promoted");

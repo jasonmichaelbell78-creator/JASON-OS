@@ -783,17 +783,81 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
 **PR/Branch:** PR #9 / `piece-3-labeling-mechanism` → `main`
 **Items:** 16 unique after dedup (Critical: 1, Major: 4, Minor: 10, Trivial: 1; 1 rejected)
 
-_Full commit SHAs + per-item resolutions added after Step 8._
+**Resolution:**
 
-**Patterns Identified (expanded in Step 6):**
+- Fixed: 15 items across 3 commits
+  - CRITICAL G1 (cross-check shape) → `4a2d400`
+  - MAJOR batch (Q1 resume, Q10 stable-eq, Q3 safe-fs, G3 array-defense) → `fa30c9a`
+  - MINOR+TRIVIAL batch (Q2, Q6, Q7, Q11, Q12, Q13, Q14, Q15, Q4/Q5-docs) → this commit
+- Deferred: 0
+- Rejected: 1 — **Q8 (trusted-input assumption on scope.json)** — scope.json
+  is a tracked in-repo config file under `.claude/sync/label/`, committed
+  to the repo, reviewed via PR. It is not an external-input vector. The
+  scan is an internal-codebase-inventory operation; scope.json authors
+  are operators, not untrusted users. Qodo's compliance rule was written
+  for user-prompt-ingesting paths, not build-time repo configs.
+  Advisory (⚪), not red (🔴) in the Qodo report.
+
+**Patterns Identified (with prevention notes):**
 
 1. **Schema tightening exposes pre-existing output-shape violations.**
+   T27 landed `additionalProperties: false` on `file_record` /
+   `composite_record` in the same PR as S8's cross-check logic. S8
+   wrote `{value, candidates, type_mismatch}` shapes into scalar-enum
+   fields like `type`; tests passed because the `relaxFileRecord…`
+   patch silenced validation until T27 removed it. Prevention: when a
+   PR tightens a schema, grep for field-shape writers in the same PR
+   and audit structural-field assignments.
+
 2. **LLM-output equality requires stable stringification.**
-3. **Checkpoint-based resume is only correctness-safe when per-batch outputs persist.**
-4. **New modules bypassing `scripts/lib/safe-fs.js` is a recurring CLAUDE.md §2 violation.**
+   `JSON.stringify(a) === JSON.stringify(b)` is key-order-sensitive.
+   Derivation agents emit fields in unpredictable order; false-positive
+   disagreements follow. Prevention: cross-checks on LLM-produced
+   structures need a stable (key-sorted) stringifier. Candidate
+   addition to CLAUDE.md anti-patterns or the sync-mechanism reference
+   docs.
 
-**Resolution (draft):**
+3. **Checkpoint-based resume is only correctness-safe when per-batch
+   outputs persist.** My S8 orchestrator checkpointed metadata
+   (`completed_batches: [i]`) but not the actual cross-check output.
+   On resume, skipping completed batches produced a preview missing
+   their records. My test covered "dispatch-call skipping" only, not
+   "preview completeness." Prevention: resume-feature tests MUST
+   assert final-artifact completeness (record count, or byte-identical
+   comparison to non-crashed run), not just that dispatches got
+   skipped.
 
-- Fixed: TBD items
-- Deferred: TBD
-- Rejected: 1 item (Q8 trusted-input — scope.json is tracked in-repo config, not external-input)
+4. **New modules bypassing `scripts/lib/safe-fs.js` is a recurring
+   CLAUDE.md §2 violation.** S8's `readJsonSafe` used raw
+   `fs.readFileSync`. Same pattern PR #3 / PR #7 / PR #8 had variants
+   of. Per-skill audit doesn't catch it. Prevention candidate: a
+   pre-commit grep that flags new `fs.readFileSync` / `writeFileSync`
+   / `existsSync` in project code and requires justified suppression.
+   Front-loads vs. Qodo catching it at review. Candidate `/todo` when
+   Layer 2 pre-commit infrastructure lands.
+
+5. **Default-value semantics differ from assignment semantics.** Q11:
+   `base.schema_version || "1.2"` preserved older versions across hook
+   re-fires, pinning legacy records at "1.1" forever even when the
+   write-time hook is v1.2-aware. Hook stamps should reflect the
+   WRITE-time schema, not the historical schema — the record shape
+   matches the hook version.
+
+6. **Test fixtures can exploit quirks; make them explicit.** The
+   preview rollback test used `mkdirSync(realLocal)` to force write
+   failure. It worked only because the old `existsSync` path returned
+   `true` for directories AND `readCatalog` returned `[]` for them.
+   My TOCTOU fix broke the quirk chain. Fixed by switching the
+   fixture to `chmod 0o444` on a pre-existing empty file — more
+   explicit about what's being tested, and doesn't depend on OS-level
+   directory semantics.
+
+**Key learnings to promote to memory (candidates):**
+
+- "LLM-output equality requires stable key-sorted stringify" → project
+  anti-pattern candidate if the pattern recurs.
+- "Resume/checkpoint tests MUST assert artifact-completeness, not just
+  dispatch-skipping" → process learning for `/pr-review` and future
+  resume-feature PRs.
+- "safe-fs.js bypass is a recurring violation; candidate pre-commit
+  grep" → `/todo` candidate.

@@ -1,0 +1,78 @@
+{
+  "topic": "/migration skill",
+  "depth": "L1",
+  "questionType": "skill design / architecture",
+  "domain": "technology",
+  "startedAt": "2026-04-21T00:00:00Z",
+  "completedAt": "2026-04-21T11:45:00Z",
+  "agentCount": 35,
+  "searchRounds": 5,
+  "sourceCount": 119,
+  "claimCount": 156,
+  "confidenceDistribution": {
+    "HIGH": 117,
+    "MEDIUM-HIGH": 6,
+    "MEDIUM": 29,
+    "LOW": 3,
+    "HIGH (v1.1 only)": 1,
+    "UNVERIFIED": 0
+  },
+  "selfAuditResult": "pending Phase 4",
+  "consumerHints": {
+    "hasStackClaims": true,
+    "hasPitfallClaims": true,
+    "hasDebtCandidates": true,
+    "hasMemoryCandidates": true,
+    "lowConfidenceCount": 3
+  },
+  "gapFillRounds": 1,
+  "gapAgentCount": 2,
+  "gapClaimsAdded": 21,
+  "gapVerificationAgentCount": 2,
+  "finalReSynthesisPerformed": true,
+  "totalClaimsPostGap": 156,
+  "gapSources": [
+    "<JASON_OS_ROOT>\\.research\\migration-skill\\findings\\G1-loop-control.md",
+    "<JASON_OS_ROOT>\\.research\\migration-skill\\findings\\G2-sonash-source-cost.md",
+    "<JASON_OS_ROOT>\\.research\\migration-skill\\findings\\GV1-loop-control-verify.md",
+    "<JASON_OS_ROOT>\\.research\\migration-skill\\findings\\GV2-sonash-cost-verify.md"
+  ],
+  "reSynthesisTriggered": true,
+  "reSynthesisDetails": {
+    "triggeredAt": "2026-04-21T11:00:00Z",
+    "triggerReason": "~38% of claims changed from verification + challenges + disputes",
+    "verifierFindings": ["V1-jason-os-infra", "V2-sonash-integration", "V3-cas", "V4-design-web"],
+    "challengeFindings": ["contrarian", "otb"],
+    "disputeResolutions": ["dispute-resolutions-arch", "dispute-resolutions-cas"],
+    "topChanges": [
+      "Decomposition label canonicalized to 'minimum-viable router + 2 ancillaries' (3 locations)",
+      "CAS auth/network claim reframed NARROW (scripts zero-auth; 3 of 6 skill bodies networked)",
+      "D16 back-direction VIOLATED -> reframed to v1.1 per D28",
+      "Agent count collapsed 8-9 new -> 2 new + 6 reused",
+      "/sonash-context reclassified SKILL (not hidden file dependency)",
+      "CAS port split into Tier-0 hand-port + Tier-1 via /migration",
+      "Added OTB structural gaps: family unit-type, greenfield-clone verdict, v0.5 scaffold milestone"
+    ],
+    "claimsAdded": 15,
+    "claimsModified": 14,
+    "sourcesAdded": 12
+  },
+  "finalReSynthesisDetails": {
+    "triggeredAt": "2026-04-21T11:45:00Z",
+    "triggerReason": "Gap-round 1 findings integration (G1 loop-control + G2 SoNash-source-cost) + verifier corrections (GV1 + GV2)",
+    "gapFindings": ["G1-loop-control", "G2-sonash-source-cost"],
+    "gapVerifierFindings": ["GV1-loop-control-verify", "GV2-sonash-cost-verify"],
+    "structuralAdditions": [
+      "Theme 12 (Loop-control protocol): 8 design recommendations A1-A8 with confidence adjusted per GV1 (A5 v1.1-only, A8 renamed 'forward-direction I1 test', rustc byte-identity softened)",
+      "Theme 6 (CAS) updated: G2 + GV2 SoNash-side cost findings; counts corrected upward (TDMS 210->418, home-context 520->697, Firestore 159->394); TWO SonarCloud codemod rules required (not one); HYBRID recommendation; revised /migration v1 gross ~160-170h",
+      "Methodology lessons learned section added (before Sources): grep scope-narrowness as recurring failure mode observed in V3 + G2; verifier mandate recommendation for future /deep-research runs"
+    ],
+    "contradictionsAdded": [
+      "rustc stage2 byte-identity: aspirational precedent, fragile in practice — /migration A8 softened from byte-identity to structural-fixpoint criterion",
+      "Grep scope-narrowness recurring failure mode: V3, G2 both under-scoped their searches relative to claim subjects"
+    ],
+    "claimsAddedThisPhase": 21,
+    "sourcesAddedThisPhase": 22,
+    "claimRangeAdded": "C-136..C-156 (with C-140b/C-143b/C-147b/C-150b suffix variants to avoid collision with pre-existing C-140/C-143/C-147/C-150)"
+  }
+}

@@ -367,9 +367,9 @@ Dataview achieves 80% of Tana's taxonomy benefit locally.
 **Setup:** Create an Obsidian vault at `~/.claude-os-vault/`. Use FolderBridge
 to mount:
 
-- `C:\Users\jason\.claude\skills\` → `skills/`
-- `C:\Users\jason\.claude\agents\` → `agents/`
-- `C:\Users\jason\Workspace\dev-projects\sonash-v0\.claude\skills\` →
+- `<HOME>\.claude\skills\` → `skills/`
+- `<HOME>\.claude\agents\` → `agents/`
+- `<SONASH_ROOT>\.claude\skills\` →
   `sonash/skills/`
 
 Each skill/agent `.yaml` gets a companion `SKILL.md` with frontmatter:

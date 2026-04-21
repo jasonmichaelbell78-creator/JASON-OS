@@ -466,7 +466,7 @@ assumptions via convergence-loop. This plan's codebase claims:
 2. `.claude/sync/schema/` does not currently exist → Step 1 creates it
 3. `.planning/jason-os/BOOTSTRAP_DEFERRED.md` exists → referenced in Step 8
 4. DECISIONS.md at `.planning/piece-2-schema-design/DECISIONS.md` exists → referenced throughout
-5. SoNash repo at `C:\Users\jason\Workspace\dev-projects\sonash-v0\` is accessible → referenced in Step 9
+5. SoNash repo at `<SONASH_ROOT>\` is accessible → referenced in Step 9
 
 **Verification plan:** run quick filesystem checks before starting Step 1.
 

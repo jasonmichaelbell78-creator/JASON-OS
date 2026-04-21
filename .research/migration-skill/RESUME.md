@@ -1,99 +1,87 @@
-# RESUME — /port brainstorm (home-session pickup)
+# RESUME — /migration brainstorm (pickup guide)
 
-**You started this at work on 2026-04-20. This file is how you (or a fresh Claude Code session) pick it up at home.**
-
----
-
-## TL;DR
-
-You're in the middle of `/brainstorm port-skill` — designing a `/port` skill that migrates files / workflows / concepts from SoNash to JASON-OS. Phase 1 (Diverge) is substantially complete; you paused before answering the last two questions (Q11: bi-directional path, Q12: directions to add). Phase 2 (Evaluate) is the next thing to do.
-
-The skill will be blocked on `/sync` (sync-mechanism Piece 5) landing before it can execute real ports, but the design proceeds now because it tells `/sync` what to expose.
+**Updated:** 2026-04-20 session 2 (home locale). Supersedes the session-1 resume guide (which pointed at the then-pending Q11/Q12 pause).
 
 ---
 
-## State of the brainstorm
+## TL;DR — current state
 
-- **Phase reached:** Phase 1 (Diverge) — direction generation complete
-- **Leading direction chosen (tentatively):** Hybrid "/port" = Direction 1 bones (six phases) + Direction 2/3/4 freedoms (unit tracks, menu-at-gates, research-scales-with-unit)
-- **Directions surviving to Phase 2:** 1, 2, 3, 4 (Direction 5 dropped — user: "this will be heavy-lifting")
-- **Open questions:** Q11 (bi-directional path — i / ii / iii) and Q12 (directions to add)
-- **15 decisions locked** (see [BRAINSTORM_WIP.md §2](./BRAINSTORM_WIP.md))
+Skill was renamed `/port` → **`/migration`** on 2026-04-20 session 2 per D7 reopening. Phase 1 (Diverge) is substantively complete (27 decisions locked across D1–D27, four rules R1–R4). Outgoing state from this session: either
+
+- entered Phase 2 / 3 / 4 and routed to `/deep-research`, or
+- paused before Phase 2 for another reason — check `BRAINSTORM_WIP.md` §7 and any completed `BRAINSTORM.md` for signal.
 
 ---
 
-## How to resume at home
+## If picking up mid-brainstorm
 
-### Step 1 — pull the branch
+### Step 1 — ensure branch + files
 
 ```bash
-cd ~/.local/bin/JASON-OS
+cd <your-JASON-OS-locale>
 git fetch origin
-git checkout piece-3-labeling-mechanism
+git checkout piece-3-labeling-mechanism  # unless already merged
 git pull --ff-only
 ```
 
-(Scope note: the brainstorm artifacts were committed to `piece-3-labeling-mechanism` because that's the branch you were on. They live under `.research/port-skill/` and don't interfere with piece-3 labeling work. If you want them on a dedicated branch later, cherry-pick is trivial.)
+### Step 2 — read in order
 
-### Step 2 — re-read the three files in order
+1. `BRAINSTORM_WIP.md` — 27 locked decisions, hybrid direction, Phase 2 plan, deep-research scope
+2. This file (RESUME.md) — current state + pickup instructions
+3. `TRANSCRIPT.md` — verbatim session-1 conversation (uses old `/port` name; preserved as historical record)
 
-1. [RESUME.md](./RESUME.md) — this file (already reading it)
-2. [BRAINSTORM_WIP.md](./BRAINSTORM_WIP.md) — decisions ledger + leading direction + open questions
-3. [TRANSCRIPT.md](./TRANSCRIPT.md) — verbatim session if you want full context
+### Step 3 — know the blocker posture
 
-### Step 3 — re-enter the brainstorm
+**Execution blockers (do not block design/research):**
 
-Two ways to continue:
+- `/sync` (Piece 5 of sync-mechanism) — unbuilt in JASON-OS
+- CAS port into JASON-OS — unbuilt (CAS lives in SoNash)
+- Other cross-skill integrations — TBD by `/deep-research`
 
-**Option A (recommended) — invoke `/brainstorm port-skill`**
+Design, research, and planning of `/migration` proceed without these being built. Execution waits.
 
-The skill's own duplicate-check (Phase 0) will offer to resume. If the state file `.claude/state/brainstorm.port-skill.state.json` exists on this machine, the skill picks up there. If not (because state files are gitignored and don't travel across machines), say *resume* when prompted and paste the BRAINSTORM_WIP.md contents or just point at the directory.
+### Step 4 — re-enter
 
-**Option B — direct continuation**
+**Option A — if a `BRAINSTORM.md` exists in this dir:** Phase 4 has run. Route is captured in that file's closing menu. Either kick off `/deep-research` per the routing, or re-enter brainstorm if research-findings have surfaced a reframe.
 
-Tell a fresh Claude Code session:
-
-> Resuming the `/port` skill brainstorm. Context is at `.research/port-skill/` — read RESUME.md, BRAINSTORM_WIP.md, then TRANSCRIPT.md in that order. Pick up at Q11 (bi-directional path) and Q12 (directions to add), then proceed to Phase 2 (Evaluate) per the `/brainstorm` skill.
-
----
-
-## Outstanding questions you need to answer
-
-### Q11 — Bi-directional path
-
-You said you want to discuss this, and flagged that self-dogfooding (using `/port` on `/port` itself to carry it back to SoNash) might be the proof-out strategy. Pick one or propose an alternative:
-
-- **(i) Directional v1, bidirectional v2** — build SoNash→JASON-OS only first; dogfood later via `/sync` or one-off
-- **(ii) Directional core, reverse mode gated** — scaffold `--reverse` from day one, reverse minimal-and-growing
-- **(iii) True bidirectional from v1** — both directions first-class
-
-Four challenges already on the table (see BRAINSTORM_WIP.md §5) — asymmetric work, `/sync` overlap, verdict-legend divergence, label-meaning flip.
-
-### Q12 — Any direction to re-open or add
-
-Default: no, proceed to Phase 2 with current four directions.
+**Option B — if only `BRAINSTORM_WIP.md` exists:** Phase 2/3/4 pending. Invoke `/brainstorm migration-skill` — the skill's Phase 0 duplicate-check will offer resume. Or say explicitly: "resume migration-skill brainstorm at Phase 2 (light) per BRAINSTORM_WIP.md §7."
 
 ---
 
-## After Q11 / Q12: Phase 2 work
+## Renamed references
 
-Per `/brainstorm` skill:
+- Directory: `.research/port-skill/` → **`.research/migration-skill/`**
+- Skill invocation: `/port` → **`/migration`**
+- Slug: `port-skill` → **`migration-skill`**
+- Related todo T28 (`/migrate skill`) — unified into this brainstorm; title updated to `/migration`
+- Memory entry `project_port_skill_brainstorm.md` (if present on any locale) — to be updated / replaced with `project_migration_skill_brainstorm.md`
 
-1. **Tradeoff analysis** of the leading hybrid vs. Directions 1/2/3/4 as baselines — strengths, weaknesses, assumptions, feasibility
-2. **Contrarian checkpoint** — I may dispatch a `contrarian-challenger` agent to stress-test the hybrid (4 directions counts as complex enough to warrant it)
-3. **Anti-goal violation check** — confirm the hybrid doesn't trip any locked anti-goal
-4. **Grounding check** — dispatch agents to verify any unverified premises the direction rests on
+Names kept (not renamed — different concept):
 
-Then Phase 3 (Converge) — you pick final direction + rationale + open downstream questions; Phase 4 (Crystallize) — final BRAINSTORM.md written + convergence-loop verification + routing menu.
+- `.planning/jason-os-mvp/PORT_ANALYSIS.md` — the manual pre-port ledger, stays PORT_ANALYSIS per MI-1 feedback convention
+- MI-1 rule `feedback_pre_analysis_before_port.md` — stays; "pre-port analysis" is the existing feedback-memory name for the inherited rule
+
+---
+
+## Deep-research scope (if routing there next)
+
+Per BRAINSTORM_WIP.md §7:
+
+1. Agent approach (D4 deferred)
+2. Full cross-skill integration inventory (D27) — all SoNash skills `/migration` may call on
+3. Complete blocker inventory for JASON-OS
+4. Direct-apply vs. plan-export mechanics (D26)
+5. Reshape / rewrite pipeline design (D23/D24)
+6. CAS port scope — what changes during its own port into JASON-OS
 
 ---
 
 ## Machine-crossing notes
 
-- **Committed, will travel:** `.research/port-skill/TRANSCRIPT.md` + `BRAINSTORM_WIP.md` + `RESUME.md`
-- **Local-only, will NOT travel:** `.claude/state/brainstorm.port-skill.state.json` (state files are gitignored). Home machine will start with a fresh state if it needs one, or continue purely from the committed artifacts.
-- **Memory (auto-memory):** auto-memory files live under `~/.claude/projects/C--Users-jbell--local-bin-JASON-OS/memory/` and are also local-only / not shared across machines. A memory entry has been added (`project_port_skill_brainstorm.md`) on this machine; if the home machine has its own auto-memory, it'll pick up the project pointer naturally on next session — but the authoritative source is these three committed files.
+- **Committed, travels:** `.research/migration-skill/{BRAINSTORM_WIP.md,RESUME.md,TRANSCRIPT.md}`, and eventually `BRAINSTORM.md`
+- **Local-only, does not travel:** `.claude/state/brainstorm.migration-skill.state.json` (if created)
+- **Memory:** `~/.claude/projects/.../memory/` is local-only; the authoritative source across locales is the committed files here
 
 ---
 
-**Written:** 2026-04-20 at the end of the work-machine session, before commit + push.
+**Written:** 2026-04-20 session 2 (home locale).

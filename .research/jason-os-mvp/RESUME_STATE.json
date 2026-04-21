@@ -27,11 +27,11 @@
   "allocation": { "total_phase_1": 12, "wave_size": 4, "waves": 3 },
   "started_at": "2026-04-15",
   "completed_at": "2026-04-15",
-  "output_dir_current": "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\jason-os-mvp\\",
+  "output_dir_current": "<JASON_OS_ROOT>\\.research\\jason-os-mvp\\",
   "locale_history": [
-    { "locale": "jbell", "path": "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\jason-os-mvp\\", "used_through_phase": "3.9" },
-    { "locale": "jason", "path": "C:\\Users\\jason\\Workspace\\dev-projects\\jason-os\\.research\\jason-os-mvp\\", "used_phases": "3.95-4" },
-    { "locale": "jbell", "path": "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\jason-os-mvp\\", "used_from_phase": "post-sync (pulled deae5b0 2026-04-16)" }
+    { "locale": "jbell", "path": "<JASON_OS_ROOT>\\.research\\jason-os-mvp\\", "used_through_phase": "3.9" },
+    { "locale": "jason", "path": "<JASON_OS_ROOT>\\.research\\jason-os-mvp\\", "used_phases": "3.95-4" },
+    { "locale": "jbell", "path": "<JASON_OS_ROOT>\\.research\\jason-os-mvp\\", "used_from_phase": "post-sync (pulled deae5b0 2026-04-16)" }
   ],
   "phases_completed": [
     "phase-1-decomposition",

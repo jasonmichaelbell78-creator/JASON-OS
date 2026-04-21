@@ -1,5 +1,248 @@
 # PR Review Learnings
 
+#### Review #17: Piece 3 structural-fix + migration-skill deep-research (PR #10) — Round 2 (2026-04-21)
+
+**Source:** Qodo (Gemini did not post on R2)
+**PR/Branch:** PR #10 / `piece-3-labeling-mechanism` → `main`
+**Items:** 11 unique (Critical: 1, Major: 0, Minor: 4, Trivial: 0, + 2 R1 dedups, + 4 Qodo-self-rejected)
+
+**Patterns Identified:**
+
+1. **Absolute user-path PII leak across research artifacts (repo-wide).**
+   Qodo flagged `C:\Users\jbell\.local\bin\JASON-OS\...` paths in
+   `D6-cas-skills-deep.md` and `RESEARCH_OUTPUT.md`. Propagation sweep
+   showed the same pattern in 60 files with 782 total occurrences —
+   spanning `.research/migration-skill/` (this PR), `.research/jason-os-
+   mvp/` (prior PR), `.research/file-registry-portability-graph/`
+   (prior PR), and `.planning/piece-2-schema-design/PLAN.md`.
+   - Root cause: research findings include source-provenance blocks
+     that were serialized with absolute paths from the author's
+     workstation, across both operator locales (`jbell` and `jason`)
+     and both bin layouts (`.local/bin/` and `Workspace/dev-projects/`).
+   - Prevention: deep-research output serialization should use
+     placeholders (`<JASON_OS_ROOT>`, `<SONASH_ROOT>`,
+     `<JASON_OS_CLAUDE_SESSION_ROOT>`) from the start — store the
+     operator's working directory resolved against the placeholder set,
+     never the raw `process.cwd()`. Candidate gate: pre-commit regex
+     refusing `C:\\Users\\\w+\\` in tracked artifacts (honor-only until
+     implemented).
+
+2. **Qodo self-rejecting suggestions are a distinct disposition class.**
+   Four R2 suggestions had Qodo-authored rationale arguing AGAINST
+   applying them (importance 1-2, with prose like "arbitrary
+   alteration," "redundant with gapPursuitRefs," "using magic strings
+   is an anti-pattern"). These are not false positives — Qodo flagged
+   the anomaly AND flagged that the proposed fix is wrong. Correct
+   disposition is REJECT with Qodo's own rationale cited. Observed
+   four times in a single round (C-147b, C-150b, C-138 UNREGISTERED,
+   C-143b).
+   - Prevention: add an implicit "if Qodo importance ≤ 2 AND Qodo
+     self-explanation argues against the fix, auto-REJECT with Qodo
+     rationale" rule to `/pr-review` Step 2. Avoids wasted triage
+     cycles on items Qodo itself doesn't endorse.
+
+3. **Cross-round stale-diff dedup working as designed.** Two R2
+   "compliance WHITE" items (Secure Error Handling, Secure Logging
+   Practices) are exact file+rule dupes of R1 items 4 and 5 — both
+   already rejected with full technical justification. Auto-rejected
+   without re-triage cycles. Saved a round of investigation.
+
+4. **Qodo technical claim verification still matters.** Qodo's
+   "unrestricted file read path" item (WHITE) claimed the CLI
+   positional-arg heuristic could misidentify a flag value as the
+   JSONL path. Traced the normalization logic: after `--flag=VALUE`
+   expands to `[--flag, VALUE]`, the heuristic `prev.startsWith("--")`
+   correctly skips VALUE. The attack scenario Qodo described cannot
+   trigger. Rejected with technical justification rather than
+   applied-without-thinking. R1 Learning #5 (validate critical claims)
+   reaffirmed.
+
+5. **Off-by-one introduced during R1 constant extraction.** R1 commit
+   a6685a0 renamed `records.length > 3` to `records.length >
+   MIN_RECORDS_FOR_DEGENERATE_CHECK` (keeping `>`), but the constant
+   name ("MINIMUM records to trigger") reads as "`>=` semantics." Qodo
+   caught the name/operator mismatch. Fixed to `>=` and added a
+   boundary test at exactly 3 records. Minor behavior change: now
+   fires at 3 records (previously needed 4). Alignment with constant
+   name > behavior preservation here because the original `> 3` was a
+   quiet bug.
+   - Prevention: when extracting magic numbers, re-read the operator
+     against the new name — `MIN_*` almost always wants `>=`, `MAX_*`
+     almost always wants `<=` or `<`.
+
+**Resolution:**
+
+- **Fixed: 3 items**
+  - CRITICAL: PII path scrub (60 files, 782 replacements)
+  - MINOR: degenerate-check operator (`>` → `>=`) + boundary test
+  - MINOR: C-140b confidence "HIGH (v1.1 only)" → `confidence:"HIGH"` + `confidenceNote:"v1.1 only"`
+- **Deferred: 0 items**
+- **Rejected: 8 items** (with justification):
+  - **Secure Error Handling (R1 item 4 dup):** cross-round dedup.
+    `sanitize()` routes through canonical `scripts/lib/sanitize-
+    error.cjs` with SENSITIVE_PATTERNS redaction.
+  - **Secure Logging Practices (R1 item 5 dup):** cross-round dedup.
+    `formatReport` printing record paths IS the verifier's core
+    function.
+  - **Unrestricted file read path:** technical claim incorrect —
+    normalization makes the positional heuristic correct; deeper
+    "CLI jsonlPath not repo-root-bounded" concern is outside the
+    operator-invoked debug-CLI trust model (matches safe-fs.js
+    TRUST MODEL).
+  - **C-147b HIGH+empty sourceIds (Qodo self-rejects):** Qodo's own
+    rationale — "arbitrary alteration; evidence field already
+    contains detailed justification."
+  - **C-150b id split (Qodo self-rejects):** Qodo's own rationale —
+    "string identifiers like `C-150b` are standard, lexicographically
+    sortable; splitting adds unnecessary schema complexity."
+  - **Cache validators at module level:** `getValidators()` already
+    caches via `cachedValidator` at `validate-catalog.js:45`. Qodo
+    acknowledged this possibility in its own importance-6-but-low
+    rating.
+  - **C-138 S-UNREGISTERED placeholder (Qodo self-rejects):** Qodo's
+    own rationale — "adding a dummy value like `S-UNREGISTERED` is
+    an anti-pattern; `gapPursuitRefs` already captures this."
+  - **C-143b unregisteredSourceIds (Qodo self-rejects):** Qodo's own
+    rationale — "redundant with `gapPursuitRefs` which already
+    tracks `G1`."
+
+**Commit breakdown:**
+
+- `088a077` CRITICAL: PII path scrub across 60 files
+- `<commit-B>` MINOR: off-by-one + C-140b normalization + learning log
+
+**Key Learnings:**
+
+- **PII in research output is a repo-wide concern, not a per-PR one.**
+  60 files with 782 occurrences across 3 PRs' worth of research
+  artifacts. Fixed all in one sweep because partial scrubbing would
+  just re-surface the same finding on the next unrelated PR. Generalize:
+  repo-wide security fixes should not be deferred to "later" — the
+  reviewer bot will re-file on every subsequent PR touching the same
+  trees.
+- **Qodo self-rejection is a legitimate signal.** Low-importance
+  suggestions with Qodo-authored prose explaining why the fix is
+  wrong should skip manual triage entirely. Four instances in one
+  round — likely a pattern across all Qodo-reviewed repos.
+- **R1 fix quality matters for R2 noise.** The off-by-one caught here
+  was introduced by R1's own constant-rename commit. Qodo's
+  incremental-suggestion mode caught it because the constant NAME
+  made the OPERATOR wrong. Lesson: constant-extraction should re-read
+  the comparison operator against the new name, not just swap in the
+  symbol.
+- **Cross-round dedup saves real effort.** Two R1-rejected items
+  re-filed on R2 by Qodo (stale-diff); auto-rejected with prior
+  justification reference. Skill v4.6 dedup logic is doing load-
+  bearing work — keep it.
+
+**Source:** Mixed — Qodo + Gemini Code Assist
+**PR/Branch:** PR #10 / `piece-3-labeling-mechanism` → `main`
+**Items:** 13 total (Critical: 1, Major: 2, Minor: 6, Trivial: 4)
+
+**Patterns Identified:**
+
+1. **Trust-boundary code skipping helper stack (recurring).** `verify.js` is
+   a verifier at the agent-output trust boundary, yet it did ad-hoc
+   `process.argv` parsing and raw `fs.readFileSync` — exactly the pattern
+   flagged in Review #1 on the bootstrap port. The per-skill self-audit
+   pattern (MI-5) still does not catch helper-bypass in new files.
+   - Root cause: `scripts/lib/` helpers are discoverable-by-convention only;
+     authors default to `node:fs` when sketching a verifier.
+   - Prevention: this is the second PR surfacing the exact same anti-pattern
+     (PR #3 R1 L1, PR #10 R1 Qodo #1). Candidate for an ESLint `no-restricted-
+     imports` rule banning `node:fs`/`process.argv` in `.claude/**/*.js` and
+     `scripts/**/*.js` once the lint stack lands — honor-only discipline is
+     losing this bet.
+
+2. **Path-traversal at agent-output boundary (new pattern).** `record.path`
+   is agent-supplied relative path; prior code did `path.join(repoRoot,
+   record.path)` then ran `fs.existsSync/statSync/readFileSync` on the
+   result with no traversal guard. Fixed by adding `validatePathInDir`
+   from security-helpers BEFORE any fs ops. Hoisting the abs resolution
+   meant both 2a (existence) and 2b (type heuristic) share one guard.
+   - Prevention: for any future trust-boundary code reading paths from
+     agent output, `validatePathInDir` MUST run first. Add to the
+     security-helpers usage doc.
+
+3. **Multi-source convergence rule fired again.** Qodo #3 (existsSync +
+   swallowed catch) and Gemini inline comment on lines 127-129 both flagged
+   the same block. Second PR where multi-source convergence pointed at a
+   real reliability issue (Review #1 had M1/M2/M3 elevations). The rule is
+   paying its keep.
+
+4. **Branch divergence across locales was a pre-edit blocker.** Local
+   `piece-3-labeling-mechanism` HEAD was 8 commits behind remote (work done
+   on another locale and pushed). `verify.js` did not exist locally despite
+   being in the PR diff. Detected via `gh pr view --json files` showing
+   ADDED files absent from working tree, then `git fetch` + fast-forward
+   merge. Fast-forward was clean (no conflicts, no lost work) because local
+   had zero divergent commits — the cross-locale pattern works when each
+   locale pulls before pushing.
+   - Prevention: PR-review Step 0 should include `git fetch origin
+     <branch> && git status -uno` to detect behind-remote state before any
+     fs operation. Current skill assumes working tree matches the PR diff.
+
+5. **Non-destructive content normalization via scripted transformer.**
+   User accepted items 6-8 (claims.jsonl edits) with the constraint "fix
+   as long as it's not destructive." Solved via a one-shot Node transformer
+   that: (a) normalized `"MEDIUM-HIGH"` → `"MEDIUM"` preserving the
+   downgrade narrative in the `evidence` field, (b) split `G1`/`GV1` gap-
+   pursuit refs out of `sourceIds` into a new `gapPursuitRefs` sibling
+   field (all info preserved, none dropped), (c) added `supersededBy` to
+   C-091 without deleting the superseded claim. 21 of 156 claims touched;
+   0 information loss. Backup `.bak` kept during the run, deleted after
+   verification.
+
+6. **Gemini IS in the active reviewer set** (D23 stale). pr-review skill
+   v4.6-jasonos-v0.1 scope note claims CodeRabbit + Gemini excluded; user
+   confirmed Gemini runs on every review. Memory updated.
+
+**Resolution:**
+
+- **Fixed: 13 items** (across 3 commits — CRITICAL separate, MAJOR batch,
+  MINOR+TRIVIAL+content batch)
+- **Deferred: 0 items**
+- **Rejected: 2 items** (with justification):
+  - **Qodo compliance #4** (speculative `sanitize(err)` leak in CLI stderr):
+    `sanitize()` routes through canonical `scripts/lib/sanitize-error.cjs`
+    which applies SENSITIVE_PATTERNS redaction (home paths, credentials,
+    bearer tokens, DB connection strings, env var refs, internal IPs).
+    Not a raw-message leak. The Qodo finding was conditional on impl;
+    verified impl is correct.
+  - **Qodo compliance #5** (speculative `formatReport` record-path logging):
+    Printing record paths IS the verifier's core function — the whole point
+    is to show which records failed verification and why. Paths are the
+    identification unit for human operators triaging bad agent output.
+    Repo-relative paths, not filesystem-absolute.
+
+**Commit breakdown:**
+
+- `8a65129` CRITICAL: path traversal guard (item 2)
+- `11cac84` MAJOR: scripts/lib helpers for CLI + content read (items 1, 3)
+- `<commit-C>` MINOR + TRIVIAL + content (items 4/5 rejected, 6-10, 12-14)
+
+**Key Learnings:**
+
+- **Second confirmation that external review catches helper-bypass that
+  self-audit misses.** Same verify.js author wrote safe-fs.js consumers
+  correctly in other files but reverted to `node:fs` here. The anti-pattern
+  isn't a knowledge gap — it's a vigilance gap. Mechanical enforcement
+  (ESLint) is the lever; docs and self-audits aren't.
+- **Cross-locale divergence is a quiet PR-review failure mode.** "Fast-
+  forward from remote first" should be in Step 0, not discovered at edit
+  time when Edit/Read errors surface a missing file.
+- **Content transforms on research output need a tight non-destructive
+  contract.** Adding fields, renaming enum values when narrative preserved
+  elsewhere, and marking supersession relationships are all safe. Dropping
+  claims, overwriting evidence text, or inventing S-NNN mappings (Qodo
+  suggested the latter for item 7) would be destructive and were refused.
+  Codify this for any future `/pr-review` round touching `.research/*.jsonl`.
+- **Oversize-file test needs an in-repo >256 KB candidate.** First pass
+  skipped the test; second pass found `.research/sync-mechanism/.../D20d-
+  dep-map-merged.jsonl`. Worth documenting in REFERENCE for future
+  verifier test authors.
+
+
 #### Review #1: Foundation milestone PR (PR #3) — Round 1 (2026-04-17)
 
 **Source:** Mixed — SonarCloud + Semgrep + Gemini Code Assist + Qodo

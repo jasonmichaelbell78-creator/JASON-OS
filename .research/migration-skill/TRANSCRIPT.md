@@ -1,5 +1,7 @@
 # TRANSCRIPT — /brainstorm port-skill (session 1)
 
+> **Historical note (added 2026-04-20 session 2):** This transcript is the verbatim record of session 1 when the skill was still named `/port`. The skill was renamed to `/migration` in session 2 per D7 reopening. The body of this transcript is preserved unchanged as a historical artifact. For the current name, decision set, and terminology see `BRAINSTORM_WIP.md`.
+
 **Date:** 2026-04-20
 **Branch at capture:** `piece-3-labeling-mechanism`
 **Skill:** `/brainstorm`

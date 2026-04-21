@@ -150,13 +150,13 @@ Calendar estimate with normal interrupt/review overhead: **3–4 weeks** to comp
 
 ## Sources
 
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 D19, D23, D24, D25, R4; §5 Q6
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-content-analysis-adjacent.md` (home-repo guard finding, empty-corpus fallback, deprecated repo-synthesis stub note, compaction-recovery anchor)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D5-reshape-pipeline.md` §2.2 (9 signal triggers), §2.3 decision rules, §2.4 worked examples
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\{analyze,document-analysis,media-analysis,recall,repo-analysis,synthesize}\{SKILL,REFERENCE,ARCHIVE}.md` (line counts + home-context grep)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\schemas\{analysis-schema.ts,findings-schema.ts,validate-artifact.ts}`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\*.js` (12 files, 4,368 L total)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\analysis-schema.js` (493 L)
-- `C:\Users\jbell\.local\bin\sonash-v0\.planning\{content-analysis-system,creator-view-upgrade,synthesis-consolidation}\*.md` (14 files, 3,951 L total)
-- `C:\Users\jbell\.local\bin\sonash-v0\.research\{content-analysis.db,knowledge.sqlite}` (400 KB each)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 D19, D23, D24, D25, R4; §5 Q6
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-content-analysis-adjacent.md` (home-repo guard finding, empty-corpus fallback, deprecated repo-synthesis stub note, compaction-recovery anchor)
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\D5-reshape-pipeline.md` §2.2 (9 signal triggers), §2.3 decision rules, §2.4 worked examples
+- `<SONASH_ROOT>\.claude\skills\{analyze,document-analysis,media-analysis,recall,repo-analysis,synthesize}\{SKILL,REFERENCE,ARCHIVE}.md` (line counts + home-context grep)
+- `<SONASH_ROOT>\.claude\skills\schemas\{analysis-schema.ts,findings-schema.ts,validate-artifact.ts}`
+- `<SONASH_ROOT>\scripts\cas\*.js` (12 files, 4,368 L total)
+- `<SONASH_ROOT>\scripts\lib\analysis-schema.js` (493 L)
+- `<SONASH_ROOT>\.planning\{content-analysis-system,creator-view-upgrade,synthesis-consolidation}\*.md` (14 files, 3,951 L total)
+- `<SONASH_ROOT>\.research\{content-analysis.db,knowledge.sqlite}` (400 KB each)
 - Per-domain detail-owners (D6a–D6e findings) — citations TBD at synthesis time per task charter.

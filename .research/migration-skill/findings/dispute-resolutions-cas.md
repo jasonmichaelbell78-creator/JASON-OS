@@ -1,7 +1,7 @@
 # DISPUTE RESOLUTIONS — CAS cluster
 
 **Agent:** dispute-resolver (Phase 3.5)
-**Persona:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\dispute-resolver.md`
+**Persona:** `<JASON_OS_ROOT>\.claude\agents\dispute-resolver.md`
 **Date:** 2026-04-21
 **Scope:** 3 CAS-focused disputes between D6-cas-integration (D-agents), V3-cas (verifier), and contrarian.md Challenges 2 + 3 (adversarial challenger)
 **Method:** DRAGged 5-type classification + T1 filesystem ground truth (direct greps); dissent record preserved per resolver protocol
@@ -13,7 +13,7 @@
 **Disputes resolved:** 3 (Dispute 1, Dispute 2, Dispute 3)
 **Overall verdict on CAS auth deps:** **NARROW** — the "zero auth deps" finding is true for `scripts/cas/*.js` only; the full 6-skill CAS family carries networked git + `gh api` + external HTTPS surfaces in the skill bodies.
 **Overall verdict on CAS bootstrap:** **Option (b) is the most evidence-consistent reading** — CAS-Tier-0 (lib + schemas + scripts) must be hand-ported before `/migration` v0 exists; CAS-Tier-1 (handler skills) becomes `/migration`'s first real job. This reconciles BRAINSTORM D19, BRAINSTORM §6 line 152's explicit "OR precursor milestone" language, and RESEARCH_OUTPUT line 348's "schemas+lib are so foundational that they're not meaningfully 'migrated' — they're ported as prereq."
-**`/sonash-context` verdict:** **SKILL** — confirmed at `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\sonash-context\SKILL.md` (91 lines, has frontmatter `name: sonash-context`); consumed by 30+ agents via `skills: [sonash-context]` frontmatter field. Port surface for `/migration` is to introduce `/jason-os-context` as analog skill and rewrite agent frontmatter — exactly what claim C-082 already commits to.
+**`/sonash-context` verdict:** **SKILL** — confirmed at `<SONASH_ROOT>\.claude\skills\sonash-context\SKILL.md` (91 lines, has frontmatter `name: sonash-context`); consumed by 30+ agents via `skills: [sonash-context]` frontmatter field. Port surface for `/migration` is to introduce `/jason-os-context` as analog skill and rewrite agent frontmatter — exactly what claim C-082 already commits to.
 
 ---
 
@@ -122,12 +122,12 @@ This is what the research is **implicitly** assuming — line 348's "schemas+lib
 
 ### Key evidence citations
 
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md:73` — D19 locked decision
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md:152` — explicit OR precursor milestone
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\RESEARCH_OUTPUT.md:282` — M2 row
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\RESEARCH_OUTPUT.md:348` — Unresolved Question
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-integration.md:338-388` — 5-layer port DAG (Layer 0-1-2-3 are precursor-style; Layer 4-5 are skill-port-style)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\challenges\contrarian.md:194-197` — explicit split proposal
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md:73` — D19 locked decision
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md:152` — explicit OR precursor milestone
+- `<JASON_OS_ROOT>\.research\migration-skill\RESEARCH_OUTPUT.md:282` — M2 row
+- `<JASON_OS_ROOT>\.research\migration-skill\RESEARCH_OUTPUT.md:348` — Unresolved Question
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-integration.md:338-388` — 5-layer port DAG (Layer 0-1-2-3 are precursor-style; Layer 4-5 are skill-port-style)
+- `<JASON_OS_ROOT>\.research\migration-skill\challenges\contrarian.md:194-197` — explicit split proposal
 
 ### Resolution
 
@@ -154,7 +154,7 @@ This is what the research is **implicitly** assuming — line 348's "schemas+lib
 
 **`/sonash-context` is a SKILL.** Direct confirmation:
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\sonash-context\SKILL.md` exists, 91 lines, has frontmatter:
+- `<SONASH_ROOT>\.claude\skills\sonash-context\SKILL.md` exists, 91 lines, has frontmatter:
   ```yaml
   ---
   name: sonash-context
@@ -239,7 +239,7 @@ None of the 6 skills declares `allowed-tools` frontmatter — they inherit invok
 **Evidence:** BRAINSTORM.md:73,152; RESEARCH_OUTPUT.md:282,348; D6-cas-integration.md:338-388 (5-layer DAG); contrarian.md:194-197.
 **Routing:** `deepPlan=true, gsd=true, convergenceLoop=false, memory=true, tdms=true`
 
-**NC-SONASH-CTX-SKILL (HIGH):** `/sonash-context` is a skill at `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\sonash-context\SKILL.md` (91 lines, `name: sonash-context` frontmatter), NOT a file-system home-context file. Consumed by 30+ agents via `skills: [sonash-context]` frontmatter field (examples: backend-architect, code-reviewer, debugger, general-purpose, deep-research-searcher, deep-research-verifier, deep-research-synthesizer, deep-research-gap-pursuer, explore, plan, contrarian-challenger, otb-challenger, dispute-resolver, and 17 more). Content is SoNash-specific stack/security facts (Next.js 16 / React 19 / Firebase 12 / Tailwind 4 / Zod 4 / Cloud Functions / App Check). Port action is captured by C-082 (sonash-context → jason-os-context rewrite in agent frontmatter, with analog skill `/jason-os-context` to be authored in JASON-OS carrying stack-agnostic content).
+**NC-SONASH-CTX-SKILL (HIGH):** `/sonash-context` is a skill at `<SONASH_ROOT>\.claude\skills\sonash-context\SKILL.md` (91 lines, `name: sonash-context` frontmatter), NOT a file-system home-context file. Consumed by 30+ agents via `skills: [sonash-context]` frontmatter field (examples: backend-architect, code-reviewer, debugger, general-purpose, deep-research-searcher, deep-research-verifier, deep-research-synthesizer, deep-research-gap-pursuer, explore, plan, contrarian-challenger, otb-challenger, dispute-resolver, and 17 more). Content is SoNash-specific stack/security facts (Next.js 16 / React 19 / Firebase 12 / Tailwind 4 / Zod 4 / Cloud Functions / App Check). Port action is captured by C-082 (sonash-context → jason-os-context rewrite in agent frontmatter, with analog skill `/jason-os-context` to be authored in JASON-OS carrying stack-agnostic content).
 **Evidence:** filesystem this session (SKILL.md exists); 30 agent-file grep hits.
 **Routing:** `deepPlan=true, gsd=true, convergenceLoop=false, memory=true, tdms=true`
 
@@ -255,7 +255,7 @@ None of the 6 skills declares `allowed-tools` frontmatter — they inherit invok
 - **Auth-deps verdict:** **NARROW** (scripts zero-auth verified; skills networked in 3 of 6)
 - **Bootstrap resolution:** **(b)** — CAS-Tier-0 hand-port precursor; CAS-Tier-1 via `/migration` first-real-job
 - **`/sonash-context` verdict:** **SKILL** (SKILL.md at `sonash-v0\.claude\skills\sonash-context\`, consumed by 30+ agents via `skills:` frontmatter)
-- **Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\dispute-resolutions-cas.md`
+- **Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\dispute-resolutions-cas.md`
 - **Claim updates:** 2 unchanged (C-040, C-077), 1 reinforced (C-082), 1 scope-qualified (C-062 HIGH → MEDIUM-HIGH), 1 reworded (C-108)
 - **New claims surfaced:** 5 (NC-CAS-NET-SCRIPTS, NC-CAS-NET-SKILLS, NC-CAS-BOOTSTRAP-SPLIT, NC-SONASH-CTX-SKILL, NC-D29-SCOPE-QUALIFIER)
 

@@ -1,7 +1,7 @@
 # GV2 — Verification of G2-sonash-source-cost.md
 
 **Agent:** Phase 3.96 gap-verifier GV2 (deep-research-gap-verifier persona)
-**Scope verified:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\G2-sonash-source-cost.md` (26.4 KB)
+**Scope verified:** `<JASON_OS_ROOT>\.research\migration-skill\findings\G2-sonash-source-cost.md` (26.4 KB)
 **Verification method:** Re-run all greps claimed in G2 across broader scope; compare actual counts to G2's reported counts.
 **Date:** 2026-04-21
 
@@ -94,7 +94,7 @@ One factual error (not just a scope miss): G2 cites `sonarcloud/SKILL.md:269,270
 
 **G2 claim (SOURCES line 210):** "20 in `code-reviewer.md` alone".
 
-**Actual breakdown in `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\code-reviewer.md`:**
+**Actual breakdown in `<SONASH_ROOT>\.claude\agents\code-reviewer.md`:**
 - Firestore: 5 hits
 - httpsCallable: 7 hits
 - Cloud Functions: matched within the combined count
@@ -119,7 +119,7 @@ One factual error (not just a scope miss): G2 cites `sonarcloud/SKILL.md:269,270
 
 ## Scope-expansion findings (what G2 missed)
 
-G2's SOURCES section cites greps primarily over `C:\Users\jbell\.local\bin\sonash-v0\.claude\**`. Per V3's auth-scope lesson, running the same greps over `scripts/`, `docs/`, `.planning/`, `.research/archive/`, and root files reveals additional concentrations:
+G2's SOURCES section cites greps primarily over `<SONASH_ROOT>\.claude\**`. Per V3's auth-scope lesson, running the same greps over `scripts/`, `docs/`, `.planning/`, `.research/archive/`, and root files reveals additional concentrations:
 
 1. **`sonar-project.properties:4`** — The **authoritative source of the SonarCloud project key**. G2 did not cite this file. Any migration codemod that reads `.claude/` only will miss this root-level config; it is the file SonarCloud reads at CI time.
 2. **`.vscode/settings.json:6`** — VS Code sonarlint project key. Not in G2.
@@ -211,18 +211,18 @@ D6's 161 h is the **mechanical port** only (apply the already-determined verdict
 ## Sources
 
 **Re-grep scope:**
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\**` (G2's primary scope)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\**`
-- `C:\Users\jbell\.local\bin\sonash-v0\docs\**`
-- `C:\Users\jbell\.local\bin\sonash-v0\.planning\**`
-- `C:\Users\jbell\.local\bin\sonash-v0\.research\archive\**`
-- `C:\Users\jbell\.local\bin\sonash-v0\` (root: `sonar-project.properties`, `.vscode/settings.json`, `CHANGELOG.md`, `DEVELOPMENT.md`, `DOCUMENTATION_INDEX.md`, `llms.txt`)
+- `<SONASH_ROOT>\.claude\**` (G2's primary scope)
+- `<SONASH_ROOT>\scripts\**`
+- `<SONASH_ROOT>\docs\**`
+- `<SONASH_ROOT>\.planning\**`
+- `<SONASH_ROOT>\.research\archive\**`
+- `<SONASH_ROOT>\` (root: `sonar-project.properties`, `.vscode/settings.json`, `CHANGELOG.md`, `DEVELOPMENT.md`, `DOCUMENTATION_INDEX.md`, `llms.txt`)
 
 **Cross-references:**
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\G2-sonash-source-cost.md` (subject under verification)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-skills-deep.md` (161-h CAS port estimate cross-check)
-- `C:\Users\jbell\.local\bin\sonash-v0\.research\archive\github-health\findings\D15-sonarcloud-integration.md` (documents the `-creator` vs no-`-creator` project-key split that G2 conflated)
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\G2-sonash-source-cost.md` (subject under verification)
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-skills-deep.md` (161-h CAS port estimate cross-check)
+- `<SONASH_ROOT>\.research\archive\github-health\findings\D15-sonarcloud-integration.md` (documents the `-creator` vs no-`-creator` project-key split that G2 conflated)
 
 ---
 
-**Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\GV2-sonash-cost-verify.md`
+**Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\GV2-sonash-cost-verify.md`

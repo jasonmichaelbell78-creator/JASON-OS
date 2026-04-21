@@ -23,7 +23,7 @@ does not exist in SoNash's codebase, and no consumer hook is ported.
 
 ### Item G5: Pre-Commit Agent-Compliance Gate
 
-**Source:** `C:\Users\jason\Workspace\dev-projects\sonash-v0\.claude\hooks\pre-commit-agent-compliance.js`
+**Source:** `<SONASH_ROOT>\.claude\hooks\pre-commit-agent-compliance.js`
 
 #### What the hook does
 
@@ -290,7 +290,7 @@ reduces the risk that Claude treats them as enforced when they are not.
 
 #### (a) JASON-OS statusline — confirmed no bridge write
 
-`C:\Users\jason\Workspace\dev-projects\jason-os\.claude\statusline-command.sh`
+`<JASON_OS_ROOT>\.claude\statusline-command.sh`
 (64 lines, read in full). The script reads stdin JSON via `cat`, extracts fields
 with `jq`, runs `git status --porcelain`, runs `node --version`, and assembles
 output with `printf`. There is no file write anywhere in the script. Confirmed:

@@ -36,7 +36,7 @@ All four `*-ecosystem-audit` skills (PR, Script, Session, TDMS) are **deeply SoN
 ## Top integration points for /migration
 
 ### 1. Shared `_shared/ecosystem-audit/` chassis (all 4 audits)
-**Files:** `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\ecosystem-audit\CRITICAL_RULES.md`, `COMPACTION_GUARD.md`, `FINDING_WALKTHROUGH.md`, `SUMMARY_AND_TRENDS.md`, `CLOSURE_AND_GUARDRAILS.md`, `README.md`.
+**Files:** `<SONASH_ROOT>\.claude\skills\_shared\ecosystem-audit\CRITICAL_RULES.md`, `COMPACTION_GUARD.md`, `FINDING_WALKTHROUGH.md`, `SUMMARY_AND_TRENDS.md`, `CLOSURE_AND_GUARDRAILS.md`, `README.md`.
 **Evidence:** All four audit SKILL.md files contain identical `> Read .claude/skills/_shared/ecosystem-audit/{FILE}.md` directives — pr:42-46, session:48-50, tdms:47-49, script:SKILL.md references REFERENCE.md in-skill instead (v2.0 different style, predates extraction).
 **Relevance:** `/migration` Phase 2 (Discovery), Phase 5 (Execute), Phase 6 (Prove) will need analogous shared patterns (progress-resume, walkthrough protocol, summary-and-trends). The 8 CRITICAL RULES align nearly 1:1 with `/migration`'s D8 (nothing silent) + D3 (plan-then-execute) + D22 R3 (gate memory aids recall) axioms.
 
@@ -45,7 +45,7 @@ All four `*-ecosystem-audit` skills (PR, Script, Session, TDMS) are **deeply SoN
 **Relevance:** Direct pattern for `/migration` state machine / mid-state resume (D21-D22). Indicates the SoNash ecosystem has already solved the Windows compaction-survivability problem and the primitive can be hoisted verbatim into JASON-OS for `/migration`.
 
 ### 3. `doc-optimizer` wave orchestration pattern
-**Files:** `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\doc-optimizer\SKILL.md`, `prompts.md`.
+**Files:** `<SONASH_ROOT>\.claude\skills\doc-optimizer\SKILL.md`, `prompts.md`.
 **Evidence:** 5-wave DAG (Wave 0 discovery → Wave 1 4 agents in parallel → Wave 2 4 parallel → Wave 3 2 parallel → Wave 4 3 parallel → unify → report), with explicit Windows 0-byte bug fallback (SKILL.md:162-168, #39791), CRITICAL RETURN PROTOCOL (orchestrator never reads JSONL files, uses `wc -l` only — lines 113-133), and agent context-budget check between waves.
 **Relevance:** **Strongest precedent for `/migration` Q1 (agent approach) + Q7 (decomposition).** If `/migration` executes multi-file reshape via parallel agents, doc-optimizer proves the Windows-safe pattern. The "max 2 waves per invocation" rule (SKILL.md:140-146) directly answers Q8 (failure/recovery) for active transformation.
 
@@ -54,7 +54,7 @@ All four `*-ecosystem-audit` skills (PR, Script, Session, TDMS) are **deeply SoN
 **Relevance:** `/migration` skip / blocked-on-prereq verdicts (D23) naturally route here. JASON-OS has the `/add-debt` stub (CLAUDE.md §7 skill list) — so the defer contract already exists, the consumer (full TDMS pipeline) does not.
 
 ### 5. Hook-filename coupling (session-ecosystem-audit)
-**Files:** `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\session-ecosystem-audit\scripts\checkers\compaction-resilience.js` (lines 1-50 shown; 68 references per count).
+**Files:** `<SONASH_ROOT>\.claude\skills\session-ecosystem-audit\scripts\checkers\compaction-resilience.js` (lines 1-50 shown; 68 references per count).
 **Evidence:** Skill references seven session-related SoNash hook filenames (`session-start.js`, `commit-tracker.js`, `pre-compaction-save.js`, `compact-restore.js`, `compaction-handoff.js`, gap detector `scripts/check-session-gaps.js`, `.session-state.json`) as fixed literals — SKILL.md:22-25 + 228-242.
 **Relevance:** If JASON-OS renames or restructures any of these during port, the skill's checkers break silently (high-count literal drift). Flag for `/migration` target analysis.
 
@@ -78,25 +78,25 @@ All four `*-ecosystem-audit` skills (PR, Script, Session, TDMS) are **deeply SoN
 
 ## Sources
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-ecosystem-audit\SKILL.md` (lines 1-333)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-ecosystem-audit\scripts\run-pr-ecosystem-audit.js` (lines 1-100)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-ecosystem-audit\scripts\checkers\feedback-integration.js:46,47,386,394,446,447`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-ecosystem-audit\scripts\checkers\pattern-lifecycle.js:48,50,54,107,534`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-ecosystem-audit\scripts\checkers\effectiveness-metrics.js:44-47,265-322,406-495`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\script-ecosystem-audit\SKILL.md` (lines 1-299)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\script-ecosystem-audit\scripts\checkers\safety-error-handling.js:227,233,493`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\script-ecosystem-audit\scripts\checkers\registration-reachability.js` (lines 1-50)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\session-ecosystem-audit\SKILL.md` (lines 1-273)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\session-ecosystem-audit\scripts\checkers\compaction-resilience.js` (lines 1-50; 68 SoNash-hook references total)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\tdms-ecosystem-audit\SKILL.md` (lines 1-257)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\tdms-ecosystem-audit\scripts\checkers\roadmap-integration.js:54,73,106,107,119,159,178,197,238,244,255,268,294-296`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\doc-optimizer\SKILL.md` (lines 1-487)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\doc-optimizer\prompts.md` (lines 1-60)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\docs-maintain\SKILL.md` (lines 1-106)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\ecosystem-audit\CRITICAL_RULES.md` (lines 1-50)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:73-75,90,158-160` (orchestrator fan-out contract)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` §2, §5, §7 (JASON-OS helper / anti-pattern / skill cross-reference)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 D19, D23, D24, D27; §5 Q1, Q2, Q7, Q8 (scope + verdict legend)
+- `<SONASH_ROOT>\.claude\skills\pr-ecosystem-audit\SKILL.md` (lines 1-333)
+- `<SONASH_ROOT>\.claude\skills\pr-ecosystem-audit\scripts\run-pr-ecosystem-audit.js` (lines 1-100)
+- `<SONASH_ROOT>\.claude\skills\pr-ecosystem-audit\scripts\checkers\feedback-integration.js:46,47,386,394,446,447`
+- `<SONASH_ROOT>\.claude\skills\pr-ecosystem-audit\scripts\checkers\pattern-lifecycle.js:48,50,54,107,534`
+- `<SONASH_ROOT>\.claude\skills\pr-ecosystem-audit\scripts\checkers\effectiveness-metrics.js:44-47,265-322,406-495`
+- `<SONASH_ROOT>\.claude\skills\script-ecosystem-audit\SKILL.md` (lines 1-299)
+- `<SONASH_ROOT>\.claude\skills\script-ecosystem-audit\scripts\checkers\safety-error-handling.js:227,233,493`
+- `<SONASH_ROOT>\.claude\skills\script-ecosystem-audit\scripts\checkers\registration-reachability.js` (lines 1-50)
+- `<SONASH_ROOT>\.claude\skills\session-ecosystem-audit\SKILL.md` (lines 1-273)
+- `<SONASH_ROOT>\.claude\skills\session-ecosystem-audit\scripts\checkers\compaction-resilience.js` (lines 1-50; 68 SoNash-hook references total)
+- `<SONASH_ROOT>\.claude\skills\tdms-ecosystem-audit\SKILL.md` (lines 1-257)
+- `<SONASH_ROOT>\.claude\skills\tdms-ecosystem-audit\scripts\checkers\roadmap-integration.js:54,73,106,107,119,159,178,197,238,244,255,268,294-296`
+- `<SONASH_ROOT>\.claude\skills\doc-optimizer\SKILL.md` (lines 1-487)
+- `<SONASH_ROOT>\.claude\skills\doc-optimizer\prompts.md` (lines 1-60)
+- `<SONASH_ROOT>\.claude\skills\docs-maintain\SKILL.md` (lines 1-106)
+- `<SONASH_ROOT>\.claude\skills\_shared\ecosystem-audit\CRITICAL_RULES.md` (lines 1-50)
+- `<SONASH_ROOT>\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:73-75,90,158-160` (orchestrator fan-out contract)
+- `<JASON_OS_ROOT>\CLAUDE.md` §2, §5, §7 (JASON-OS helper / anti-pattern / skill cross-reference)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 D19, D23, D24, D27; §5 Q1, Q2, Q7, Q8 (scope + verdict legend)
 
 ---
 
@@ -112,4 +112,4 @@ All four `*-ecosystem-audit` skills (PR, Script, Session, TDMS) are **deeply SoN
   5. `comprehensive-ecosystem-audit` fan-out contract (`--batch --summary` → v2 JSON stdout / progress stderr) — dispatch contract `/migration` Phase 6 can mirror
   6. Session-audit hard-coded hook filenames — watch-list for JASON-OS port-time renames
 - **Verdicts (D23):** 4× rewrite (audits), 2× reshape (doc-optimizer pattern-port, docs-maintain wrapper-port); 0× copy-as-is / sanitize / skip / blocked — all require destination-idiom research per R4
-- **Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-ecosystem-audits-b.md`
+- **Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-ecosystem-audits-b.md`

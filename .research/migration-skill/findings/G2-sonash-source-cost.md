@@ -22,7 +22,7 @@ The /migration skill imposes a **silent source-side (SoNash) refactoring bill** 
   - `jasonmichaelbell78-creator_sonash-v0` — SonarCloud project key, appears in 5 SoNash files: `.claude/canonical-memory/reference_external_systems.md:13,15`, `.claude/skills/pr-review/reference/SONARCLOUD_ENRICHMENT.md:27`, `.claude/skills/sonarcloud/SKILL.md:269,270,277,331`.
   - `jasonmichaelbell78` — SonarCloud org default, `.claude/skills/sonarcloud/SKILL.md:54,332`.
   - `sonash-app` — Firebase project ID (`.env.production:7`, `.env.local.example:32`, `.github/workflows/deploy-firebase.yml:67`). Repo-analysis skill does NOT reach this but deploy/safeguard hook does (`.claude/hooks/deploy-safeguard.js:81`).
-  - **595 "sonash"-matching lines across 146 `.claude/` files**, **254 in `.claude/` alone at count level**, **111 in `scripts/`** (`C:\Users\jbell\.local\bin\sonash-v0\.claude\**` grep counts) — most are benign prose (agent descriptions like "SoNash-specific test analyzer") but SONAR/agent hardcodes + code-reviewer's 20 Firestore/httpsCallable references constitute real coupling.
+  - **595 "sonash"-matching lines across 146 `.claude/` files**, **254 in `.claude/` alone at count level**, **111 in `scripts/`** (`<SONASH_ROOT>\.claude\**` grep counts) — most are benign prose (agent descriptions like "SoNash-specific test analyzer") but SONAR/agent hardcodes + code-reviewer's 20 Firestore/httpsCallable references constitute real coupling.
 - SoNash CLAUDE.md v6.0 already acknowledges three SoNash-specific ports of truth (`SESSION_CONTEXT.md`, `ROADMAP.md`, `CLAUDE.md` itself) at line 183 ("Before refactoring: Check SESSION_CONTEXT.md and ROADMAP.md first") and three SoNash-specific app-level rules at §2 and §5 (`migrateAnonymousUserData`, `COOP/COEP headers`, `httpsCallable` mocking). These are NOT currently sandboxed as SoNash-local by a contract; they live in the "universal guardrails" section.
 
 ---
@@ -202,27 +202,27 @@ This recommendation preserves D14 (non-mandatory), D19 (reshape-during-port not 
 ## Sources
 
 **Primary — this agent's own SoNash grep evidence:**
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\canonical-memory\reference_external_systems.md:10-15` (GitHub URL, SonarCloud project key, SonarCloud URL — 4 hardcoded lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-review\reference\SONARCLOUD_ENRICHMENT.md:27` (`SONAR_PROJECT_KEY` default)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\sonarcloud\SKILL.md:54,269,270,277,331,332` (SonarCloud project key + org hardcodes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\repo-analysis\SKILL.md:68,431` + `REFERENCE.md:1336` (home-repo guard triple-cite)
-- `C:\Users\jbell\.local\bin\sonash-v0\.env.production:7`, `.env.local.example:32`, `.github/workflows/deploy-firebase.yml:67` (Firebase `sonash-app` project ID — already env-var'd)
+- `<SONASH_ROOT>\.claude\canonical-memory\reference_external_systems.md:10-15` (GitHub URL, SonarCloud project key, SonarCloud URL — 4 hardcoded lines)
+- `<SONASH_ROOT>\.claude\skills\pr-review\reference\SONARCLOUD_ENRICHMENT.md:27` (`SONAR_PROJECT_KEY` default)
+- `<SONASH_ROOT>\.claude\skills\sonarcloud\SKILL.md:54,269,270,277,331,332` (SonarCloud project key + org hardcodes)
+- `<SONASH_ROOT>\.claude\skills\repo-analysis\SKILL.md:68,431` + `REFERENCE.md:1336` (home-repo guard triple-cite)
+- `<SONASH_ROOT>\.env.production:7`, `.env.local.example:32`, `.github/workflows/deploy-firebase.yml:67` (Firebase `sonash-app` project ID — already env-var'd)
 - Grep counts: 520 `SESSION_CONTEXT.md|ROADMAP.md|CLAUDE.md|MEMORY.md` cites across 120 `.claude/` files; 497 `creator.view|creator lens|creator-view\.md|/repo-analysis|/synthesize|/recall|/analyze` across 24 skill files; 233 `scripts/cas/|content-analysis\.db|\.research/` across 31 skill files; 210 `TDMS|MASTER_DEBT|technical-debt` across 30 `.claude/` files; 595 "sonash" matches across 146 `.claude/` files; 111 "sonash" matches across 37 `scripts/` files; 159 Firestore/Cloud-Functions/httpsCallable/NEXT_PUBLIC/firebase.json/App-Check references across 20 `.claude/` files (20 in `code-reviewer.md` alone).
-- `C:\Users\jbell\.local\bin\sonash-v0\CLAUDE.md:183` (existing "Check SESSION_CONTEXT.md and ROADMAP.md" acknowledgment).
+- `<SONASH_ROOT>\CLAUDE.md:183` (existing "Check SESSION_CONTEXT.md and ROADMAP.md" acknowledgment).
 
 **Cross-reference — prior D-agent findings:**
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-planning.md:12-29` (~72 domain assumptions, 18-term glossary, 34 PARAMETERIZE + 19 RESHAPE verdict counts).
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-skills-deep.md:14,30-44,255-305` (89 coupling sites; coupling-type frequency; Tier-A-B-C-D reshape-difficulty ranking).
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-scripts-deep.md:14-17` (68 coupling sites in 12 scripts; PROJECT_ROOT anchor in 12/12; lib dependency surface).
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-content-analysis-adjacent.md:67-78` (all 6 CAS skills pre-port-dependent).
-- `C:\Users\jbell\.local\bin\sonash-v0\.research\archive\repo-analysis-value-extraction\findings\D5-internal-delta-analysis.md:191-209` (prior SoNash-side finding: code-reviewer has 10 SoNash-specific patterns needing replacement or generalization — direct input to Category 2).
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-planning.md:12-29` (~72 domain assumptions, 18-term glossary, 34 PARAMETERIZE + 19 RESHAPE verdict counts).
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-skills-deep.md:14,30-44,255-305` (89 coupling sites; coupling-type frequency; Tier-A-B-C-D reshape-difficulty ranking).
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-scripts-deep.md:14-17` (68 coupling sites in 12 scripts; PROJECT_ROOT anchor in 12/12; lib dependency surface).
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-content-analysis-adjacent.md:67-78` (all 6 CAS skills pre-port-dependent).
+- `<SONASH_ROOT>\.research\archive\repo-analysis-value-extraction\findings\D5-internal-delta-analysis.md:191-209` (prior SoNash-side finding: code-reviewer has 10 SoNash-specific patterns needing replacement or generalization — direct input to Category 2).
 
 **Challenge / OTB source (the gap motivation):**
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\challenges\otb.md:240-275,745-751,820-822,853-856` (OTB-3 NT-2: source-side refactoring cost systematically absent; C-127 ~20-40h estimate; C-128 Phase -1 gate proposal; C-129 Aviator "to migrate, first make migratable").
+- `<JASON_OS_ROOT>\.research\migration-skill\challenges\otb.md:240-275,745-751,820-822,853-856` (OTB-3 NT-2: source-side refactoring cost systematically absent; C-127 ~20-40h estimate; C-128 Phase -1 gate proposal; C-129 Aviator "to migrate, first make migratable").
 
 **Context — JASON-OS CLAUDE.md + BRAINSTORM axioms:**
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` v0.1 §1-8 (bootstrap, explicitly "Sanitized extraction from SoNash CLAUDE.md v6.0" per footer — confirms the extraction split already started; SoNash back-port not yet done).
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md:63-64,73,108-115` (D14 non-mandatory, D15 unlabeled-files, D19 CAS-reshape-during-port).
+- `<JASON_OS_ROOT>\CLAUDE.md` v0.1 §1-8 (bootstrap, explicitly "Sanitized extraction from SoNash CLAUDE.md v6.0" per footer — confirms the extraction split already started; SoNash back-port not yet done).
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md:63-64,73,108-115` (D14 non-mandatory, D15 unlabeled-files, D19 CAS-reshape-during-port).
 
 **Web — port-friendly design + migration-cost estimation:**
 - [Aviator — How to Manage Code in a Large Codebase](https://www.aviator.co/blog/how-to-manage-code-in-a-large-codebase/) — coupling reduction as primary refactor goal; interface insertion to decouple components.
@@ -234,4 +234,4 @@ This recommendation preserves D14 (non-mandatory), D19 (reshape-during-port not 
 
 ---
 
-**Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\G2-sonash-source-cost.md`
+**Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\G2-sonash-source-cost.md`

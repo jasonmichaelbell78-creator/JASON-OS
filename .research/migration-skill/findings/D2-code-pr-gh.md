@@ -12,7 +12,7 @@ which are incompatible with v1's local-only posture (D29), and deep-dive
 ## Summary
 
 All 7 skills are SoNash-local (live under
-`C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\`). Only **one skill
+`<SONASH_ROOT>\.claude\skills\`). Only **one skill
 (`pre-commit-fixer`)** is a direct structural fit for /migration's active
 transformation phase (Phase 5) because /migration v1 is **local-only, no remote
 PR creation, no network** (D29). The remaining six skills split into two bands:
@@ -181,32 +181,32 @@ must keep it on the main thread.
 
 All paths absolute.
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\code-reviewer\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\code-reviewer\SKILL.md`
   (lines 1-9 metadata, 38-40 scope exclusion, 42-59 subagent dispatch
   pattern, 98-146 anti-pattern gate, 225-236 commands)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-review\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\pr-review\SKILL.md`
   (lines 1-9 metadata, 32-46 scope, 97-99 gh CLI dep, 114-115 Qodo coupling,
   177 multi-source reviewers, 478-482 integration)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-retro\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\pr-retro\SKILL.md`
   (lines 1-13, 28-36, 70-72 `gh pr list`)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\gh-fix-ci\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\gh-fix-ci\SKILL.md`
   (lines 1-11 metadata, 16-24 scope, 35-73 gh workflow steps)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\github-health\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\github-health\SKILL.md`
   (lines 1-8, 22-27 critical rules, 60-70 modes, 77-80 token-scope check)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\sonarcloud\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\sonarcloud\SKILL.md`
   (lines 1-12 metadata, 37-45 modes, 48-64 prerequisites incl. SONAR_TOKEN)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pre-commit-fixer\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\pre-commit-fixer\SKILL.md`
   (lines 1-8 metadata, 21-36 critical rules, 60-90 steps 1-2, 103-112 warm-up,
   125-163 fix execution, 165-205 report/recommit, 237-247 integration)
-- `C:\Users\jbell\.local\bin\sonash-v0\CLAUDE.md` (lines 74-76 guardrail #9
+- `<SONASH_ROOT>\CLAUDE.md` (lines 74-76 guardrail #9
   routing to pre-commit-fixer; line 90 guardrail #14 SKIP_REASON ban)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\config\hook-checks.json`
+- `<SONASH_ROOT>\scripts\config\hook-checks.json`
   (canonical check list referenced by pre-commit-fixer SKILL.md:76)
-- `C:\Users\jbell\.local\bin\sonash-v0\.husky\pre-commit` (present — confirms
+- `<SONASH_ROOT>\.husky\pre-commit` (present — confirms
   hook scaffold)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md`
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md`
   §3 D27/D29, §5 Q2 (referenced as task context; not re-read)
 
 ---
 
-**File:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-code-pr-gh.md`
+**File:** `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-code-pr-gh.md`

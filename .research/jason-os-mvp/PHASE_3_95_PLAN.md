@@ -76,11 +76,11 @@
 You are Gap Agent G1 in Phase 3.95 of the JASON-OS MVP deep-research. Investigate session-rhythm infrastructure gaps.
 
 ## Repo roots (IMPORTANT — two repos to reference)
-- Target repo (JASON-OS): C:\Users\jason\Workspace\dev-projects\jason-os
-- Source repo (SoNash, read-only reference): C:\Users\jason\Workspace\dev-projects\sonash-v0
+- Target repo (JASON-OS): <JASON_OS_ROOT>
+- Source repo (SoNash, read-only reference): <SONASH_ROOT>
 
 ## Context to load first
-1. C:\Users\jason\Workspace\dev-projects\jason-os\.research\jason-os-mvp\RESEARCH_OUTPUT.md — overall research state
+1. <JASON_OS_ROOT>\.research\jason-os-mvp\RESEARCH_OUTPUT.md — overall research state
 2. .research\jason-os-mvp\findings\D1a-rhythm-spine.md, D1b-rhythm-triggers.md, D3a-session-end-archaeology.md, D4-hidden-gaps-diff.md
 3. .research\jason-os-mvp\claims.jsonl — existing claims
 
@@ -107,7 +107,7 @@ You are Gap Agent G1 in Phase 3.95 of the JASON-OS MVP deep-research. Investigat
 - Your own gaps do NOT recurse (Critical Rule 9). List them but don't try to fill them.
 
 ## Output
-Write to: C:\Users\jason\Workspace\dev-projects\jason-os\.research\jason-os-mvp\findings\G1-session-rhythm-infra.md
+Write to: <JASON_OS_ROOT>\.research\jason-os-mvp\findings\G1-session-rhythm-infra.md
 
 Required format (per SKILL.md §22.3):
   # G1 — Session Rhythm Infrastructure (Gap Pursuit)
@@ -135,11 +135,11 @@ CRITICAL (Windows 0-byte bug, CLAUDE.md §4.15): confirm your Write succeeded by
 You are Gap Agent G2 in Phase 3.95 of the JASON-OS MVP deep-research. Investigate knowledge-architecture gaps: /todo skill viability, skills version-sync infrastructure, and memory portability architecture.
 
 ## Repo roots
-- Target repo (JASON-OS): C:\Users\jason\Workspace\dev-projects\jason-os
-- Source repo (SoNash): C:\Users\jason\Workspace\dev-projects\sonash-v0
+- Target repo (JASON-OS): <JASON_OS_ROOT>
+- Source repo (SoNash): <SONASH_ROOT>
 
 ## Context to load first
-1. C:\Users\jason\Workspace\dev-projects\jason-os\.research\jason-os-mvp\RESEARCH_OUTPUT.md
+1. <JASON_OS_ROOT>\.research\jason-os-mvp\RESEARCH_OUTPUT.md
 2. Findings: D2d-auto-memory.md, D2e-skills-loaded.md, D4-hidden-gaps-diff.md, D3b-debt-tracking.md
 3. Challenges: challenges/contrarian-v1.md (esp. CH-C-005 maintenance trap, CH-C-010 memory portability), challenges/otb-v1.md (esp. CH-O-007 canonical-memory, CH-O-008 /todo stub)
 
@@ -161,7 +161,7 @@ You are Gap Agent G2 in Phase 3.95 of the JASON-OS MVP deep-research. Investigat
 - SoNash has .claude/canonical-memory/ which IS git-tracked (memory travels with repo).
 - CH-C-010: "memory portability fix is session-local, not OS-portable."
 - JASON-OS just committed a .claude/canonical-memory/ with sanitized seed content (commit 1d7fc0c), adopting sonash's pattern. But the auto-memory (global dir) is still machine-local.
-- Investigate: Read C:\...\sonash-v0\.claude\canonical-memory\ structure vs the global C:\Users\jason\.claude\projects\C--Users-jason-Workspace-dev-projects-sonash-v0\memory\. Are they sync'd? How does sonash keep them consistent (manual copy, script, hook)? Is there a post-memory-write.js or similar hook? Then propose: for a "portable Claude Code OS", what is the right architecture — commit canonical-memory + auto-copy to global (bidirectional), one-way sync, or something else? Note trade-offs (security, per-user context pollution, merge conflicts).
+- Investigate: Read C:\...\sonash-v0\.claude\canonical-memory\ structure vs the global <SONASH_CLAUDE_SESSION_ROOT>\memory\. Are they sync'd? How does sonash keep them consistent (manual copy, script, hook)? Is there a post-memory-write.js or similar hook? Then propose: for a "portable Claude Code OS", what is the right architecture — commit canonical-memory + auto-copy to global (bidirectional), one-way sync, or something else? Note trade-offs (security, per-user context pollution, merge conflicts).
 
 ## Discipline
 - Grep-first, Read-targeted.
@@ -169,7 +169,7 @@ You are Gap Agent G2 in Phase 3.95 of the JASON-OS MVP deep-research. Investigat
 - Your own gaps do NOT recurse.
 
 ## Output
-Write to: C:\Users\jason\Workspace\dev-projects\jason-os\.research\jason-os-mvp\findings\G2-knowledge-arch.md
+Write to: <JASON_OS_ROOT>\.research\jason-os-mvp\findings\G2-knowledge-arch.md
 
 Format:
   # G2 — Knowledge Architecture (Gap Pursuit)
@@ -197,8 +197,8 @@ CRITICAL (Windows 0-byte bug): verify Write by reading back first 5 lines before
 You are Gap Agent G3 in Phase 3.95 of the JASON-OS MVP deep-research. Investigate the two heaviest hook gaps: UserPromptSubmit extraction and the PostToolUse tripwire web.
 
 ## Repo roots
-- Target (JASON-OS): C:\Users\jason\Workspace\dev-projects\jason-os
-- Source (SoNash): C:\Users\jason\Workspace\dev-projects\sonash-v0
+- Target (JASON-OS): <JASON_OS_ROOT>
+- Source (SoNash): <SONASH_ROOT>
 
 ## Context to load first (minimum)
 1. .research\jason-os-mvp\RESEARCH_OUTPUT.md
@@ -237,7 +237,7 @@ Investigate the remaining 5 (governance-logger.js, loop-detector.js, post-read-h
 - Your own gaps do NOT recurse.
 
 ## Output
-Write to: C:\Users\jason\Workspace\dev-projects\jason-os\.research\jason-os-mvp\findings\G3-hooks-extraction.md
+Write to: <JASON_OS_ROOT>\.research\jason-os-mvp\findings\G3-hooks-extraction.md
 
 Format:
   # G3 — Hooks Extraction (Gap Pursuit)
@@ -264,8 +264,8 @@ CRITICAL (Windows 0-byte bug): verify Write by reading back first 5 lines before
 You are Gap Agent G4 in Phase 3.95 of the JASON-OS MVP deep-research. Investigate governance and annotation gaps: pre-commit agent compliance, PROACTIVELY clauses on agents, GATE/BEHAVIORAL tags on CLAUDE.md rules, and the statusline→hook bridge.
 
 ## Repo roots
-- Target (JASON-OS): C:\Users\jason\Workspace\dev-projects\jason-os
-- Source (SoNash): C:\Users\jason\Workspace\dev-projects\sonash-v0
+- Target (JASON-OS): <JASON_OS_ROOT>
+- Source (SoNash): <SONASH_ROOT>
 
 ## Context to load first
 1. .research\jason-os-mvp\RESEARCH_OUTPUT.md
@@ -302,7 +302,7 @@ You are Gap Agent G4 in Phase 3.95 of the JASON-OS MVP deep-research. Investigat
 - Your own gaps do NOT recurse.
 
 ## Output
-Write to: C:\Users\jason\Workspace\dev-projects\jason-os\.research\jason-os-mvp\findings\G4-governance-annotations.md
+Write to: <JASON_OS_ROOT>\.research\jason-os-mvp\findings\G4-governance-annotations.md
 
 Format:
   # G4 — Governance & Annotations (Gap Pursuit)
@@ -335,8 +335,8 @@ CRITICAL (Windows 0-byte bug): verify Write by reading back first 5 lines before
 You are Gap Agent G5 in Phase 3.95 of the JASON-OS MVP deep-research. Investigate navigation documents, skill/team infrastructure, and small portability fixes.
 
 ## Repo roots
-- Target (JASON-OS): C:\Users\jason\Workspace\dev-projects\jason-os
-- Source (SoNash): C:\Users\jason\Workspace\dev-projects\sonash-v0
+- Target (JASON-OS): <JASON_OS_ROOT>
+- Source (SoNash): <SONASH_ROOT>
 
 ## Context to load first
 1. .research\jason-os-mvp\RESEARCH_OUTPUT.md
@@ -379,7 +379,7 @@ You are Gap Agent G5 in Phase 3.95 of the JASON-OS MVP deep-research. Investigat
 - Your own gaps do NOT recurse.
 
 ## Output
-Write to: C:\Users\jason\Workspace\dev-projects\jason-os\.research\jason-os-mvp\findings\G5-navigation-skill-infra.md
+Write to: <JASON_OS_ROOT>\.research\jason-os-mvp\findings\G5-navigation-skill-infra.md
 
 Format:
   # G5 — Navigation & Skill Infrastructure (Gap Pursuit)
@@ -410,8 +410,8 @@ CRITICAL (Windows 0-byte bug): verify Write by reading back first 5 lines before
 You are Gap Agent G6 in Phase 3.95 of the JASON-OS MVP deep-research. Web research: evaluate AgentSkills open-standard compatibility.
 
 ## Repo roots
-- Target (JASON-OS): C:\Users\jason\Workspace\dev-projects\jason-os
-- Source (SoNash): C:\Users\jason\Workspace\dev-projects\sonash-v0
+- Target (JASON-OS): <JASON_OS_ROOT>
+- Source (SoNash): <SONASH_ROOT>
 
 ## Context to load first
 1. .research\jason-os-mvp\RESEARCH_OUTPUT.md — section on "Unconsidered Approaches"
@@ -447,7 +447,7 @@ Recommendation:
 - Your own gaps do NOT recurse.
 
 ## Output
-Write to: C:\Users\jason\Workspace\dev-projects\jason-os\.research\jason-os-mvp\findings\G6-agentskills-feasibility.md
+Write to: <JASON_OS_ROOT>\.research\jason-os-mvp\findings\G6-agentskills-feasibility.md
 
 Format:
   # G6 — AgentSkills Open-Standard Feasibility (Gap Pursuit)
@@ -604,12 +604,12 @@ Post-menu: cleanup, index entry, strategy log, source reputation, MCP memory (pe
 
 RESUME_STATE.json `output_dir` was written by the jbell locale:
 ```
-C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\jason-os-mvp\\
+<JASON_OS_ROOT>\\.research\\jason-os-mvp\\
 ```
 
 Correct for current (jason) locale is:
 ```
-C:\\Users\\jason\\Workspace\\dev-projects\\jason-os\\.research\\jason-os-mvp\\
+<JASON_OS_ROOT>\\.research\\jason-os-mvp\\
 ```
 
 Both state updates are in the companion update to RESUME_STATE.json (this session's next commit).

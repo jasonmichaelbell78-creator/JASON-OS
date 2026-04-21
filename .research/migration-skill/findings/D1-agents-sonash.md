@@ -1,7 +1,7 @@
 # FINDINGS — D1-agents-sonash
 
 **Sub-question:** SQ-D1b — Inventory existing Claude Code agents in SoNash at
-`C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\`. Identify
+`<SONASH_ROOT>\.claude\agents\`. Identify
 SoNash-coupled vs. portable, and catalogue parallel-dispatch patterns used by
 SoNash skills that `/migration` may want to adopt (both-direction build per
 D16, so SoNash agents matter for reverse-direction migrations too).
@@ -336,55 +336,55 @@ inventory of SoNash subsystems to identify migration candidates.
 
 ### SoNash agent definitions (live, 49)
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\deep-research-searcher.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\deep-research-synthesizer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\deep-research-verifier.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\deep-research-gap-pursuer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\deep-research-final-synthesizer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\contrarian-challenger.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\otb-challenger.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\dispute-resolver.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\explore.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\plan.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\general-purpose.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\code-reviewer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\debugger.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\silent-failure-hunter.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\security-auditor.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\test-engineer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\frontend-developer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\fullstack-developer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\backend-architect.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\database-architect.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\nextjs-architecture-expert.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\performance-engineer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\pr-test-analyzer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\documentation-expert.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\technical-writer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\mcp-expert.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\git-flow-manager.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\dependency-manager.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\ui-ux-designer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\document-analyst.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\media-analyst.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-advisor-researcher.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-assumptions-analyzer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-codebase-mapper.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-debugger.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-executor.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-integration-checker.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-nyquist-auditor.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-phase-researcher.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-plan-checker.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-planner.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-project-researcher.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-research-synthesizer.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-roadmapper.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-ui-auditor.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-ui-checker.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-ui-researcher.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-user-profiler.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-verifier.md`
+- `<SONASH_ROOT>\.claude\agents\deep-research-searcher.md`
+- `<SONASH_ROOT>\.claude\agents\deep-research-synthesizer.md`
+- `<SONASH_ROOT>\.claude\agents\deep-research-verifier.md`
+- `<SONASH_ROOT>\.claude\agents\deep-research-gap-pursuer.md`
+- `<SONASH_ROOT>\.claude\agents\deep-research-final-synthesizer.md`
+- `<SONASH_ROOT>\.claude\agents\contrarian-challenger.md`
+- `<SONASH_ROOT>\.claude\agents\otb-challenger.md`
+- `<SONASH_ROOT>\.claude\agents\dispute-resolver.md`
+- `<SONASH_ROOT>\.claude\agents\explore.md`
+- `<SONASH_ROOT>\.claude\agents\plan.md`
+- `<SONASH_ROOT>\.claude\agents\general-purpose.md`
+- `<SONASH_ROOT>\.claude\agents\code-reviewer.md`
+- `<SONASH_ROOT>\.claude\agents\debugger.md`
+- `<SONASH_ROOT>\.claude\agents\silent-failure-hunter.md`
+- `<SONASH_ROOT>\.claude\agents\security-auditor.md`
+- `<SONASH_ROOT>\.claude\agents\test-engineer.md`
+- `<SONASH_ROOT>\.claude\agents\frontend-developer.md`
+- `<SONASH_ROOT>\.claude\agents\fullstack-developer.md`
+- `<SONASH_ROOT>\.claude\agents\backend-architect.md`
+- `<SONASH_ROOT>\.claude\agents\database-architect.md`
+- `<SONASH_ROOT>\.claude\agents\nextjs-architecture-expert.md`
+- `<SONASH_ROOT>\.claude\agents\performance-engineer.md`
+- `<SONASH_ROOT>\.claude\agents\pr-test-analyzer.md`
+- `<SONASH_ROOT>\.claude\agents\documentation-expert.md`
+- `<SONASH_ROOT>\.claude\agents\technical-writer.md`
+- `<SONASH_ROOT>\.claude\agents\mcp-expert.md`
+- `<SONASH_ROOT>\.claude\agents\git-flow-manager.md`
+- `<SONASH_ROOT>\.claude\agents\dependency-manager.md`
+- `<SONASH_ROOT>\.claude\agents\ui-ux-designer.md`
+- `<SONASH_ROOT>\.claude\agents\document-analyst.md`
+- `<SONASH_ROOT>\.claude\agents\media-analyst.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-advisor-researcher.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-assumptions-analyzer.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-codebase-mapper.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-debugger.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-executor.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-integration-checker.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-nyquist-auditor.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-phase-researcher.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-plan-checker.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-planner.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-project-researcher.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-research-synthesizer.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-roadmapper.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-ui-auditor.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-ui-checker.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-ui-researcher.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-user-profiler.md`
+- `<SONASH_ROOT>\.claude\agents\gsd-verifier.md`
 
 ### Removed-stub files (8, skip)
 
@@ -403,16 +403,16 @@ inventory of SoNash subsystems to identify migration candidates.
 
 ### Dispatch-pattern sources
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\SKILL.md:46-48,121-124,207-217,220-223,237,243-247,255-266,270-281,287,311,326,334`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\REFERENCE.md:820-881,953-990,1248-1255`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\convergence-loop\SKILL.md:17,135-175`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\convergence-loop\REFERENCE.md:1-80,194-236`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-creator\REFERENCE.md:73-74`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-process\prompts.md:16-145`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-ai-optimization\SKILL.md:121-226`
+- `<SONASH_ROOT>\.claude\skills\deep-research\SKILL.md:46-48,121-124,207-217,220-223,237,243-247,255-266,270-281,287,311,326,334`
+- `<SONASH_ROOT>\.claude\skills\deep-research\REFERENCE.md:820-881,953-990,1248-1255`
+- `<SONASH_ROOT>\.claude\skills\convergence-loop\SKILL.md:17,135-175`
+- `<SONASH_ROOT>\.claude\skills\convergence-loop\REFERENCE.md:1-80,194-236`
+- `<SONASH_ROOT>\.claude\skills\skill-creator\REFERENCE.md:73-74`
+- `<SONASH_ROOT>\.claude\skills\audit-process\prompts.md:16-145`
+- `<SONASH_ROOT>\.claude\skills\audit-ai-optimization\SKILL.md:121-226`
 
 ### Cross-reference
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\sonash-context\SKILL.md:1-60` — definition of the coupling skill, names exact SoNash constraints injected into every coupled agent.
-- `C:\Users\jbell\.local\bin\sonash-v0\CLAUDE.md` §7 — the 34-agent count claim in CLAUDE.md is stale versus the filesystem reality (57 top-level files, 49 live).
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 D16, §3 D19, §5 Q1, §5 Q8 — direct cross-reference to migration-skill decisions this research feeds.
+- `<SONASH_ROOT>\.claude\skills\sonash-context\SKILL.md:1-60` — definition of the coupling skill, names exact SoNash constraints injected into every coupled agent.
+- `<SONASH_ROOT>\CLAUDE.md` §7 — the 34-agent count claim in CLAUDE.md is stale versus the filesystem reality (57 top-level files, 49 live).
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 D16, §3 D19, §5 Q1, §5 Q8 — direct cross-reference to migration-skill decisions this research feeds.

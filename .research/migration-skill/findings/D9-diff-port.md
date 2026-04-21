@@ -357,5 +357,5 @@ Per D29 (v1 is local-filesystem only) and the "craft over shipping" discipline
 - [Rsync — Wikipedia](https://en.wikipedia.org/wiki/Rsync)
 - [Delta Transfer — RsyncProject/rsync DeepWiki](https://deepwiki.com/RsyncProject/rsync/2.2-delta-transfer)
 - [The Rsync Algorithm — Tufts CS](https://www.cs.tufts.edu/~nr/rsync.html)
-- Local: `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` (§3 D9, D16, D17, D18, D23, D24, D28, D29; §5 Q9)
-- Local: `C:\Users\jbell\.local\bin\JASON-OS\.research\sync-mechanism\BRAINSTORM.md` (§3.1–3.8 architecture; §3.3 symmetric self-propagating; §3.5 manual-with-prompting)
+- Local: `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` (§3 D9, D16, D17, D18, D23, D24, D28, D29; §5 Q9)
+- Local: `<JASON_OS_ROOT>\.research\sync-mechanism\BRAINSTORM.md` (§3.1–3.8 architecture; §3.3 symmetric self-propagating; §3.5 manual-with-prompting)

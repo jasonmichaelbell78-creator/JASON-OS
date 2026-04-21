@@ -80,7 +80,7 @@ Lives in JASON-OS (the workshop, per D18) regardless of direction. Naming conven
   "schemaVersion": 1,
   "runId": "2026-04-21T14-30-00_sonash-to-jasonos",
   "direction": "in",
-  "otherEndpoint": "C:\\Users\\jbell\\.local\\bin\\sonash-v0",
+  "otherEndpoint": "<SONASH_ROOT>",
   "mode": "direct-apply",
   "phase": 5,
   "phaseStatus": "in-progress",
@@ -230,10 +230,10 @@ Seven best-in-class recovery UX patterns. Each row notes what `/migration` shoul
 ## 8. Sources
 
 **Local precedent (JASON-OS):**
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 (D8, D22, D24, D26, D28, D29), §5 (Q8)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\checkpoint\SKILL.md` (state-file shape, local/MCP split)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\pre-commit-fixer\SKILL.md` (F2 handoff, `.claude/state/pre-commit-fixer-state.json`, 2-attempt rule, regression detection)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` §4 guardrails #9, #13, #14, #15 (failure-on-agent-empty, post-commit review, SKIP_REASON, 0-byte writes)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 (D8, D22, D24, D26, D28, D29), §5 (Q8)
+- `<JASON_OS_ROOT>\.claude\skills\checkpoint\SKILL.md` (state-file shape, local/MCP split)
+- `<JASON_OS_ROOT>\.claude\skills\pre-commit-fixer\SKILL.md` (F2 handoff, `.claude/state/pre-commit-fixer-state.json`, 2-attempt rule, regression detection)
+- `<JASON_OS_ROOT>\CLAUDE.md` §4 guardrails #9, #13, #14, #15 (failure-on-agent-empty, post-commit review, SKIP_REASON, 0-byte writes)
 
 **Web:**
 - Alembic failure recovery: https://github.com/sqlalchemy/alembic/issues/755 ; https://alembic.sqlalchemy.org/en/latest/tutorial.html

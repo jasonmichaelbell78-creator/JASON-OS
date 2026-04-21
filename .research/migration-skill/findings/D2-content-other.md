@@ -123,14 +123,14 @@ inventory can confidently mark all 7 as **non-participants**.
 
 ## Sources
 
-1. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\content-research-writer\SKILL.md` (lines 1-147; frontmatter:1-8, scope:16-35, workflow:36-115, pro tips:117-133, related use cases:136-137)
-2. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\website-analysis\SKILL.md` (lines 1-393; frontmatter:1-8, routing guide:42-50, critical rules:52-68, output artifacts:103-116, integration contract:373-382)
-3. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\website-synthesis\SKILL.md` (lines 1-63; deprecation frontmatter:1-7, consolidation note:14-24, migration path:26-36, removal:44-48, version history:61-63)
-4. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\excel-analysis\SKILL.md` (lines 1-269; frontmatter:1-9, quick-start:22-36, workflows:38-207, available packages:254-261)
-5. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\market-research-reports\SKILL.md` (lines 1-373; frontmatter:1-11, features:26-49, workflow phases:148-287, integration:291-300, resources:304-326)
-6. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\developer-growth-analysis\SKILL.md` (lines 1-431; frontmatter:1-8, 6-step analysis:42-65, chat-history read:93-105, Rube MCP / Slack delivery:199-253)
-7. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\data-effectiveness-audit\SKILL.md` (lines 1-353; frontmatter:1-13, critical rules:24-38, routing guide:57-67, phases:72-83, audit domains:99-160, integration:332-336)
-8. `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 D23 (verdict legend), D24 (Phase 5 content), D27 (research-scope expansion), §5 Q2 (cross-skill integration inventory).
+1. `<SONASH_ROOT>\.claude\skills\content-research-writer\SKILL.md` (lines 1-147; frontmatter:1-8, scope:16-35, workflow:36-115, pro tips:117-133, related use cases:136-137)
+2. `<SONASH_ROOT>\.claude\skills\website-analysis\SKILL.md` (lines 1-393; frontmatter:1-8, routing guide:42-50, critical rules:52-68, output artifacts:103-116, integration contract:373-382)
+3. `<SONASH_ROOT>\.claude\skills\website-synthesis\SKILL.md` (lines 1-63; deprecation frontmatter:1-7, consolidation note:14-24, migration path:26-36, removal:44-48, version history:61-63)
+4. `<SONASH_ROOT>\.claude\skills\excel-analysis\SKILL.md` (lines 1-269; frontmatter:1-9, quick-start:22-36, workflows:38-207, available packages:254-261)
+5. `<SONASH_ROOT>\.claude\skills\market-research-reports\SKILL.md` (lines 1-373; frontmatter:1-11, features:26-49, workflow phases:148-287, integration:291-300, resources:304-326)
+6. `<SONASH_ROOT>\.claude\skills\developer-growth-analysis\SKILL.md` (lines 1-431; frontmatter:1-8, 6-step analysis:42-65, chat-history read:93-105, Rube MCP / Slack delivery:199-253)
+7. `<SONASH_ROOT>\.claude\skills\data-effectiveness-audit\SKILL.md` (lines 1-353; frontmatter:1-13, critical rules:24-38, routing guide:57-67, phases:72-83, audit domains:99-160, integration:332-336)
+8. `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 D23 (verdict legend), D24 (Phase 5 content), D27 (research-scope expansion), §5 Q2 (cross-skill integration inventory).
 
 ---
 
@@ -141,4 +141,4 @@ inventory can confidently mark all 7 as **non-participants**.
 - **verdict distribution (D23):** 7/7 skip
 - **surprising integration points:** none (hypothesis confirmed)
 - **flags worth downstream attention:** (1) `/website-synthesis` is a deprecated stub, update D27 inventory to point at `/synthesize` instead; (2) `/data-effectiveness-audit` is ambient state-file consumer, mention in `/migration` operator docs as a post-port-ripple item but not a code integration
-- **findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-content-other.md`
+- **findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-content-other.md`

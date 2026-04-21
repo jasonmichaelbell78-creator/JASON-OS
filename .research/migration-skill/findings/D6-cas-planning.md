@@ -312,24 +312,24 @@ Three `.planning/` directories encode the design history of the SoNash Content A
 
 | File | Size | Role |
 |------|------|------|
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\content-analysis-system\DECISIONS.md` | 7693 B | 29 decisions, CAS foundation |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\content-analysis-system\DIAGNOSIS.md` | 8998 B | Current state, schema drift, corpus baselines |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\content-analysis-system\PLAN.md` | 29975 B | 15-step plan, Wave 1-5, all step-level detail |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\content-analysis-system\REMAINING_CAS_TASKS.md` | 10499 B | Close-out runbook (Steps A/B/C, T47/T48/T49 follow-ups, `/deep-plan` template-fix proposal) |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\content-analysis-system\STEP_A_HANDOFF.md` | 10971 B | Multi-skill-audit execution handoff |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\creator-view-upgrade\DIAGNOSIS.md` | 6377 B | 10-gap framing, current v3.0 skill state |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\creator-view-upgrade\DECISIONS.md` | 16338 B | 30 decisions, lens architecture |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\creator-view-upgrade\PLAN.md` | 24951 B | Task A (Steps 1-8b) + Task B (Step 9) |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\creator-view-upgrade\AUDIT.md` | 36271 B | 8-part audit (traceability, schema consistency, cross-section, process flow, output contract, backward compat), 3 findings |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\synthesis-consolidation\DIAGNOSIS.md` | 4229 B | 3-implementation landscape (repo-synthesis v1.3, website-synthesis v1.1, cross-type stub) |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\synthesis-consolidation\DECISIONS.md` | 14262 B | 32 decisions, paradigm architecture |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\synthesis-consolidation\PLAN.md` | 39773 B | 15-step plan, Wave 1-5, Step 10.5 full-corpus audit |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\synthesis-consolidation\WAVE4_RESUME.md` | 9561 B | Wave 4 Step 10 resume handoff, bypass-skill policy hardening |
-| `C:\Users\jbell\.local\bin\sonash-v0\.planning\synthesis-consolidation\audit-step-10.5\` | 28 JSON files, ~110KB | Per-source audit output (OBSOLETE execution snapshots) |
-| `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` | context | §5 Q6 + §3 D19 frame this sub-question |
-| `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` | context | v0.1 bootstrap, no SESSION_CONTEXT.md yet (§8 TBD) |
-| `C:\Users\jbell\.local\bin\sonash-v0\CLAUDE.md` | context | v6.0, SoNash-home-repo-authoritative |
+| `<SONASH_ROOT>\.planning\content-analysis-system\DECISIONS.md` | 7693 B | 29 decisions, CAS foundation |
+| `<SONASH_ROOT>\.planning\content-analysis-system\DIAGNOSIS.md` | 8998 B | Current state, schema drift, corpus baselines |
+| `<SONASH_ROOT>\.planning\content-analysis-system\PLAN.md` | 29975 B | 15-step plan, Wave 1-5, all step-level detail |
+| `<SONASH_ROOT>\.planning\content-analysis-system\REMAINING_CAS_TASKS.md` | 10499 B | Close-out runbook (Steps A/B/C, T47/T48/T49 follow-ups, `/deep-plan` template-fix proposal) |
+| `<SONASH_ROOT>\.planning\content-analysis-system\STEP_A_HANDOFF.md` | 10971 B | Multi-skill-audit execution handoff |
+| `<SONASH_ROOT>\.planning\creator-view-upgrade\DIAGNOSIS.md` | 6377 B | 10-gap framing, current v3.0 skill state |
+| `<SONASH_ROOT>\.planning\creator-view-upgrade\DECISIONS.md` | 16338 B | 30 decisions, lens architecture |
+| `<SONASH_ROOT>\.planning\creator-view-upgrade\PLAN.md` | 24951 B | Task A (Steps 1-8b) + Task B (Step 9) |
+| `<SONASH_ROOT>\.planning\creator-view-upgrade\AUDIT.md` | 36271 B | 8-part audit (traceability, schema consistency, cross-section, process flow, output contract, backward compat), 3 findings |
+| `<SONASH_ROOT>\.planning\synthesis-consolidation\DIAGNOSIS.md` | 4229 B | 3-implementation landscape (repo-synthesis v1.3, website-synthesis v1.1, cross-type stub) |
+| `<SONASH_ROOT>\.planning\synthesis-consolidation\DECISIONS.md` | 14262 B | 32 decisions, paradigm architecture |
+| `<SONASH_ROOT>\.planning\synthesis-consolidation\PLAN.md` | 39773 B | 15-step plan, Wave 1-5, Step 10.5 full-corpus audit |
+| `<SONASH_ROOT>\.planning\synthesis-consolidation\WAVE4_RESUME.md` | 9561 B | Wave 4 Step 10 resume handoff, bypass-skill policy hardening |
+| `<SONASH_ROOT>\.planning\synthesis-consolidation\audit-step-10.5\` | 28 JSON files, ~110KB | Per-source audit output (OBSOLETE execution snapshots) |
+| `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` | context | §5 Q6 + §3 D19 frame this sub-question |
+| `<JASON_OS_ROOT>\CLAUDE.md` | context | v0.1 bootstrap, no SESSION_CONTEXT.md yet (§8 TBD) |
+| `<SONASH_ROOT>\CLAUDE.md` | context | v6.0, SoNash-home-repo-authoritative |
 
 ---
 
-**Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-planning.md`
+**Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-planning.md`

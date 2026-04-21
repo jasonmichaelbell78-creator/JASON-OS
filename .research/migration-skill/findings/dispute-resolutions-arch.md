@@ -1,6 +1,6 @@
 # DISPUTE RESOLUTIONS — Architecture & design
 
-**Dispute-resolver:** persona `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\dispute-resolver.md` (DRAGged 5-type taxonomy, evidence-weight hierarchy T1→T4)
+**Dispute-resolver:** persona `<JASON_OS_ROOT>\.claude\agents\dispute-resolver.md` (DRAGged 5-type taxonomy, evidence-weight hierarchy T1→T4)
 **Date:** 2026-04-21
 **Inputs consulted:**
 - `findings/D7-router-vs-monolith.md` (C-042 basis)
@@ -254,6 +254,6 @@ Upgrade trigger is OBSERVED behavior, not speculative. This matches the refactor
 - **Canonical architecture name:** `minimum-viable router + 2 ancillaries` (primary `/migration` with monolith-with-companions internal layout; ancillaries `/migration-scan` (Phase 2) and `/migration-prove` (Phase 6))
 - **D16 verdict:** `violated → reframed to v1.1` (per D28 iterative re-entry norm)
 - **Agent count recommended:** `2 new` (`migration-executor`, `migration-plan-author`) + 6 reused (total inventory 8→10)
-- **Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\dispute-resolutions-arch.md`
+- **Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\dispute-resolutions-arch.md`
 
 **End DISPUTE RESOLUTIONS — Architecture & design.**

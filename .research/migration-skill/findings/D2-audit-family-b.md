@@ -5,7 +5,7 @@
 **Scope:** 6 SoNash `audit-*` skills — integration surfaces against `/migration`
 **Depth:** L1 (file-level, line-cited)
 **Date:** 2026-04-21
-**Source root:** `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\`
+**Source root:** `<SONASH_ROOT>\.claude\skills\`
 
 ---
 
@@ -173,18 +173,18 @@ to BRAINSTORM Q7 (skill decomposition) — this cluster is the strongest argumen
 ## Sources
 
 ### Primary files inventoried
-1. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-enhancements\SKILL.md` (v1.2, 2026-02-23, 506 lines)
-2. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-health\SKILL.md` (v1.1, 2026-02-24, 148 lines)
-3. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-performance\SKILL.md` (v1.0, 2026-02-25, 348 lines)
-4. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-process\SKILL.md` (v2.5, 2026-04-03, 355 lines)
-5. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-process\prompts.md` (companion, not inventoried in detail — noted as dependency)
-6. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-refactoring\SKILL.md` (v1.0, 2026-02-25, 431 lines)
-7. `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-security\SKILL.md` (v1.0, 2026-02-25, 444 lines)
+1. `<SONASH_ROOT>\.claude\skills\audit-enhancements\SKILL.md` (v1.2, 2026-02-23, 506 lines)
+2. `<SONASH_ROOT>\.claude\skills\audit-health\SKILL.md` (v1.1, 2026-02-24, 148 lines)
+3. `<SONASH_ROOT>\.claude\skills\audit-performance\SKILL.md` (v1.0, 2026-02-25, 348 lines)
+4. `<SONASH_ROOT>\.claude\skills\audit-process\SKILL.md` (v2.5, 2026-04-03, 355 lines)
+5. `<SONASH_ROOT>\.claude\skills\audit-process\prompts.md` (companion, not inventoried in detail — noted as dependency)
+6. `<SONASH_ROOT>\.claude\skills\audit-refactoring\SKILL.md` (v1.0, 2026-02-25, 431 lines)
+7. `<SONASH_ROOT>\.claude\skills\audit-security\SKILL.md` (v1.0, 2026-02-25, 444 lines)
 
 ### Cross-references
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` — §2 seven-phase arc; §3 D23 (verdict legend), D24 (Phase 5 content), D19 (CAS foreign-repo), D27 (research-scope expansion); §5 Q2 (cross-skill inventory)
-- `C:\Users\jbell\.local\bin\sonash-v0\CLAUDE.md` — stack versions, §2 security rules, §7 agent/skill triggers
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` — §1 stack-agnostic posture, §2 security pipeline (gitleaks/semgrep/codeql/dep-review/scorecard/SonarCloud/Qodo), §4 rule 14/15 (SKIP_REASON auth, empty-agent-result rule)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` — §2 seven-phase arc; §3 D23 (verdict legend), D24 (Phase 5 content), D19 (CAS foreign-repo), D27 (research-scope expansion); §5 Q2 (cross-skill inventory)
+- `<SONASH_ROOT>\CLAUDE.md` — stack versions, §2 security rules, §7 agent/skill triggers
+- `<JASON_OS_ROOT>\CLAUDE.md` — §1 stack-agnostic posture, §2 security pipeline (gitleaks/semgrep/codeql/dep-review/scorecard/SonarCloud/Qodo), §4 rule 14/15 (SKIP_REASON auth, empty-agent-result rule)
 - Referenced but not inventoried: `.claude/skills/_shared/AUDIT_TEMPLATE.md` (SoNash shared audit template — shared dependency for all six skills)
 
 ### Not inventoried (out of scope)

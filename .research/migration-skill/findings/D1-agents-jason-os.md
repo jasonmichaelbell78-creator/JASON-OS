@@ -10,7 +10,7 @@
 
 ## Summary
 
-- **8 agents total** live in `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\` — all Sonnet-backed, all built specifically to serve the `/deep-research` pipeline (seven of eight) plus one reused by `/brainstorm` (`contrarian-challenger`). [HIGH]
+- **8 agents total** live in `<JASON_OS_ROOT>\.claude\agents\` — all Sonnet-backed, all built specifically to serve the `/deep-research` pipeline (seven of eight) plus one reused by `/brainstorm` (`contrarian-challenger`). [HIGH]
 - Every existing agent is **research/adjudication-oriented** — they read, investigate, challenge, synthesize. **Zero** of them are transformation-oriented; none hold Edit/MultiEdit grants. This is the single largest reusability gap for `/migration`. [HIGH]
 - Existing agents are **strong fits for `/migration` Phases 2 (Discovery), 3 (Research — verdict-conditional), and parts of 6 (Prove)** — particularly `deep-research-searcher` (profile-switchable), `deep-research-verifier` (dual-path codebase/external verification), `contrarian-challenger`, `otb-challenger`, and `dispute-resolver`. [HIGH]
 - **No existing agent fits Phase 5 (Execute)** — sanitize/reshape/rewrite (D23/D24) is active transformation against destination idioms, which requires Edit/Write grants plus verdict-aware state and gate handshakes that no current agent implements. [HIGH]
@@ -24,7 +24,7 @@
 ### C1. The JASON-OS agent roster is exactly 8 files, all in `.claude/agents/`
 
 **Confidence:** HIGH
-**Evidence:** Glob of `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\*.md` returns exactly:
+**Evidence:** Glob of `<JASON_OS_ROOT>\.claude\agents\*.md` returns exactly:
 
 1. `contrarian-challenger.md`
 2. `deep-research-final-synthesizer.md`
@@ -198,7 +198,7 @@ Also worth noting: the 6-of-8 `disallowedTools: Agent` convention means any `/mi
 
 ## Sources
 
-Codebase (all under `C:\Users\jbell\.local\bin\JASON-OS\`):
+Codebase (all under `<JASON_OS_ROOT>\`):
 
 - `.claude/agents/contrarian-challenger.md:1-13, 89-96` (frontmatter, severity taxonomy)
 - `.claude/agents/deep-research-final-synthesizer.md:1-13, 15-20, 66-111, 136-172` (frontmatter, role, template, reconciliation)
@@ -217,7 +217,7 @@ Codebase (all under `C:\Users\jbell\.local\bin\JASON-OS\`):
 - `.claude/skills/convergence-loop/SKILL.md:140` (generic subagent_type dispatch pattern)
 - `CLAUDE.md:154-155` (§7 Agent/Skill Triggers table — `Explore`, `Plan` as Task-dispatched built-ins)
 
-Brainstorm context (all under `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\`):
+Brainstorm context (all under `<JASON_OS_ROOT>\.research\migration-skill\`):
 
 - `BRAINSTORM.md:22-32` (§2 seven-phase arc)
 - `BRAINSTORM.md:56, 82-85, 120-143` (§3 decisions D4, D23, D24, D26; §5 Q1, Q5, Q8, Q9)

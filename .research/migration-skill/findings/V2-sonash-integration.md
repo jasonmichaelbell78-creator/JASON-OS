@@ -2,7 +2,7 @@
 
 **Verifier:** V2 (deep-research-verifier persona)
 **Scope:** Q2 cross-skill integration inventory claims, EXCLUDING D2-content-analysis-adjacent (V3 owns CAS).
-**Method:** File:line spot-checks against `C:\Users\jbell\.local\bin\sonash-v0\` + `C:\Users\jbell\.local\bin\JASON-OS\`. Read-only.
+**Method:** File:line spot-checks against `<SONASH_ROOT>\` + `<JASON_OS_ROOT>\`. Read-only.
 **Date:** 2026-04-21.
 
 ---
@@ -115,5 +115,5 @@
   1. C-080 cites `CLAUDE.md:74-76` for Guardrail #9; correct line is **100**.
   2. `D2-hooks-lib` says 25 top-level JS hooks; filesystem has **26** (off-by-1). `scripts/lib/` claim "20 modules" is actually **21** (disagrees with D2-integration-synthesis which correctly says 21).
   3. `D2-integration-synthesis` says "81 skill directories"; actual is **80**. (Minor.)
-- **Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\V2-sonash-integration.md`
+- **Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\V2-sonash-integration.md`
 - **File size:** pending persistence check below.

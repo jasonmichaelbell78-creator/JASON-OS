@@ -215,4 +215,4 @@ If `/deep-research` surfaces findings that materially reframe these decisions, r
 - `.planning/jason-os-mvp/PORT_ANALYSIS.md` — existing manual ledger (prior art; name should stay PORT_ANALYSIS per MI-1 feedback convention, not be renamed to MIGRATION_ANALYSIS)
 - `.research/sync-mechanism/BRAINSTORM.md` — 5-piece architecture (upstream context)
 - `.research/sync-mechanism/piece-1a-discovery-scan-jason-os/` + `piece-1b-discovery-scan-sonash/` — data sources
-- SoNash CAS ecosystem (`C:\Users\jason\Workspace\dev-projects\sonash-v0\.claude\skills\{analyze,document-analysis,media-analysis,recall,repo-analysis,synthesize}`, `.research/content-analysis.db`, `scripts/cas/`, `.planning/{content-analysis-system,creator-view-upgrade,synthesis-consolidation}/`) — the candidate port target underlying D19
+- SoNash CAS ecosystem (`<SONASH_ROOT>\.claude\skills\{analyze,document-analysis,media-analysis,recall,repo-analysis,synthesize}`, `.research/content-analysis.db`, `scripts/cas/`, `.planning/{content-analysis-system,creator-view-upgrade,synthesis-consolidation}/`) — the candidate port target underlying D19

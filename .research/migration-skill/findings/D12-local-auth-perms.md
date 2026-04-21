@@ -3,7 +3,7 @@
 **Agent:** Phase 1 D-agent D12-local-auth-perms
 **Skill:** `/migration` (deep-research, Q12)
 **Scope:** Local filesystem write between two locally-cloned repos (per D29 — v1 local-only, no remote PR, no GitHub API, no cross-machine auth).
-**Host:** Windows 11 Pro; source `C:\Users\jbell\.local\bin\sonash-v0\`, dest `C:\Users\jbell\.local\bin\JASON-OS\`. Both NTFS on same volume (C:).
+**Host:** Windows 11 Pro; source `<SONASH_ROOT>\`, dest `<JASON_OS_ROOT>\`. Both NTFS on same volume (C:).
 **Date:** 2026-04-21
 
 ---
@@ -48,7 +48,7 @@ For a local-filesystem-only `/migration` between two cloned repos on Windows, **
 
 ### File permissions on write
 
-`safeWriteFile` in `security-helpers.js` writes with `mode: 0o600`. On NTFS with `core.filemode=false` (verified in `C:/Users/jbell/.local/bin/JASON-OS/.git/config`), the POSIX mode bit is effectively ignored by git — NTFS uses ACL inheritance from the parent directory instead. New files inherit ACLs from `C:\Users\jbell\.local\bin\JASON-OS\` which are the jbell user's default ACLs. No chmod / icacls calls needed.
+`safeWriteFile` in `security-helpers.js` writes with `mode: 0o600`. On NTFS with `core.filemode=false` (verified in `C:/Users/jbell/.local/bin/JASON-OS/.git/config`), the POSIX mode bit is effectively ignored by git — NTFS uses ACL inheritance from the parent directory instead. New files inherit ACLs from `<JASON_OS_ROOT>\` which are the jbell user's default ACLs. No chmod / icacls calls needed.
 
 ---
 
@@ -107,13 +107,13 @@ Every file write triggers a Defender scan. For bulk `/migration` runs (e.g., por
 **Mitigation:** Not `/migration`'s problem to fix (no registry/Defender policy changes — user PATH memory confirms the user can't modify system settings). But Phase 5 should:
 - Batch writes in a single pass rather than write-read-write oscillation (each write is a scan event).
 - Display progress during large batches so perceived slowness isn't mistaken for a hang.
-- Document in SKILL.md that users who see `>5s`/file write latency should add `C:\Users\jbell\.local\bin\` to Defender exclusions if they have admin rights.
+- Document in SKILL.md that users who see `>5s`/file write latency should add `<HOME>\.local\bin\` to Defender exclusions if they have admin rights.
 
 ### 3. MAX_PATH = 260 character limit
 
 Windows 11 default. Git bash and git itself have `core.longpaths=true` support but `JASON-OS/.git/config` does NOT set it (verified via `git config --list`). Node's `fs` module respects Win32 API limits on paths > 260 chars unless the `\\?\` prefix is used, which node does not do by default. `ENAMETOOLONG` surfaces as `ENOENT` or `EPERM` with misleading messages.
 
-**Mitigation:** `/migration` should pre-flight path-length check each destination path before writing. A destination path of `C:\Users\jbell\.local\bin\JASON-OS\` is 39 chars, leaving 221 chars for the suffix — tight for deeply-nested `.planning/` or `node_modules/` paths. Abort early with "Path too long for NTFS default (>260); enable `core.longpaths` in dest repo or choose a shallower target."
+**Mitigation:** `/migration` should pre-flight path-length check each destination path before writing. A destination path of `<JASON_OS_ROOT>\` is 39 chars, leaving 221 chars for the suffix — tight for deeply-nested `.planning/` or `node_modules/` paths. Abort early with "Path too long for NTFS default (>260); enable `core.longpaths` in dest repo or choose a shallower target."
 
 ### 4. CRLF / autocrlf=true on dest
 
@@ -123,7 +123,7 @@ Windows 11 default. Git bash and git itself have `core.longpaths=true` support b
 
 ### 5. Path normalization: Git Bash vs native Windows
 
-Git bash presents `C:\Users\jbell\...` as `/c/Users/jbell/...`. Node in a bash-invoked process receives the Windows form via `process.cwd()`. `path.resolve()` + `path.isAbsolute()` handle both. `/migration` should use `path.resolve` on all input paths and never concatenate with `/` or `\` manually.
+Git bash presents `<HOME>\...` as `/c/Users/jbell/...`. Node in a bash-invoked process receives the Windows form via `process.cwd()`. `path.resolve()` + `path.isAbsolute()` handle both. `/migration` should use `path.resolve` on all input paths and never concatenate with `/` or `\` manually.
 
 **Mitigation:** Already enforced by `security-helpers.js` `validatePathInDir` (uses `path.resolve` + `path.relative` + `path.isAbsolute`). Reuse verbatim.
 
@@ -213,13 +213,13 @@ For RECOVERABLE (category #8): `safe-fs.js` `safeAtomicWriteSync` writes to a tm
 
 ### Codebase (read-only inspections)
 
-- `C:\Users\jbell\.local\bin\JASON-OS\scripts\lib\safe-fs.js` — trust model block (lines 14–33), `safeAtomicWriteSync` (206–245), `safeRenameSync` + EXDEV/EPERM fallback (146–176), lock primitives (370–621).
-- `C:\Users\jbell\.local\bin\JASON-OS\scripts\lib\security-helpers.js` — `validatePathInDir` (109–123), `safeWriteFile` (135–166), `safeGitAdd` (176–192), `refuseSymlinkWithParents` (83–98), 0o600 mode on new files.
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\pre-commit-fixer\SKILL.md` — dirty-state patterns, confirmation gates, SKIP_REASON discipline (guardrail #14), state-file pattern at `.claude/state/pre-commit-fixer-state.json`.
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` — §5 Q12 scope, §3 D29 (v1 local-only, no remote PR / GitHub API / cross-machine auth).
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` — §2 security rules (helpers-at-boundaries), §4 guardrails #7 (no push without approval, gated by `block-push-to-main.js`), #9 (pre-commit-fixer routing), #14 (SKIP_REASON).
-- `C:\Users\jbell\.local\bin\sonash-v0\.worktrees\planning\` — directory exists on disk but `git worktree list --porcelain` on sonash-v0 shows only the main checkout, indicating a historical or pruned registration.
-- `C:\Users\jbell\.local\bin\JASON-OS\.git\config` (via `git config --list`) — `core.autocrlf=true`, `core.filemode=false`, `credential.helper=manager`, `remote.origin.url=…JASON-OS.git` (HTTPS, not SSH). No `core.longpaths` set.
+- `<JASON_OS_ROOT>\scripts\lib\safe-fs.js` — trust model block (lines 14–33), `safeAtomicWriteSync` (206–245), `safeRenameSync` + EXDEV/EPERM fallback (146–176), lock primitives (370–621).
+- `<JASON_OS_ROOT>\scripts\lib\security-helpers.js` — `validatePathInDir` (109–123), `safeWriteFile` (135–166), `safeGitAdd` (176–192), `refuseSymlinkWithParents` (83–98), 0o600 mode on new files.
+- `<JASON_OS_ROOT>\.claude\skills\pre-commit-fixer\SKILL.md` — dirty-state patterns, confirmation gates, SKIP_REASON discipline (guardrail #14), state-file pattern at `.claude/state/pre-commit-fixer-state.json`.
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` — §5 Q12 scope, §3 D29 (v1 local-only, no remote PR / GitHub API / cross-machine auth).
+- `<JASON_OS_ROOT>\CLAUDE.md` — §2 security rules (helpers-at-boundaries), §4 guardrails #7 (no push without approval, gated by `block-push-to-main.js`), #9 (pre-commit-fixer routing), #14 (SKIP_REASON).
+- `<SONASH_ROOT>\.worktrees\planning\` — directory exists on disk but `git worktree list --porcelain` on sonash-v0 shows only the main checkout, indicating a historical or pruned registration.
+- `<JASON_OS_ROOT>\.git\config` (via `git config --list`) — `core.autocrlf=true`, `core.filemode=false`, `credential.helper=manager`, `remote.origin.url=…JASON-OS.git` (HTTPS, not SSH). No `core.longpaths` set.
 
 ### Web
 

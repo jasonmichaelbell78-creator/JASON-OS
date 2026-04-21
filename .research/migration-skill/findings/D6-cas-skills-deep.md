@@ -362,25 +362,25 @@ Given the dep graph (reads-from → writes-to) and coupling-tier ranking above:
 
 ### Primary (skill files read, SoNash):
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\SKILL.md` (19039 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\REFERENCE.md` (27706 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\document-analysis\SKILL.md` (20235 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\document-analysis\REFERENCE.md` (52883 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\media-analysis\SKILL.md` (22587 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\media-analysis\REFERENCE.md` (60304 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\recall\SKILL.md` (12122 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\recall\REFERENCE.md` (19577 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\repo-analysis\SKILL.md` (25556 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\repo-analysis\REFERENCE.md` (96627 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\repo-analysis\ARCHIVE.md` (1170 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\synthesize\SKILL.md` (21557 bytes)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\synthesize\REFERENCE.md` (27975 bytes)
+- `<SONASH_ROOT>\.claude\skills\analyze\SKILL.md` (19039 bytes)
+- `<SONASH_ROOT>\.claude\skills\analyze\REFERENCE.md` (27706 bytes)
+- `<SONASH_ROOT>\.claude\skills\document-analysis\SKILL.md` (20235 bytes)
+- `<SONASH_ROOT>\.claude\skills\document-analysis\REFERENCE.md` (52883 bytes)
+- `<SONASH_ROOT>\.claude\skills\media-analysis\SKILL.md` (22587 bytes)
+- `<SONASH_ROOT>\.claude\skills\media-analysis\REFERENCE.md` (60304 bytes)
+- `<SONASH_ROOT>\.claude\skills\recall\SKILL.md` (12122 bytes)
+- `<SONASH_ROOT>\.claude\skills\recall\REFERENCE.md` (19577 bytes)
+- `<SONASH_ROOT>\.claude\skills\repo-analysis\SKILL.md` (25556 bytes)
+- `<SONASH_ROOT>\.claude\skills\repo-analysis\REFERENCE.md` (96627 bytes)
+- `<SONASH_ROOT>\.claude\skills\repo-analysis\ARCHIVE.md` (1170 bytes)
+- `<SONASH_ROOT>\.claude\skills\synthesize\SKILL.md` (21557 bytes)
+- `<SONASH_ROOT>\.claude\skills\synthesize\REFERENCE.md` (27975 bytes)
 
 ### Context (brainstorm + adjacent):
 
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §5 Q6 + §3 D19 + D23 verdict legend
-- `C:\Users\jbell\.local\bin\sonash-v0\CLAUDE.md` (v6.0 — confirms stack: Next.js 16, React 19, Firebase 12, Tailwind 4.2, Zod 4.3.6; SESSION_CONTEXT.md / ROADMAP.md / CLAUDE.md / MEMORY.md as home-context canonical inputs)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` (v0.1 bootstrap — confirms `scripts/lib/sanitize-error.cjs` naming, §2 security rules, §5 anti-patterns; NO SESSION_CONTEXT.md, NO ROADMAP.md yet in JASON-OS bootstrap — home-context `HOME_CONTEXT_FILES[]` config must be present-only/fail-soft)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §5 Q6 + §3 D19 + D23 verdict legend
+- `<SONASH_ROOT>\CLAUDE.md` (v6.0 — confirms stack: Next.js 16, React 19, Firebase 12, Tailwind 4.2, Zod 4.3.6; SESSION_CONTEXT.md / ROADMAP.md / CLAUDE.md / MEMORY.md as home-context canonical inputs)
+- `<JASON_OS_ROOT>\CLAUDE.md` (v0.1 bootstrap — confirms `scripts/lib/sanitize-error.cjs` naming, §2 security rules, §5 anti-patterns; NO SESSION_CONTEXT.md, NO ROADMAP.md yet in JASON-OS bootstrap — home-context `HOME_CONTEXT_FILES[]` config must be present-only/fail-soft)
 
 ### Cross-reference deliverables (sibling D-agents):
 

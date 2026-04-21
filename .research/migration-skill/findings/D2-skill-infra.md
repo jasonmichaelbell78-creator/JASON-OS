@@ -4,7 +4,7 @@
 **Date:** 2026-04-21
 **Depth:** L1 surface inventory, with slightly deeper read on `skill-creator` + `skill-audit`.
 **Agent:** D2-skill-infra
-**Source repo:** `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\`
+**Source repo:** `<SONASH_ROOT>\.claude\skills\`
 
 ---
 
@@ -130,28 +130,28 @@ Ranked by load-bearing weight for /migration's design + build:
 
 All paths absolute, all reads SKILL.md-surface unless noted deeper:
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-creator\SKILL.md` (381 lines, full read)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-creator\REFERENCE.md` (grep for port/migrate only — not found)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-creator\scripts\init_skill.py` (existence only)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-audit\SKILL.md` (591 lines, full read)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\find-skills\SKILL.md` (166 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\create-audit\SKILL.md` (398 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\SKILL_STANDARDS.md` (426 lines — partial: first 80)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\SELF_AUDIT_PATTERN.md` (332 lines — partial: first 60)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\AUDIT_TEMPLATE.md` (234 lines — not read, existence + line count)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\TAG_SUGGESTION.md` (118 lines — not read, existence + line count)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\shared\CONVENTIONS.md` (595 lines — partial: first 80)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\schemas\analysis-schema.ts` (partial: first 40)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\using-superpowers\SKILL.md` (105 lines, full)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\systematic-debugging\SKILL.md` (partial: first 80)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\debt-runner\SKILL.md` (partial: first 80)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\multi-ai-audit\SKILL.md` (partial: first 80)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\decrypt-secrets\SKILL.md` (73 lines, full)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\quick-fix\SKILL.md` (141 lines, full)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\ui-design-system\SKILL.md` (partial: first 40)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\frontend-design\SKILL.md` (partial: first 30, out-of-scope)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\ux-researcher-designer\SKILL.md` (partial: first 30, out-of-scope)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\alerts\SKILL.md` (partial: first 40, out-of-scope)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\artifacts-builder\SKILL.md` (partial: first 30, out-of-scope)
+- `<SONASH_ROOT>\.claude\skills\skill-creator\SKILL.md` (381 lines, full read)
+- `<SONASH_ROOT>\.claude\skills\skill-creator\REFERENCE.md` (grep for port/migrate only — not found)
+- `<SONASH_ROOT>\.claude\skills\skill-creator\scripts\init_skill.py` (existence only)
+- `<SONASH_ROOT>\.claude\skills\skill-audit\SKILL.md` (591 lines, full read)
+- `<SONASH_ROOT>\.claude\skills\find-skills\SKILL.md` (166 lines)
+- `<SONASH_ROOT>\.claude\skills\create-audit\SKILL.md` (398 lines)
+- `<SONASH_ROOT>\.claude\skills\_shared\SKILL_STANDARDS.md` (426 lines — partial: first 80)
+- `<SONASH_ROOT>\.claude\skills\_shared\SELF_AUDIT_PATTERN.md` (332 lines — partial: first 60)
+- `<SONASH_ROOT>\.claude\skills\_shared\AUDIT_TEMPLATE.md` (234 lines — not read, existence + line count)
+- `<SONASH_ROOT>\.claude\skills\_shared\TAG_SUGGESTION.md` (118 lines — not read, existence + line count)
+- `<SONASH_ROOT>\.claude\skills\shared\CONVENTIONS.md` (595 lines — partial: first 80)
+- `<SONASH_ROOT>\.claude\skills\schemas\analysis-schema.ts` (partial: first 40)
+- `<SONASH_ROOT>\.claude\skills\using-superpowers\SKILL.md` (105 lines, full)
+- `<SONASH_ROOT>\.claude\skills\systematic-debugging\SKILL.md` (partial: first 80)
+- `<SONASH_ROOT>\.claude\skills\debt-runner\SKILL.md` (partial: first 80)
+- `<SONASH_ROOT>\.claude\skills\multi-ai-audit\SKILL.md` (partial: first 80)
+- `<SONASH_ROOT>\.claude\skills\decrypt-secrets\SKILL.md` (73 lines, full)
+- `<SONASH_ROOT>\.claude\skills\quick-fix\SKILL.md` (141 lines, full)
+- `<SONASH_ROOT>\.claude\skills\ui-design-system\SKILL.md` (partial: first 40)
+- `<SONASH_ROOT>\.claude\skills\frontend-design\SKILL.md` (partial: first 30, out-of-scope)
+- `<SONASH_ROOT>\.claude\skills\ux-researcher-designer\SKILL.md` (partial: first 30, out-of-scope)
+- `<SONASH_ROOT>\.claude\skills\alerts\SKILL.md` (partial: first 40, out-of-scope)
+- `<SONASH_ROOT>\.claude\skills\artifacts-builder\SKILL.md` (partial: first 30, out-of-scope)
 
 BRAINSTORM anchors referenced: §5 Q2 (cross-skill inventory), §5 Q10 (self-dogfood criteria), §3 D19 (CAS port), D23 (6-verdict legend), D24 (Phase 5 active transformation), D27 (research-scope expansion).

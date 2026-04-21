@@ -430,57 +430,57 @@ JASON-OS + `better-sqlite3` native binding.
 ## Sources
 
 ### CAS skill SKILL.md files
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\SKILL.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\document-analysis\SKILL.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\media-analysis\SKILL.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\recall\SKILL.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\repo-analysis\SKILL.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\synthesize\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\analyze\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\document-analysis\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\media-analysis\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\recall\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\repo-analysis\SKILL.md`
+- `<SONASH_ROOT>\.claude\skills\synthesize\SKILL.md`
 
 ### CAS skill REFERENCE.md files
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\{analyze,document-analysis,media-analysis,recall,repo-analysis,synthesize}\REFERENCE.md`
+- `<SONASH_ROOT>\.claude\skills\{analyze,document-analysis,media-analysis,recall,repo-analysis,synthesize}\REFERENCE.md`
 
 ### Shared skill conventions
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\shared\CONVENTIONS.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\TAG_SUGGESTION.md`
+- `<SONASH_ROOT>\.claude\skills\shared\CONVENTIONS.md`
+- `<SONASH_ROOT>\.claude\skills\_shared\TAG_SUGGESTION.md`
 
 ### CAS scripts (all 12)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\rebuild-index.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\update-index.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\recall.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\self-audit.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\retag.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\generate-extractions-md.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\migrate-v3.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\migrate-schemas.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\backfill-candidates.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\backfill-tags.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\fix-depth-mislabel.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\promote-firecrawl-to-journal.js`
+- `<SONASH_ROOT>\scripts\cas\rebuild-index.js`
+- `<SONASH_ROOT>\scripts\cas\update-index.js`
+- `<SONASH_ROOT>\scripts\cas\recall.js`
+- `<SONASH_ROOT>\scripts\cas\self-audit.js`
+- `<SONASH_ROOT>\scripts\cas\retag.js`
+- `<SONASH_ROOT>\scripts\cas\generate-extractions-md.js`
+- `<SONASH_ROOT>\scripts\cas\migrate-v3.js`
+- `<SONASH_ROOT>\scripts\cas\migrate-schemas.js`
+- `<SONASH_ROOT>\scripts\cas\backfill-candidates.js`
+- `<SONASH_ROOT>\scripts\cas\backfill-tags.js`
+- `<SONASH_ROOT>\scripts\cas\fix-depth-mislabel.js`
+- `<SONASH_ROOT>\scripts\cas\promote-firecrawl-to-journal.js`
 
 ### Lib dependencies
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\safe-cas-io.js:1-30`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\security-helpers.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\safe-fs.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\sanitize-error.cjs`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\parse-jsonl-line.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\read-jsonl.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\analysis-schema.js`
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\retag-mutations.js`
+- `<SONASH_ROOT>\scripts\lib\safe-cas-io.js:1-30`
+- `<SONASH_ROOT>\scripts\lib\security-helpers.js`
+- `<SONASH_ROOT>\scripts\lib\safe-fs.js`
+- `<SONASH_ROOT>\scripts\lib\sanitize-error.cjs`
+- `<SONASH_ROOT>\scripts\lib\parse-jsonl-line.js`
+- `<SONASH_ROOT>\scripts\lib\read-jsonl.js`
+- `<SONASH_ROOT>\scripts\lib\analysis-schema.js`
+- `<SONASH_ROOT>\scripts\lib\retag-mutations.js`
 
 ### CAS planning / architecture
-- `C:\Users\jbell\.local\bin\sonash-v0\.planning\content-analysis-system\DECISIONS.md:1-79`
+- `<SONASH_ROOT>\.planning\content-analysis-system\DECISIONS.md:1-79`
 
 ### Hooks dir (verified clean of CAS deps)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\hooks\` (28 files, grepped)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\hooks\user-prompt-handler.js:144-145,707`
+- `<SONASH_ROOT>\.claude\hooks\` (28 files, grepped)
+- `<SONASH_ROOT>\.claude\hooks\user-prompt-handler.js:144-145,707`
   (runAnalyze is prompt-intent, not CAS)
 
 ### BRAINSTORM refs
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md`
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md`
   §3 D19 (CAS port with home-context reshape), §5 Q6 (deferred research
   into integration points)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md:19-30` (stack-agnostic
+- `<JASON_OS_ROOT>\CLAUDE.md:19-30` (stack-agnostic
   posture, Node 22 pinned), §2 (scripts/lib helpers already declared)
 
 ---

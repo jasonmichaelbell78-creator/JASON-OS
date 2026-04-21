@@ -151,7 +151,7 @@ Specifically:
 
 ## 6. Sources
 
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` — authoritative context (§2 seven-phase arc, §5 Q7, D23/D24/D26/D27)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` — authoritative context (§2 seven-phase arc, §5 Q7, D23/D24/D26/D27)
 - dbt Command Reference — https://docs.getdbt.com/reference/dbt-commands (2026-04-21)
 - Flyway CLI — https://flywaydb.org/documentation/commandline/ (2026-04-21)
 - Cookiecutter CLI options — https://cookiecutter.readthedocs.io/en/stable/cli_options.html (2026-04-21)

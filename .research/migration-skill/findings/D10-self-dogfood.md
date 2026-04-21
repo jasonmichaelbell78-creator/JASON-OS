@@ -52,7 +52,7 @@ Recommendation:
   `other-endpoint=<sonash path>`, `unit=concept`, target
   `.claude/skills/migration/` (the skill's own tree).
 - Assert: file
-  `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\MIGRATION_PLAN.md`
+  `<JASON_OS_ROOT>\.research\migration-skill\MIGRATION_PLAN.md`
   exists, is non-empty, has all seven phases represented in its
   structure, contains at minimum N verdicts where N ≥ count of files in
   `.claude/skills/migration/`, and every verdict ∈ D23 legend
@@ -305,9 +305,9 @@ one-directional.
 - [hashicorp/terraform issue #35534 — idempotency test exposure][tf]
 - [Eating your own dog food — Wikipedia][wk]
 - [Dogfooding in software development — herocoders][hc]
-- In-repo: `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §2, §3 D16 / D22 / D23 / D24, §5 Q10, §6
-- In-repo: `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\skill-audit\SKILL.md` Phase 5 (self-audit precedent, lines 436-519)
-- In-repo: `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` §1 (stack), §2 (scripts/lib + CI pipeline)
+- In-repo: `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §2, §3 D16 / D22 / D23 / D24, §5 Q10, §6
+- In-repo: `<JASON_OS_ROOT>\.claude\skills\skill-audit\SKILL.md` Phase 5 (self-audit precedent, lines 436-519)
+- In-repo: `<JASON_OS_ROOT>\CLAUDE.md` §1 (stack), §2 (scripts/lib + CI pipeline)
 
 [rustc]: https://rustc-dev-guide.rust-lang.org/building/bootstrapping/what-bootstrapping-does.html
 [rustc-readme]: https://github.com/rust-lang/rust/blob/main/src/bootstrap/README.md

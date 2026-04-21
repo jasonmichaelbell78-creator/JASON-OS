@@ -131,7 +131,7 @@ called out in D5's 11 primitives or 9 signal detectors.
 - `sonash-v0/.claude/skills/repo-analysis/SKILL.md:69` — "Rate limit safety. Check `gh api rate_limit` before every API batch."
 - `sonash-v0/.claude/skills/repo-analysis/SKILL.md:174` — "Clone: `git clone --filter=blob:none --depth=1 <url>` to `/tmp/`"
 - `sonash-v0/.claude/skills/repo-analysis/REFERENCE.md:51` — external API call to securityscorecards.dev
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\V3-cas.md:37-39` — grep scope limited to `scripts/cas/*.js`, not skill bodies
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\V3-cas.md:37-39` — grep scope limited to `scripts/cas/*.js`, not skill bodies
 - `D12-local-auth-perms.md:151` — acknowledges credential.helper=manager is live; relies entirely on "no networked git by design"
 - No counter-evidence: D5-reshape-pipeline.md has zero mentions of "gh api" or "git clone" as reshape targets
 
@@ -568,7 +568,7 @@ in RESEARCH_OUTPUT). **Recommended routing:** deepPlan=true (text correction).
 - **Weakened-claims count:** 11 (10 with explicit downgrade + 1 re-scoped
   "zero-auth-deps" finding)
 - **New-claims-surfaced count:** 6 (NC-01 through NC-06)
-- **Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\challenges\contrarian.md`
+- **Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\challenges\contrarian.md`
 - **Critical challenges:** Challenge 2 (CAS auth/network contradiction),
   Challenge 3 (bootstrap circular dep), Challenge 6 (D16 asymmetry)
 - **Recommended Phase 4 re-synth actions:**

@@ -73,7 +73,7 @@ Column key:
 | 5 | deep-research | Multi-agent research engine; 12-phase arc (0, 1, 2, 2.5, 3, 3.5, 3.9, 3.95, 3.96, 3.97, 4, 5); decomposes into sub-questions with allocation floor `D + 3 + floor(D/5)`; contrarian + OTB mandatory; Windows 0-byte fallback (Critical Rule 4, L37-43) | **Very High** | Phase 3 of /migration (mandatory for reshape/rewrite verdicts per R4 / D25); may re-enter mid-execute per D28 when /migration Phase 5 surfaces unknown destination idiom | Skill-dispatch with `--auto` flag (Critical Rule 1) because /migration is the orchestrator; adapter writes to `.research/<migration-slug>/` | **copy-as-is** — SoNash L1-423 match JASON-OS L1-419 except frontmatter compat + condensed When-to-Use block (JASON-OS L57-65 vs SoNash L54-69). |
 | 6 | session-begin | Pre-flight checklist; 5-phase arc; duplicate-detection gate; SessionStart hook boundary; JASON-OS v0.1 port has 8+ DEFERRED blocks for unwired infra | **Medium** | Optional — before a /migration run (Phase 0 context pull may coincide); NOT called mid-migration | Skill-dispatch (`/session-begin`); artifact-consumption (SESSION_CONTEXT.md) | **reshape** — JASON-OS v2.1 (L1-246) is the reshape target: DEFERRED markers for `scripts/secrets/`, cross-session validation, session-gap detection, consolidation status, prior-research surface, 8 health scripts (Phase 3), override-trend, health-score-drop, warning-acknowledgment, infrastructure-failure, technical-debt — SoNash v2.0 (L1-321) is what got reshaped. When porting infra, these DEFERRED sections reshape back. |
 | 7 | session-end | Session-closure pipeline; 4-phase arc (Context / Compliance / Metrics / Cleanup); steps 1-10; auto-learnings loop; orphaned `/synthesize` state check | **Medium** | Optional — after a /migration run; may consume MIGRATION_PLAN.md artifact for summary | Skill-dispatch (`/session-end` or `--no-push`); state-file cleanup | **reshape** — JASON-OS v2.2-jasonos-v0.1 (L1-120+) is Foundation-scoped: strips Phase 3 entirely (reviews:sync, ecosystem-health, TDMS debt consolidation, metrics generation) and most of Phase 2 (agent invocation summary, override audit, hook warnings synthesizer). Labelled "Lineage: SoNash 41526 session-end v2.2 → JASON-OS v0.1 port" (L17-18). |
-| 8 | todo | Cross-session task management; JSONL + CLI (`scripts/planning/todos-cli.js`); 8-option menu; context-capture on add; regression-guarded via advisory-locked CLI (Critical Rule 6 — prevents T26/T27/T28 data-loss bug) | **Medium** | Phase 1 target-pick menu of /migration may offer "add to todo" for blocked-on-prereq items; Phase 5 blocked items route to `/todo` or `/add-debt` per D28 back-entry | Skill-dispatch (`/todo`); CLI-call (`node scripts/planning/todos-cli.js ...`) — note: JASON-OS has this CLI; verify at `C:\Users\jbell\.local\bin\JASON-OS\scripts\planning\` | **sanitize** — SoNash Invocation Tracking (L340-360) is dropped in JASON-OS. Otherwise content-identical. |
+| 8 | todo | Cross-session task management; JSONL + CLI (`scripts/planning/todos-cli.js`); 8-option menu; context-capture on add; regression-guarded via advisory-locked CLI (Critical Rule 6 — prevents T26/T27/T28 data-loss bug) | **Medium** | Phase 1 target-pick menu of /migration may offer "add to todo" for blocked-on-prereq items; Phase 5 blocked items route to `/todo` or `/add-debt` per D28 back-entry | Skill-dispatch (`/todo`); CLI-call (`node scripts/planning/todos-cli.js ...`) — note: JASON-OS has this CLI; verify at `<JASON_OS_ROOT>\scripts\planning\` | **sanitize** — SoNash Invocation Tracking (L340-360) is dropped in JASON-OS. Otherwise content-identical. |
 | 9 | task-next | Dependency-resolved next-task selector from ROADMAP.md active sprint; calls `node scripts/tasks/resolve-dependencies.js`; Kahn's topological sort | **Low** (SoNash-only) | Not directly — but /migration Phase 1 target-pick menu may use it for resume-mode ("what unblocked since last migration?"); also possible consumer of it when porting CAS which has ROADMAP-style dependency graphs | N/A (skill absent in JASON-OS) | **blocked-on-prereq** — JASON-OS lacks ROADMAP.md (session-begin JASON-OS L108-109 "ROADMAP.md read is DEFERRED — JASON-OS v0.1 does not have ROADMAP.md yet"). Port-candidate after JASON-OS gains a roadmap substrate. Reshape during port: configurable source-doc param (target-repo-param per D19). |
 
 ---
@@ -206,30 +206,30 @@ re-enter brainstorm on JASON-OS's task-tracking shape — ROADMAP.md vs
 File references (all absolute paths, L = line numbers observed):
 
 **SoNash SKILL.md:**
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\brainstorm\SKILL.md` L1-349
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\checkpoint\SKILL.md` L1-171
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\convergence-loop\SKILL.md` L1-297
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-plan\SKILL.md` L1-414
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\SKILL.md` L1-423
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\session-begin\SKILL.md` L1-320
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\session-end\SKILL.md` L1-465
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\todo\SKILL.md` L1-368
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\task-next\SKILL.md` L1-97
+- `<SONASH_ROOT>\.claude\skills\brainstorm\SKILL.md` L1-349
+- `<SONASH_ROOT>\.claude\skills\checkpoint\SKILL.md` L1-171
+- `<SONASH_ROOT>\.claude\skills\convergence-loop\SKILL.md` L1-297
+- `<SONASH_ROOT>\.claude\skills\deep-plan\SKILL.md` L1-414
+- `<SONASH_ROOT>\.claude\skills\deep-research\SKILL.md` L1-423
+- `<SONASH_ROOT>\.claude\skills\session-begin\SKILL.md` L1-320
+- `<SONASH_ROOT>\.claude\skills\session-end\SKILL.md` L1-465
+- `<SONASH_ROOT>\.claude\skills\todo\SKILL.md` L1-368
+- `<SONASH_ROOT>\.claude\skills\task-next\SKILL.md` L1-97
 
 **JASON-OS SKILL.md:**
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\brainstorm\SKILL.md` L1-346
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\checkpoint\SKILL.md` L1-173
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\convergence-loop\SKILL.md` L1-300
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-plan\SKILL.md` L1-405
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md` L1-419
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\session-begin\SKILL.md` L1-245
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\session-end\SKILL.md` L1-442
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\todo\SKILL.md` L1-350
+- `<JASON_OS_ROOT>\.claude\skills\brainstorm\SKILL.md` L1-346
+- `<JASON_OS_ROOT>\.claude\skills\checkpoint\SKILL.md` L1-173
+- `<JASON_OS_ROOT>\.claude\skills\convergence-loop\SKILL.md` L1-300
+- `<JASON_OS_ROOT>\.claude\skills\deep-plan\SKILL.md` L1-405
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md` L1-419
+- `<JASON_OS_ROOT>\.claude\skills\session-begin\SKILL.md` L1-245
+- `<JASON_OS_ROOT>\.claude\skills\session-end\SKILL.md` L1-442
+- `<JASON_OS_ROOT>\.claude\skills\todo\SKILL.md` L1-350
 
 **Reference docs used:**
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §2 Bones (7-phase arc), §3 D16-D19 endpoint, §3 D23-D26 verdicts + Phase 5 + output modes, §3 D27 research scope, §3 D28 iterative re-entry, §3 D29 v1 local-only
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` (JASON-OS operational stance; bootstrap status)
-- `C:\Users\jbell\.local\bin\sonash-v0\CLAUDE.md` (SoNash context providing the invocation-tracking + TDMS + ecosystem-health patterns that diverge in JASON-OS ports)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §2 Bones (7-phase arc), §3 D16-D19 endpoint, §3 D23-D26 verdicts + Phase 5 + output modes, §3 D27 research scope, §3 D28 iterative re-entry, §3 D29 v1 local-only
+- `<JASON_OS_ROOT>\CLAUDE.md` (JASON-OS operational stance; bootstrap status)
+- `<SONASH_ROOT>\CLAUDE.md` (SoNash context providing the invocation-tracking + TDMS + ecosystem-health patterns that diverge in JASON-OS ports)
 
 **Verification commands run:**
 - `wc -l` on all 17 SKILL.md files (line-count comparison)

@@ -126,18 +126,18 @@ A: **Confirmed.** Entire payload is SoNash facts. Flagged. NOT a /migration call
 
 ## Sources
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\mcp-builder\SKILL.md` (lines 1-430)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\mcp-builder\LICENSE.txt` (vendored Anthropic)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\mcp-builder\reference\` (dir: mcp_best_practices.md, python_mcp_server.md, node_mcp_server.md, evaluation.md)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\system-test\SKILL.md` (lines 1-295)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\system-test\domains.md` (62KB; 58 SoNash-coupling matches)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\webapp-testing\SKILL.md` (lines 1-132)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\webapp-testing\LICENSE.txt` (vendored Anthropic)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\test-suite\SKILL.md` (lines 1-329)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\validate-claude-folder\SKILL.md` (lines 1-133)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\sonash-context\SKILL.md` (lines 1-91)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\add-debt\SKILL.md` (lines 1-311)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 D23 (verdict legend), D24 (Phase 5 content), D27 (integration inventory scope); §5 Q2 (integration question)
+- `<SONASH_ROOT>\.claude\skills\mcp-builder\SKILL.md` (lines 1-430)
+- `<SONASH_ROOT>\.claude\skills\mcp-builder\LICENSE.txt` (vendored Anthropic)
+- `<SONASH_ROOT>\.claude\skills\mcp-builder\reference\` (dir: mcp_best_practices.md, python_mcp_server.md, node_mcp_server.md, evaluation.md)
+- `<SONASH_ROOT>\.claude\skills\system-test\SKILL.md` (lines 1-295)
+- `<SONASH_ROOT>\.claude\skills\system-test\domains.md` (62KB; 58 SoNash-coupling matches)
+- `<SONASH_ROOT>\.claude\skills\webapp-testing\SKILL.md` (lines 1-132)
+- `<SONASH_ROOT>\.claude\skills\webapp-testing\LICENSE.txt` (vendored Anthropic)
+- `<SONASH_ROOT>\.claude\skills\test-suite\SKILL.md` (lines 1-329)
+- `<SONASH_ROOT>\.claude\skills\validate-claude-folder\SKILL.md` (lines 1-133)
+- `<SONASH_ROOT>\.claude\skills\sonash-context\SKILL.md` (lines 1-91)
+- `<SONASH_ROOT>\.claude\skills\add-debt\SKILL.md` (lines 1-311)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 D23 (verdict legend), D24 (Phase 5 content), D27 (integration inventory scope); §5 Q2 (integration question)
 - JASON-OS system skill list (user-visible skills roster) confirming `add-debt` v0 stub at `.planning/DEBT_LOG.md`
 
 ---

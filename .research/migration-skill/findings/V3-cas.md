@@ -4,7 +4,7 @@
 **Date:** 2026-04-21
 **Scope:** Claims from Q6 (`SQ-D6`) + Q2 CAS-adjacent (`SQ-D2` via `D2-content-analysis-adjacent`)
 **Source findings:** `D6-cas-skills-deep`, `D6-cas-scripts-deep`, `D6-cas-dbs-schemas`, `D6-cas-planning`, `D6-cas-integration`, `D6-cas-reshape-verdict-list`, `D2-content-analysis-adjacent`
-**Target:** read-only SoNash (`C:\Users\jbell\.local\bin\sonash-v0\`) + JASON-OS bootstrap
+**Target:** read-only SoNash (`<SONASH_ROOT>\`) + JASON-OS bootstrap
 **Verdict classes:** VERIFIED / REFUTED / UNVERIFIABLE / CONFLICTED
 
 ---
@@ -82,7 +82,7 @@ both `content-analysis.db` and `knowledge.sqlite`. Claim C-040 is VERIFIED.
 | C-076 | 7 CAS-adjacent skills; /recall is lowest-cost prior-art check; /analyze router for unknown-target | **VERIFIED** | D2-content-analysis-adjacent integration table lists all 7; D6-cas-integration §4 confirms /analyze→handler dispatch + /recall query surface. |
 | C-077 | All 6 live CAS skills are pre-port-dependent for /migration EXECUTION beyond trivial file-copy; concept unit-type is blocked-on-prereq in v1-MVP until CAS ported | **VERIFIED (structurally)** | Logical consequence of the port-order claim (C-039): handler skills depend on CAS scripts + lib, which depend on schema. JASON-OS currently has neither CAS scripts nor the Zod schema lib ported. No counter-evidence. |
 | C-108 | /sonash-context is implicit cross-skill dependency of /synthesize via REFERENCE.md:730 | **VERIFIED** | `synthesize/REFERENCE.md:730` reads *"Stack: Zod 4.3.6 schemas per CLAUDE.md §1; script runners per sonash-context"*. NOTE: The claim says "D6-cas-skills-deep table 6" — table 6 in that finding IS /synthesize, so the cross-reference is correctly attributed to the synthesize skill, not repo-analysis. |
-| C-109 | Invocation-tracking (scripts/reviews/write-invocation.ts) is SoNash-specific; JASON-OS has scripts/reviews/ unported | **VERIFIED** | `scripts/reviews/write-invocation.ts` exists in SoNash (confirmed via `ls`). JASON-OS has no `scripts/reviews/` directory (confirmed via `ls C:\Users\jbell\.local\bin\JASON-OS\scripts\` — only `config/`, `lib/`, `planning/`, `session-end-commit.js`). Invocation call at `repo-analysis/SKILL.md:529-538` confirmed. |
+| C-109 | Invocation-tracking (scripts/reviews/write-invocation.ts) is SoNash-specific; JASON-OS has scripts/reviews/ unported | **VERIFIED** | `scripts/reviews/write-invocation.ts` exists in SoNash (confirmed via `ls`). JASON-OS has no `scripts/reviews/` directory (confirmed via `ls <JASON_OS_ROOT>\scripts\` — only `config/`, `lib/`, `planning/`, `session-end-commit.js`). Invocation call at `repo-analysis/SKILL.md:529-538` confirmed. |
 
 ---
 
@@ -150,8 +150,8 @@ newline ambiguity. Doesn't change any substantive port-effort claim.
 
 | File | Bytes | MD5 (actual) | MD5 (claimed) | Match |
 |---|---|---|---|---|
-| `C:\Users\jbell\.local\bin\sonash-v0\.research\content-analysis.db` | 409,600 | `d098a358f3e75c978e0417e759e3c84e` | `d098a358f3e75c978e0417e759e3c84e` | ✓ |
-| `C:\Users\jbell\.local\bin\sonash-v0\.research\knowledge.sqlite` | 409,600 | `d098a358f3e75c978e0417e759e3c84e` | `d098a358f3e75c978e0417e759e3c84e` | ✓ |
+| `<SONASH_ROOT>\.research\content-analysis.db` | 409,600 | `d098a358f3e75c978e0417e759e3c84e` | `d098a358f3e75c978e0417e759e3c84e` | ✓ |
+| `<SONASH_ROOT>\.research\knowledge.sqlite` | 409,600 | `d098a358f3e75c978e0417e759e3c84e` | `d098a358f3e75c978e0417e759e3c84e` | ✓ |
 
 **Byte-identical confirmed.** `knowledge.sqlite` is a stale alias of
 `content-analysis.db`, referenced only by `synthesize/self-audit.js:704` as
@@ -221,6 +221,6 @@ ported self-audit).
   1. **C-035 (CONFLICTED)** — verdict distribution numbers don't match the 38-row master table; fix to `14/6/7/7/3/1`.
   2. **C-041 (minor)** — DDL line ranges drift 1-8 lines; substance correct, but line-precision downstream tools should pull fresh.
   3. **C-039 (minor)** — analysis-schema.js line count: 493 per wc -l (D6-cas-dbs-schemas §1.1 says 494; off by 1).
-- **Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\V3-cas.md`
+- **Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\V3-cas.md`
 
 **End V3-cas verification.**

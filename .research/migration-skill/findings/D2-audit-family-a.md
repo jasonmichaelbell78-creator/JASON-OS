@@ -56,22 +56,22 @@ Of the 7, `/migration` is most likely to **reference** (not call) 2-3 as design 
 ## Sources
 
 ### Skill files inventoried (7 SKILL.md + 4 companions)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-agent-quality\SKILL.md` (438 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-agent-quality\REFERENCE.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-aggregator\SKILL.md` (225 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-aggregator\examples.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-ai-optimization\SKILL.md` (499 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-code\SKILL.md` (369 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-comprehensive\SKILL.md` (496 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-comprehensive\reference\WAVE_DETAILS.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-comprehensive\reference\TRIAGE_GUIDE.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-comprehensive\reference\RECOVERY_PROCEDURES.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-documentation\SKILL.md` (248 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-documentation\prompts.md`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-engineering-productivity\SKILL.md` (354 lines)
+- `<SONASH_ROOT>\.claude\skills\audit-agent-quality\SKILL.md` (438 lines)
+- `<SONASH_ROOT>\.claude\skills\audit-agent-quality\REFERENCE.md`
+- `<SONASH_ROOT>\.claude\skills\audit-aggregator\SKILL.md` (225 lines)
+- `<SONASH_ROOT>\.claude\skills\audit-aggregator\examples.md`
+- `<SONASH_ROOT>\.claude\skills\audit-ai-optimization\SKILL.md` (499 lines)
+- `<SONASH_ROOT>\.claude\skills\audit-code\SKILL.md` (369 lines)
+- `<SONASH_ROOT>\.claude\skills\audit-comprehensive\SKILL.md` (496 lines)
+- `<SONASH_ROOT>\.claude\skills\audit-comprehensive\reference\WAVE_DETAILS.md`
+- `<SONASH_ROOT>\.claude\skills\audit-comprehensive\reference\TRIAGE_GUIDE.md`
+- `<SONASH_ROOT>\.claude\skills\audit-comprehensive\reference\RECOVERY_PROCEDURES.md`
+- `<SONASH_ROOT>\.claude\skills\audit-documentation\SKILL.md` (248 lines)
+- `<SONASH_ROOT>\.claude\skills\audit-documentation\prompts.md`
+- `<SONASH_ROOT>\.claude\skills\audit-engineering-productivity\SKILL.md` (354 lines)
 
 ### Context
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 (D19, D23, D24, D27), §5 Q2
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 (D19, D23, D24, D27), §5 Q2
 - SoNash `CLAUDE.md` (stack versions, security rules, Agent/Skill Triggers table)
 
 ### Key SoNash-coupling evidence (grep hits)

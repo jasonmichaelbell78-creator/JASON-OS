@@ -250,22 +250,22 @@ would run in JASON-OS without reshape.
 
 ## 6. Sources
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:1-172`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\comprehensive-ecosystem-audit\reference\WAVE_DETAILS.md:1-369`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\doc-ecosystem-audit\SKILL.md:1-253`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\doc-ecosystem-audit\scripts\checkers\coverage-completeness.js:127-302`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\doc-ecosystem-audit\scripts\checkers\generation-pipeline.js:93-167`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\health-ecosystem-audit\SKILL.md:1-273`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\health-ecosystem-audit\REFERENCE.md:295-304`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\health-ecosystem-audit\scripts\run-health-ecosystem-audit.js:32-120`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\hook-ecosystem-audit\SKILL.md:1-440`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\hook-ecosystem-audit\REFERENCE.md:276-313`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\hook-ecosystem-audit\scripts\run-hook-ecosystem-audit.js:1-220`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\hook-ecosystem-audit\scripts\checkers\code-quality-security.js:134,202-203`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-ecosystem-audit\SKILL.md:1-271`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-ecosystem-audit\scripts\checkers\agent-orchestration.js:1-299`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-ecosystem-audit\scripts\checkers\coverage-consistency.js:181-474`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\ecosystem-audit\CRITICAL_RULES.md:1-71`
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 D23–D27, §5 Q1–Q2
-- `C:\Users\jbell\.local\bin\sonash-v0\CLAUDE.md` §4 behavioral guardrail 15 (Windows 0-byte bug)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` §2 (sanitize-error.cjs)
+- `<SONASH_ROOT>\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:1-172`
+- `<SONASH_ROOT>\.claude\skills\comprehensive-ecosystem-audit\reference\WAVE_DETAILS.md:1-369`
+- `<SONASH_ROOT>\.claude\skills\doc-ecosystem-audit\SKILL.md:1-253`
+- `<SONASH_ROOT>\.claude\skills\doc-ecosystem-audit\scripts\checkers\coverage-completeness.js:127-302`
+- `<SONASH_ROOT>\.claude\skills\doc-ecosystem-audit\scripts\checkers\generation-pipeline.js:93-167`
+- `<SONASH_ROOT>\.claude\skills\health-ecosystem-audit\SKILL.md:1-273`
+- `<SONASH_ROOT>\.claude\skills\health-ecosystem-audit\REFERENCE.md:295-304`
+- `<SONASH_ROOT>\.claude\skills\health-ecosystem-audit\scripts\run-health-ecosystem-audit.js:32-120`
+- `<SONASH_ROOT>\.claude\skills\hook-ecosystem-audit\SKILL.md:1-440`
+- `<SONASH_ROOT>\.claude\skills\hook-ecosystem-audit\REFERENCE.md:276-313`
+- `<SONASH_ROOT>\.claude\skills\hook-ecosystem-audit\scripts\run-hook-ecosystem-audit.js:1-220`
+- `<SONASH_ROOT>\.claude\skills\hook-ecosystem-audit\scripts\checkers\code-quality-security.js:134,202-203`
+- `<SONASH_ROOT>\.claude\skills\skill-ecosystem-audit\SKILL.md:1-271`
+- `<SONASH_ROOT>\.claude\skills\skill-ecosystem-audit\scripts\checkers\agent-orchestration.js:1-299`
+- `<SONASH_ROOT>\.claude\skills\skill-ecosystem-audit\scripts\checkers\coverage-consistency.js:181-474`
+- `<SONASH_ROOT>\.claude\skills\_shared\ecosystem-audit\CRITICAL_RULES.md:1-71`
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 D23–D27, §5 Q1–Q2
+- `<SONASH_ROOT>\CLAUDE.md` §4 behavioral guardrail 15 (Windows 0-byte bug)
+- `<JASON_OS_ROOT>\CLAUDE.md` §2 (sanitize-error.cjs)

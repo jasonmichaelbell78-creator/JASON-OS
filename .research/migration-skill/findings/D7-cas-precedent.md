@@ -293,36 +293,36 @@ under this heuristic.
 ## Sources
 
 ### CAS skill SKILL.md files
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\SKILL.md:24-40,107-123,179-230,267-269,255-256,294-295`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\repo-analysis\SKILL.md:17-22,55-78,117-137,279-280,530-537`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\document-analysis\SKILL.md:18-22,61-63,87-92,110-120,124-140`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\media-analysis\SKILL.md:68-69`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\synthesize\SKILL.md:20-23,78,119,157-170,198-201,246,289,482-488`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\recall\SKILL.md:111-119,234`
+- `<SONASH_ROOT>\.claude\skills\analyze\SKILL.md:24-40,107-123,179-230,267-269,255-256,294-295`
+- `<SONASH_ROOT>\.claude\skills\repo-analysis\SKILL.md:17-22,55-78,117-137,279-280,530-537`
+- `<SONASH_ROOT>\.claude\skills\document-analysis\SKILL.md:18-22,61-63,87-92,110-120,124-140`
+- `<SONASH_ROOT>\.claude\skills\media-analysis\SKILL.md:68-69`
+- `<SONASH_ROOT>\.claude\skills\synthesize\SKILL.md:20-23,78,119,157-170,198-201,246,289,482-488`
+- `<SONASH_ROOT>\.claude\skills\recall\SKILL.md:111-119,234`
 
 ### Shared substrate
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\shared\CONVENTIONS.md:1-13,29-34,120-129,168-187,190-241,248-257,401,409-446,482-488,526-581,587-595`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\SKILL_STANDARDS.md:1-150`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\SELF_AUDIT_PATTERN.md:1-332` (esp. 37-50, 111-127)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\TAG_SUGGESTION.md:1-119`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\schemas\analysis-schema.ts:1-98`
+- `<SONASH_ROOT>\.claude\skills\shared\CONVENTIONS.md:1-13,29-34,120-129,168-187,190-241,248-257,401,409-446,482-488,526-581,587-595`
+- `<SONASH_ROOT>\.claude\skills\_shared\SKILL_STANDARDS.md:1-150`
+- `<SONASH_ROOT>\.claude\skills\_shared\SELF_AUDIT_PATTERN.md:1-332` (esp. 37-50, 111-127)
+- `<SONASH_ROOT>\.claude\skills\_shared\TAG_SUGGESTION.md:1-119`
+- `<SONASH_ROOT>\.claude\skills\schemas\analysis-schema.ts:1-98`
 
 ### Scripts (duplication + aliasing evidence)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\rebuild-index.js:14-112` (DDL block L37-112)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\update-index.js:14-80,291-350` (DDL block duplicates rebuild's)
-- `C:\Users\jbell\.local\bin\sonash-v0\.research\content-analysis.db` (409600 B, md5 `d098a358f3e75c978e0417e759e3c84e`)
-- `C:\Users\jbell\.local\bin\sonash-v0\.research\knowledge.sqlite` (409600 B, identical md5)
+- `<SONASH_ROOT>\scripts\cas\rebuild-index.js:14-112` (DDL block L37-112)
+- `<SONASH_ROOT>\scripts\cas\update-index.js:14-80,291-350` (DDL block duplicates rebuild's)
+- `<SONASH_ROOT>\.research\content-analysis.db` (409600 B, md5 `d098a358f3e75c978e0417e759e3c84e`)
+- `<SONASH_ROOT>\.research\knowledge.sqlite` (409600 B, identical md5)
 
 ### Cross-reference
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-integration.md`
+- `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-integration.md`
   — Ported 5-layer DAG (L336-396) informs the "ship shared substrate first"
   recommendation; auth/hooks/paths inventory in §1-§6 is the surface
   /migration must not duplicate when decomposing.
 
 ### BRAINSTORM refs
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md`
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md`
   §5 Q7 (decomposition candidates), §2 (seven-phase arc)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` §1 (stack-agnostic),
+- `<JASON_OS_ROOT>\CLAUDE.md` §1 (stack-agnostic),
   §7 (metrics-pipeline deferred — supports break #5 reasoning)
 
 ---

@@ -506,7 +506,7 @@ Discoveries beyond the 12 research questions that surfaced during the L1 investi
 
 - **`website-synthesis` is a deprecated redirect stub** (consolidated into `/synthesize` at Session #271, T29 Wave 3); never port the stub. Update D27 inventory accordingly. [39]
 
-- **`/sonash-context` is a SKILL, not a hidden file dependency (per dispute-resolutions-cas Dispute 3).** Filesystem-confirmed at `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\sonash-context\SKILL.md` (91 lines, `name: sonash-context` frontmatter). It is **not** in D6's 5-item home-context-file list. It is injected into 30+ SoNash agents via `skills: [sonash-context]` frontmatter field (backend-architect, code-reviewer, debugger, general-purpose, deep-research-searcher, deep-research-verifier, deep-research-synthesizer, deep-research-gap-pursuer, explore, plan, contrarian-challenger, otb-challenger, dispute-resolver, and 17 more). The one grep hit inside `/synthesize` (`REFERENCE.md:730`) is prose reference, not runtime dispatch. **Port action (captured by C-082):** author a `/jason-os-context` analog skill in JASON-OS carrying stack-agnostic content, then rewrite agent frontmatter `skills: [sonash-context]` → `skills: [jason-os-context]` at Phase 5 REWRITE. C-108 reclassified as observational; C-082 remains the load-bearing port claim. [17]
+- **`/sonash-context` is a SKILL, not a hidden file dependency (per dispute-resolutions-cas Dispute 3).** Filesystem-confirmed at `<SONASH_ROOT>\.claude\skills\sonash-context\SKILL.md` (91 lines, `name: sonash-context` frontmatter). It is **not** in D6's 5-item home-context-file list. It is injected into 30+ SoNash agents via `skills: [sonash-context]` frontmatter field (backend-architect, code-reviewer, debugger, general-purpose, deep-research-searcher, deep-research-verifier, deep-research-synthesizer, deep-research-gap-pursuer, explore, plan, contrarian-challenger, otb-challenger, dispute-resolver, and 17 more). The one grep hit inside `/synthesize` (`REFERENCE.md:730`) is prose reference, not runtime dispatch. **Port action (captured by C-082):** author a `/jason-os-context` analog skill in JASON-OS carrying stack-agnostic content, then rewrite agent frontmatter `skills: [sonash-context]` → `skills: [jason-os-context]` at Phase 5 REWRITE. C-108 reclassified as observational; C-082 remains the load-bearing port claim. [17]
 
 - **`comprehensive-ecosystem-audit` return-line protocol** `COMPLETE: {audit-name} grade {grade} score {score} errors {N} warnings {N} info {N}` is a direct transplant candidate for `/migration` Phase 5 agent spawn returns — keeps orchestrator context clean while per-agent details live in result JSON files. [32]
 
@@ -593,57 +593,57 @@ Gap-round 1 surfaced a systemic methodology issue worth flagging for every futur
 
 | # | Title | URL / path | Type | Date |
 |---|---|---|---|---|
-| [1] | BRAINSTORM.md — /migration 7-phase arc + 29 decisions | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` | codebase | 2026-04-20 |
-| [2] | deep-research SKILL.md (JASON-OS) | `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md` | codebase | current |
-| [3] | deep-research REFERENCE.md (JASON-OS) | `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\REFERENCE.md` | codebase | current |
-| [4] | JASON-OS agents inventory (8 agents) | `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\*.md` | codebase | current |
-| [5] | pre-commit-fixer SKILL.md (JASON-OS) | `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\pre-commit-fixer\SKILL.md:168-170` | codebase | current |
-| [6] | pre-commit-fixer dispatch pattern | `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pre-commit-fixer\SKILL.md:168-170` | codebase | current |
-| [7] | BOOTSTRAP_DEFERRED.md (JASON-OS) | `C:\Users\jbell\.local\bin\JASON-OS\.planning\jason-os\BOOTSTRAP_DEFERRED.md:166-169` | codebase | current |
-| [8] | scripts/lib/sanitize-error.cjs | `C:\Users\jbell\.local\bin\JASON-OS\scripts\lib\sanitize-error.cjs` | codebase | current |
-| [9] | CLAUDE.md §4 Behavioral Guardrails (JASON-OS) | `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md:62-117` | codebase | 2026-04-15 |
-| [10] | D1-dispatch-patterns findings (8 patterns + Windows 0-byte) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D1-dispatch-patterns.md` | codebase | 2026-04-21 |
-| [11] | D5-reshape-pipeline findings (9 signals + 11 primitives + idiom 3-source) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D5-reshape-pipeline.md` | codebase | 2026-04-21 |
+| [1] | BRAINSTORM.md — /migration 7-phase arc + 29 decisions | `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` | codebase | 2026-04-20 |
+| [2] | deep-research SKILL.md (JASON-OS) | `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md` | codebase | current |
+| [3] | deep-research REFERENCE.md (JASON-OS) | `<JASON_OS_ROOT>\.claude\skills\deep-research\REFERENCE.md` | codebase | current |
+| [4] | JASON-OS agents inventory (8 agents) | `<JASON_OS_ROOT>\.claude\agents\*.md` | codebase | current |
+| [5] | pre-commit-fixer SKILL.md (JASON-OS) | `<JASON_OS_ROOT>\.claude\skills\pre-commit-fixer\SKILL.md:168-170` | codebase | current |
+| [6] | pre-commit-fixer dispatch pattern | `<SONASH_ROOT>\.claude\skills\pre-commit-fixer\SKILL.md:168-170` | codebase | current |
+| [7] | BOOTSTRAP_DEFERRED.md (JASON-OS) | `<JASON_OS_ROOT>\.planning\jason-os\BOOTSTRAP_DEFERRED.md:166-169` | codebase | current |
+| [8] | scripts/lib/sanitize-error.cjs | `<JASON_OS_ROOT>\scripts\lib\sanitize-error.cjs` | codebase | current |
+| [9] | CLAUDE.md §4 Behavioral Guardrails (JASON-OS) | `<JASON_OS_ROOT>\CLAUDE.md:62-117` | codebase | 2026-04-15 |
+| [10] | D1-dispatch-patterns findings (8 patterns + Windows 0-byte) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D1-dispatch-patterns.md` | codebase | 2026-04-21 |
+| [11] | D5-reshape-pipeline findings (9 signals + 11 primitives + idiom 3-source) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D5-reshape-pipeline.md` | codebase | 2026-04-21 |
 | [12] | Windows 0-byte upstream issue #17147 | https://github.com/anthropics/claude-code/issues/17147 | web | 2026-04-21 |
-| [13] | D8-failure-recovery findings (11 modes + state schema) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D8-failure-recovery.md` | codebase | 2026-04-21 |
-| [14] | D4-plan-export findings (MIGRATION_PLAN.md schema + 9 precedents) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D4-plan-export.md` | codebase | 2026-04-21 |
+| [13] | D8-failure-recovery findings (11 modes + state schema) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D8-failure-recovery.md` | codebase | 2026-04-21 |
+| [14] | D4-plan-export findings (MIGRATION_PLAN.md schema + 9 precedents) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D4-plan-export.md` | codebase | 2026-04-21 |
 | [15] | Terraform JSON plan format | https://developer.hashicorp.com/terraform/internals/json-format | official-docs | 2026-04-21 |
 | [16] | Alembic autogenerate | https://alembic.sqlalchemy.org/en/latest/autogenerate.html | official-docs | 2026-04-21 |
-| [17] | D6-cas-skills-deep findings (89 coupling sites across 6 skills) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-skills-deep.md` | codebase | 2026-04-21 |
-| [18] | D6-cas-reshape-verdict-list (35-38 port actions, ~143h) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-reshape-verdict-list.md` | codebase | 2026-04-21 |
-| [19] | SoNash CAS skill inventory | `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\{analyze,document-analysis,media-analysis,recall,repo-analysis,synthesize}\` | codebase | current |
-| [20] | D10-self-dogfood findings (7 criteria incl. round-trip + zero-drift) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D10-self-dogfood.md` | codebase | 2026-04-21 |
+| [17] | D6-cas-skills-deep findings (89 coupling sites across 6 skills) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-skills-deep.md` | codebase | 2026-04-21 |
+| [18] | D6-cas-reshape-verdict-list (35-38 port actions, ~143h) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-reshape-verdict-list.md` | codebase | 2026-04-21 |
+| [19] | SoNash CAS skill inventory | `<SONASH_ROOT>\.claude\skills\{analyze,document-analysis,media-analysis,recall,repo-analysis,synthesize}\` | codebase | current |
+| [20] | D10-self-dogfood findings (7 criteria incl. round-trip + zero-drift) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D10-self-dogfood.md` | codebase | 2026-04-21 |
 | [21] | Rustc stage2 bootstrap | https://rustc-dev-guide.rust-lang.org/building/bootstrapping.html | web | 2026-04-21 |
 | [22] | Terraform idempotency guarantee | https://developer.hashicorp.com/terraform/cli/commands/plan | official-docs | 2026-04-21 |
-| [23] | D7-router-vs-monolith findings (7 criteria + 7 precedent catalog) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D7-router-vs-monolith.md` | codebase | 2026-04-21 |
-| [24] | D7-other-multi-skill-families findings (6 families, 5 shapes) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D7-other-multi-skill-families.md` | codebase | 2026-04-21 |
-| [25] | D7-cas-precedent findings (7 works + 5 breaks + boundary heuristic) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D7-cas-precedent.md` | codebase | 2026-04-21 |
-| [26] | D1-agents-sonash findings (49 live agents + 5 dispatch patterns) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D1-agents-sonash.md` | codebase | 2026-04-21 |
-| [27] | D1-migration-agent-spec findings (8 new + 6 reused agents) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D1-migration-agent-spec.md` | codebase | 2026-04-21 |
-| [28] | D7-invocation-contracts findings (state passing + gate memory + CL Programmatic Mode) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D7-invocation-contracts.md` | codebase | 2026-04-21 |
-| [29] | deep-research SKILL.md (SoNash) — 12-phase arc + 5 sub-agents | `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\SKILL.md` | codebase | current |
-| [30] | D2-audit-family-a findings (7 skills) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-audit-family-a.md` | codebase | 2026-04-21 |
-| [31] | D2-audit-family-b findings (6 skills) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-audit-family-b.md` | codebase | 2026-04-21 |
-| [32] | D2-ecosystem-audits-a findings (5 skills + dispatch patterns) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-ecosystem-audits-a.md` | codebase | 2026-04-21 |
-| [33] | D2-ecosystem-audits-b findings (6 skills + doc-optimizer) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-ecosystem-audits-b.md` | codebase | 2026-04-21 |
-| [34] | D2-content-analysis-adjacent findings (7 CAS skills) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-content-analysis-adjacent.md` | codebase | 2026-04-21 |
-| [35] | D2-code-pr-gh findings (7 skills, D29 compat matrix) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-code-pr-gh.md` | codebase | 2026-04-21 |
-| [36] | D2-mcp-testing findings (7 skills) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-mcp-testing.md` | codebase | 2026-04-21 |
-| [37] | D2-core-orchestration findings (9 skills + 5 divergence buckets) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-core-orchestration.md` | codebase | 2026-04-21 |
-| [38] | D2-hooks-lib findings (54 files + dep-chain depth 4) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-hooks-lib.md` | codebase | 2026-04-21 |
-| [39] | D2-content-other findings (7 skills, all skip) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-content-other.md` | codebase | 2026-04-21 |
-| [40] | D2-skill-infra findings (14 skills + authoring contract) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-skill-infra.md` | codebase | 2026-04-21 |
-| [41] | D9-diff-port findings (4 scenarios + /sync boundary) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D9-diff-port.md` | codebase | 2026-04-21 |
+| [23] | D7-router-vs-monolith findings (7 criteria + 7 precedent catalog) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D7-router-vs-monolith.md` | codebase | 2026-04-21 |
+| [24] | D7-other-multi-skill-families findings (6 families, 5 shapes) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D7-other-multi-skill-families.md` | codebase | 2026-04-21 |
+| [25] | D7-cas-precedent findings (7 works + 5 breaks + boundary heuristic) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D7-cas-precedent.md` | codebase | 2026-04-21 |
+| [26] | D1-agents-sonash findings (49 live agents + 5 dispatch patterns) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D1-agents-sonash.md` | codebase | 2026-04-21 |
+| [27] | D1-migration-agent-spec findings (8 new + 6 reused agents) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D1-migration-agent-spec.md` | codebase | 2026-04-21 |
+| [28] | D7-invocation-contracts findings (state passing + gate memory + CL Programmatic Mode) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D7-invocation-contracts.md` | codebase | 2026-04-21 |
+| [29] | deep-research SKILL.md (SoNash) — 12-phase arc + 5 sub-agents | `<SONASH_ROOT>\.claude\skills\deep-research\SKILL.md` | codebase | current |
+| [30] | D2-audit-family-a findings (7 skills) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-audit-family-a.md` | codebase | 2026-04-21 |
+| [31] | D2-audit-family-b findings (6 skills) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-audit-family-b.md` | codebase | 2026-04-21 |
+| [32] | D2-ecosystem-audits-a findings (5 skills + dispatch patterns) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-ecosystem-audits-a.md` | codebase | 2026-04-21 |
+| [33] | D2-ecosystem-audits-b findings (6 skills + doc-optimizer) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-ecosystem-audits-b.md` | codebase | 2026-04-21 |
+| [34] | D2-content-analysis-adjacent findings (7 CAS skills) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-content-analysis-adjacent.md` | codebase | 2026-04-21 |
+| [35] | D2-code-pr-gh findings (7 skills, D29 compat matrix) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-code-pr-gh.md` | codebase | 2026-04-21 |
+| [36] | D2-mcp-testing findings (7 skills) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-mcp-testing.md` | codebase | 2026-04-21 |
+| [37] | D2-core-orchestration findings (9 skills + 5 divergence buckets) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-core-orchestration.md` | codebase | 2026-04-21 |
+| [38] | D2-hooks-lib findings (54 files + dep-chain depth 4) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-hooks-lib.md` | codebase | 2026-04-21 |
+| [39] | D2-content-other findings (7 skills, all skip) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-content-other.md` | codebase | 2026-04-21 |
+| [40] | D2-skill-infra findings (14 skills + authoring contract) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-skill-infra.md` | codebase | 2026-04-21 |
+| [41] | D9-diff-port findings (4 scenarios + /sync boundary) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D9-diff-port.md` | codebase | 2026-04-21 |
 | [42] | D10-self-dogfood (7 criteria + round-trip keystone) — see [20] | see [20] | codebase | 2026-04-21 |
-| [43] | D11-meta-ledger findings (5 precedents + 3 current failures) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D11-meta-ledger.md` | codebase | 2026-04-21 |
-| [44] | D12-local-auth-perms findings (12-cell worktree matrix + 13 dirty-state categories) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D12-local-auth-perms.md` | codebase | 2026-04-21 |
-| [45] | D2-integration-synthesis findings (24 unique cross-phase deps) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-integration-synthesis.md` | codebase | 2026-04-21 |
-| [46] | D3-jason-os-skills-scripts (14 skills + script inventory + top-10 blockers) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D3-jason-os-skills-scripts.md` | codebase | 2026-04-21 |
-| [47] | D3-jason-os-hooks-agents-infra (8 hooks + 8 agents + sync Piece 5 status) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D3-jason-os-hooks-agents-infra.md` | codebase | 2026-04-21 |
-| [48] | D6-cas-scripts-deep (detailed CAS script inventory) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-scripts-deep.md` | codebase | 2026-04-21 |
-| [49] | D6-cas-dbs-schemas (byte-identical DB finding) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-dbs-schemas.md` | codebase | 2026-04-21 |
-| [50] | D6-cas-planning (3 planning trees) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-planning.md` | codebase | 2026-04-21 |
-| [51] | D6-cas-integration (5-layer ported DAG) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-integration.md` | codebase | 2026-04-21 |
+| [43] | D11-meta-ledger findings (5 precedents + 3 current failures) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D11-meta-ledger.md` | codebase | 2026-04-21 |
+| [44] | D12-local-auth-perms findings (12-cell worktree matrix + 13 dirty-state categories) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D12-local-auth-perms.md` | codebase | 2026-04-21 |
+| [45] | D2-integration-synthesis findings (24 unique cross-phase deps) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-integration-synthesis.md` | codebase | 2026-04-21 |
+| [46] | D3-jason-os-skills-scripts (14 skills + script inventory + top-10 blockers) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D3-jason-os-skills-scripts.md` | codebase | 2026-04-21 |
+| [47] | D3-jason-os-hooks-agents-infra (8 hooks + 8 agents + sync Piece 5 status) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D3-jason-os-hooks-agents-infra.md` | codebase | 2026-04-21 |
+| [48] | D6-cas-scripts-deep (detailed CAS script inventory) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-scripts-deep.md` | codebase | 2026-04-21 |
+| [49] | D6-cas-dbs-schemas (byte-identical DB finding) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-dbs-schemas.md` | codebase | 2026-04-21 |
+| [50] | D6-cas-planning (3 planning trees) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-planning.md` | codebase | 2026-04-21 |
+| [51] | D6-cas-integration (5-layer ported DAG) | `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-integration.md` | codebase | 2026-04-21 |
 
 ### Tier 2 (Verified — external docs cross-referenced with codebase)
 
@@ -684,10 +684,10 @@ Gap-round 1 surfaced a systemic methodology issue worth flagging for every futur
 
 | # | Title | URL / path | Type | Date |
 |---|---|---|---|---|
-| [G1] | G1 gap-pursuer loop-control findings (8 design recommendations A1-A8 + 6 precedent bodies) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\G1-loop-control.md` | codebase | 2026-04-21 |
-| [G2] | G2 gap-pursuer SoNash-source-cost findings (6 refactor categories, 24-44h SoNash-side estimate) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\G2-sonash-source-cost.md` | codebase | 2026-04-21 |
-| [GV1] | GV1 gap-verifier report on G1 (4 priority claims re-verified; 7 edits required; A5+A8 v1.1 scope, rustc P3 CONFLICTED) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\GV1-loop-control-verify.md` | codebase | 2026-04-21 |
-| [GV2] | GV2 gap-verifier report on G2 (3 priority counts corrected upward; SonarCloud data-integrity bug surfaced; TWO codemod rules required) | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\GV2-sonash-cost-verify.md` | codebase | 2026-04-21 |
+| [G1] | G1 gap-pursuer loop-control findings (8 design recommendations A1-A8 + 6 precedent bodies) | `<JASON_OS_ROOT>\.research\migration-skill\findings\G1-loop-control.md` | codebase | 2026-04-21 |
+| [G2] | G2 gap-pursuer SoNash-source-cost findings (6 refactor categories, 24-44h SoNash-side estimate) | `<JASON_OS_ROOT>\.research\migration-skill\findings\G2-sonash-source-cost.md` | codebase | 2026-04-21 |
+| [GV1] | GV1 gap-verifier report on G1 (4 priority claims re-verified; 7 edits required; A5+A8 v1.1 scope, rustc P3 CONFLICTED) | `<JASON_OS_ROOT>\.research\migration-skill\findings\GV1-loop-control-verify.md` | codebase | 2026-04-21 |
+| [GV2] | GV2 gap-verifier report on G2 (3 priority counts corrected upward; SonarCloud data-integrity bug surfaced; TWO codemod rules required) | `<JASON_OS_ROOT>\.research\migration-skill\findings\GV2-sonash-cost-verify.md` | codebase | 2026-04-21 |
 | [77] | Kildall "A Unified Approach to Global Program Optimization" (1973 POPL) — via Wikipedia Data-flow analysis | https://en.wikipedia.org/wiki/Data-flow_analysis | web | 2026-04-21 |
 | [78] | Kam & Ullman "Monotone data flow analysis frameworks" Acta Informatica (1977) | https://link.springer.com/article/10.1007/BF00290339 | academic | 2026-04-21 |
 | [79] | Knaster-Tarski theorem | https://en.wikipedia.org/wiki/Knaster%E2%80%93Tarski_theorem | web | 2026-04-21 |
@@ -706,7 +706,7 @@ Gap-round 1 surfaced a systemic methodology issue worth flagging for every futur
 | [92] | Platzer CMU Compilers Lecture Notes on Monotone Frameworks | https://lfcps.org/course/Compilers/27-monframework.pdf | academic | 2026-04-21 |
 | [93] | Aviator "How to Manage Code in a Large Codebase" | https://www.aviator.co/blog/how-to-manage-code-in-a-large-codebase/ | blog | 2026-04-21 |
 | [94] | Mike Cvet "Migrations: Refactoring for Your System" | https://mikecvet.medium.com/migrations-8f1b0273abfa | blog | 2026-04-21 |
-| [95] | D15-sonarcloud-integration (SoNash archive) — documents the TWO SonarCloud project-key variants | `C:\Users\jbell\.local\bin\sonash-v0\.research\archive\github-health\findings\D15-sonarcloud-integration.md` | codebase | 2026-04-21 |
+| [95] | D15-sonarcloud-integration (SoNash archive) — documents the TWO SonarCloud project-key variants | `<SONASH_ROOT>\.research\archive\github-health\findings\D15-sonarcloud-integration.md` | codebase | 2026-04-21 |
 
 ---
 

@@ -249,15 +249,15 @@ These surface for Q7 (skill decomposition analysis) because they affect whether 
 
 | # | Source | Type | Trust | Date |
 |---|--------|------|-------|------|
-| S-001 | `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` | codebase (spec) | HIGH | 2026-04-20 |
-| S-002 | `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\deep-research-searcher.md` | codebase (frontmatter template) | HIGH | current |
-| S-003 | `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\deep-research-synthesizer.md` | codebase (frontmatter template) | HIGH | 2026-04-01 |
-| S-004 | `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\contrarian-challenger.md` | codebase (reuse candidate) | HIGH | current |
-| S-005 | `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\dispute-resolver.md` | codebase (reuse candidate) | HIGH | current |
-| S-006 | `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\deep-research-verifier.md` | codebase (reuse candidate) | HIGH | current |
-| S-007 | `C:\Users\jbell\.local\bin\JASON-OS\.claude\agents\deep-research-gap-pursuer.md` | codebase (unused reference) | HIGH | current |
-| S-008 | `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-executor.md` | codebase (executor pattern inspiration) | HIGH | current |
-| S-009 | `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-phase-researcher.md` | codebase (research/author pattern inspiration) | HIGH | current |
-| S-010 | `C:\Users\jbell\.local\bin\sonash-v0\.claude\agents\gsd-plan-checker.md` (inferred from listing) | codebase (plan-checker pattern inspiration) | MEDIUM (listed, not read) | current |
+| S-001 | `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` | codebase (spec) | HIGH | 2026-04-20 |
+| S-002 | `<JASON_OS_ROOT>\.claude\agents\deep-research-searcher.md` | codebase (frontmatter template) | HIGH | current |
+| S-003 | `<JASON_OS_ROOT>\.claude\agents\deep-research-synthesizer.md` | codebase (frontmatter template) | HIGH | 2026-04-01 |
+| S-004 | `<JASON_OS_ROOT>\.claude\agents\contrarian-challenger.md` | codebase (reuse candidate) | HIGH | current |
+| S-005 | `<JASON_OS_ROOT>\.claude\agents\dispute-resolver.md` | codebase (reuse candidate) | HIGH | current |
+| S-006 | `<JASON_OS_ROOT>\.claude\agents\deep-research-verifier.md` | codebase (reuse candidate) | HIGH | current |
+| S-007 | `<JASON_OS_ROOT>\.claude\agents\deep-research-gap-pursuer.md` | codebase (unused reference) | HIGH | current |
+| S-008 | `<SONASH_ROOT>\.claude\agents\gsd-executor.md` | codebase (executor pattern inspiration) | HIGH | current |
+| S-009 | `<SONASH_ROOT>\.claude\agents\gsd-phase-researcher.md` | codebase (research/author pattern inspiration) | HIGH | current |
+| S-010 | `<SONASH_ROOT>\.claude\agents\gsd-plan-checker.md` (inferred from listing) | codebase (plan-checker pattern inspiration) | MEDIUM (listed, not read) | current |
 
 All sources are filesystem ground truth (T1). Verdict legend (D23), Phase 5 content (D24), output modes (D26), nothing-silent rule (D8), and iterative re-entry norm (D28) all drawn from BRAINSTORM.md directly. Frontmatter field conventions (name, model, description, tools, disallowedTools, color, maxTurns, permissionMode) confirmed across 4+ existing agents in JASON-OS and SoNash.

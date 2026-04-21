@@ -9,7 +9,7 @@
 
 ## Summary
 
-Five contract-design decisions, synthesizing patterns from three working precedents in SoNash: `/analyze` → 4 handler skills (the cleanest router → handler contract we have — `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\SKILL.md:100-126`), `/deep-research` → subagent orchestration (parallel agent dispatch with state-file spine — `.../deep-research/SKILL.md:121-165`), and `/convergence-loop` as a skill-as-callee (with explicit "Programmatic Mode" contract — `.../convergence-loop/SKILL.md:237-263`).
+Five contract-design decisions, synthesizing patterns from three working precedents in SoNash: `/analyze` → 4 handler skills (the cleanest router → handler contract we have — `<SONASH_ROOT>\.claude\skills\analyze\SKILL.md:100-126`), `/deep-research` → subagent orchestration (parallel agent dispatch with state-file spine — `.../deep-research/SKILL.md:121-165`), and `/convergence-loop` as a skill-as-callee (with explicit "Programmatic Mode" contract — `.../convergence-loop/SKILL.md:237-263`).
 
 **Headline recommendations:**
 
@@ -65,7 +65,7 @@ Return path is **disk**: handler writes `.research/analysis/<slug>/analysis.json
 
 **Why not rely on Skill-tool return text?** The Skill tool is fire-and-return — the harness synthesizes a text summary. This is fine for "did it work?" but cannot carry structured verdicts, per-file decisions, or gate states reliably. Disk is the only trustworthy surface. This matches what `/analyze` does at SKILL.md:216-218 (validate artifacts on disk, not return text).
 
-**Why not MCP memory?** MCP memory is cross-session persistent but requires MCP server to be running. JASON-OS CLAUDE.md (`C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md:11-18`) pins the OS to minimal Node.js infrastructure; adding an MCP dependency just for same-session state passing violates the minimality principle. MCP memory is appropriate for cross-session checkpoints (e.g., `/checkpoint --mcp`), not intra-flow state handoff.
+**Why not MCP memory?** MCP memory is cross-session persistent but requires MCP server to be running. JASON-OS CLAUDE.md (`<JASON_OS_ROOT>\CLAUDE.md:11-18`) pins the OS to minimal Node.js infrastructure; adding an MCP dependency just for same-session state passing violates the minimality principle. MCP memory is appropriate for cross-session checkpoints (e.g., `/checkpoint --mcp`), not intra-flow state handoff.
 
 ---
 
@@ -119,7 +119,7 @@ State-file schema must include a `gates` array:
 3. Render as "For context, you previously approved: <list of prior answers>" to the user.
 4. Re-prompt the ancillary-scoped gate. User may say "yes (I already told you)" — recorded as answer, but the re-prompt happened.
 
-**This is the single hardest contract rule to hold,** because the LLM will be tempted to skip re-prompts for efficiency. SKILL.md for each ancillary MUST include a Critical Rule at MUST level: "Gate memory aids; never replaces. Re-prompt every ancillary-scoped gate even if parent gate was just confirmed." Mirrors CLAUDE.md §4 Behavioral Guardrail #4 ("Stop and ask = hard stop" — `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md:91`).
+**This is the single hardest contract rule to hold,** because the LLM will be tempted to skip re-prompts for efficiency. SKILL.md for each ancillary MUST include a Critical Rule at MUST level: "Gate memory aids; never replaces. Re-prompt every ancillary-scoped gate even if parent gate was just confirmed." Mirrors CLAUDE.md §4 Behavioral Guardrail #4 ("Stop and ask = hard stop" — `<JASON_OS_ROOT>\CLAUDE.md:91`).
 
 ---
 
@@ -230,7 +230,7 @@ If `/migration-scan` discovers a reframe (e.g., "this file isn't a file-unit por
 | **File-based artifact** (`MIGRATION_PLAN.md`, ripple inventory JSON, sanitize candidate list) | Durable, inspectable, survives compaction, matches all SoNash precedent (CAS analysis.json at `.../analyze/SKILL.md:144-148`, deep-research at `.../deep-research/SKILL.md:363-368`), large content OK | Path coordination needed; readers must validate existence + non-emptiness (Windows 0-byte bug per deep-research Critical Rule 4) | Substantive content (plans, inventories, verdicts, convergence reports) |
 | **State-file JSON spine** (`.claude/state/migration.<topic>.state.json`) | Central, structured, compaction-safe, supports resume, enables gate log, mirrors `/deep-research` (`:202`) and `/deep-plan` (`:351-364`) | Single file = contention risk if parallel sub-skills; requires schema discipline | Gates, phase markers, skill handoff log, reframe flags, all state the harness needs for resume |
 | **Skill-tool `args` string** | In-context, no disk round-trip, matches Skill tool schema | One string only; must serialize JSON; not readable by the ancillary's future resume — only fresh call | Minimal handshake payload on router→ancillary dispatch |
-| **Skill-tool return text** | Easy; what the Skill tool naturally produces | Unstructured; LLM-synthesized summary; unreliable for structured data; CLAUDE.md §4 Guardrail #15 ("Never accept empty agent results silently" — `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md:111-113`) flags the Windows 0-byte bug for anything treating agent return as primary | Advisory only; confirm success; read state file / artifact for substance | Advisory signal only |
+| **Skill-tool return text** | Easy; what the Skill tool naturally produces | Unstructured; LLM-synthesized summary; unreliable for structured data; CLAUDE.md §4 Guardrail #15 ("Never accept empty agent results silently" — `<JASON_OS_ROOT>\CLAUDE.md:111-113`) flags the Windows 0-byte bug for anything treating agent return as primary | Advisory only; confirm success; read state file / artifact for substance | Advisory signal only |
 | **MCP memory** | Cross-session persistent, structured, searchable | MCP dependency (JASON-OS minimality principle at CLAUDE.md:11-18 argues against); same-session slower than state file | Cross-session checkpoints only (e.g., `/checkpoint --mcp`) — NOT intra-flow state |
 
 **Recommendation stack:** state-file as spine + disk artifacts for substance + Skill-tool args for handshake + return text as advisory. Skip MCP memory for intra-/migration use.
@@ -379,21 +379,21 @@ User picks (e.g., 1). Router invokes Skill(skill="brainstorm", args="migration-s
 
 ## Sources
 
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md:79-92` — R1/R3/D28 source
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\SKILL.md:100-126` — router → handler Handoff Contract v1.2
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\SKILL.md:213-230` — Router Flow Steps 3-5, Skill-tool dispatch mechanism
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\SKILL.md:50-57` — "handler directly" — standalone-callable precedent
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\SKILL.md:202` — state-file creation; `:388-392` — compaction resilience / resume from state
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\SKILL.md:37-40` — Critical Rule 4 on Windows 0-byte bug — disk-first state
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\convergence-loop\SKILL.md:237-263` — Programmatic Mode contract
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\convergence-loop\SKILL.md:61-67` — preset definitions
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\convergence-loop\SKILL.md:97-99` — confidence scoring
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-plan\SKILL.md:149-155` — Pattern B (programmatic CL) precedent in Phase 0
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-plan\SKILL.md:275-279` — Pattern B at Phase 3.5
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-plan\SKILL.md:351-364` — topic-keyed state file pattern
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\brainstorm\SKILL.md:271-272` — brainstorm's programmatic CL use at Phase 4
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\shared\CONVENTIONS.md:190-213` — Handler Output Contract precedent
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md:91` — Behavioral Guardrail #4 "Stop and ask = hard stop" (applies to gate re-prompting)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md:111-113` — Guardrail #15 on empty agent results (underpins "disk as authoritative surface")
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md:11-18` — Stack minimality (rules out MCP for intra-flow state)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md:79-92` — R1/R3/D28 source
+- `<SONASH_ROOT>\.claude\skills\analyze\SKILL.md:100-126` — router → handler Handoff Contract v1.2
+- `<SONASH_ROOT>\.claude\skills\analyze\SKILL.md:213-230` — Router Flow Steps 3-5, Skill-tool dispatch mechanism
+- `<SONASH_ROOT>\.claude\skills\analyze\SKILL.md:50-57` — "handler directly" — standalone-callable precedent
+- `<SONASH_ROOT>\.claude\skills\deep-research\SKILL.md:202` — state-file creation; `:388-392` — compaction resilience / resume from state
+- `<SONASH_ROOT>\.claude\skills\deep-research\SKILL.md:37-40` — Critical Rule 4 on Windows 0-byte bug — disk-first state
+- `<SONASH_ROOT>\.claude\skills\convergence-loop\SKILL.md:237-263` — Programmatic Mode contract
+- `<SONASH_ROOT>\.claude\skills\convergence-loop\SKILL.md:61-67` — preset definitions
+- `<SONASH_ROOT>\.claude\skills\convergence-loop\SKILL.md:97-99` — confidence scoring
+- `<SONASH_ROOT>\.claude\skills\deep-plan\SKILL.md:149-155` — Pattern B (programmatic CL) precedent in Phase 0
+- `<SONASH_ROOT>\.claude\skills\deep-plan\SKILL.md:275-279` — Pattern B at Phase 3.5
+- `<SONASH_ROOT>\.claude\skills\deep-plan\SKILL.md:351-364` — topic-keyed state file pattern
+- `<SONASH_ROOT>\.claude\skills\brainstorm\SKILL.md:271-272` — brainstorm's programmatic CL use at Phase 4
+- `<SONASH_ROOT>\.claude\skills\shared\CONVENTIONS.md:190-213` — Handler Output Contract precedent
+- `<JASON_OS_ROOT>\CLAUDE.md:91` — Behavioral Guardrail #4 "Stop and ask = hard stop" (applies to gate re-prompting)
+- `<JASON_OS_ROOT>\CLAUDE.md:111-113` — Guardrail #15 on empty agent results (underpins "disk as authoritative surface")
+- `<JASON_OS_ROOT>\CLAUDE.md:11-18` — Stack minimality (rules out MCP for intra-flow state)
 - Skill tool schema (this agent's tool list) — confirms fire-and-return semantics, `args` as single string, text-only return

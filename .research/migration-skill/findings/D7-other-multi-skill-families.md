@@ -47,7 +47,7 @@ reference docs), but is not a decomposition *shape* for `/migration`.
 reference)
 
 **File inventory** (ls of
-`C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\`):
+`<SONASH_ROOT>\.claude\skills\deep-research\`):
 
 - `SKILL.md` 21,482 bytes — the complete orchestration spec, 12 phases
   (Phase 0 Decomposition → Phase 5 Presentation/Routing), ~450 lines.
@@ -117,7 +117,7 @@ domain-YAML + REFERENCE.md structure wholesale. Substitute:
 references + helper scripts)
 
 **File inventory** (ls of
-`C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\mcp-builder\`):
+`<SONASH_ROOT>\.claude\skills\mcp-builder\`):
 
 - `SKILL.md` 14,112 bytes — 4-phase workflow (Phase 1 Research/Plan, Phase 2
   Implementation, Phase 3 Review, Phase 4 Evaluation).
@@ -170,7 +170,7 @@ stateless flow.
 LICENSE + 3 Python helpers)
 
 **File inventory** (ls of
-`C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-creator\`):
+`<SONASH_ROOT>\.claude\skills\skill-creator\`):
 
 - `SKILL.md` 17,924 bytes — 7-phase workflow (WARM-UP + PHASE 1-7:
   Context/Discovery/Planning/Build/Validate/Audit/Closure;
@@ -194,7 +194,7 @@ sessions WILL hit compaction").
 **Notable pattern — cross-references into `_shared/`:**
 `skill-creator/SKILL.md:15` points at `../_shared/SKILL_STANDARDS.md` and
 `_shared/SELF_AUDIT_PATTERN.md` (existence confirmed by
-`ls C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\`:
+`ls <SONASH_ROOT>\.claude\skills\_shared\`:
 `AUDIT_TEMPLATE.md`, `SELF_AUDIT_PATTERN.md`, `SKILL_STANDARDS.md`,
 `TAG_SUGGESTION.md`, `ecosystem-audit/`). This is a **shared-chassis** move for
 cross-skill standards, not just audit-family.
@@ -228,7 +228,7 @@ template.
 docs + checkers/ + lib/ + __tests__/)
 
 **File inventory** (ls of
-`C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\doc-ecosystem-audit\`):
+`<SONASH_ROOT>\.claude\skills\doc-ecosystem-audit\`):
 
 - `SKILL.md` 12,471 bytes — 253 lines, 6 phases (Run&Parse → Dashboard →
   Walkthrough → Summary → Trend → Self-Audit).
@@ -303,7 +303,7 @@ but the shape is useful.
 doc-ecosystem-audit)
 
 **File inventory** (ls of
-`C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-ecosystem-audit\`):
+`<SONASH_ROOT>\.claude\skills\pr-ecosystem-audit\`):
 
 - `SKILL.md` 15,711 bytes — same 6-phase template as doc-audit.
 - `scripts/run-pr-ecosystem-audit.js` 12,314 bytes.
@@ -331,7 +331,7 @@ doc-ecosystem-audit.
 shape + more domain checkers + CI/CD extension)
 
 **File inventory** (ls of
-`C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\hook-ecosystem-audit\`):
+`<SONASH_ROOT>\.claude\skills\hook-ecosystem-audit\`):
 
 - `SKILL.md` 16,151 bytes — 440 lines, **8 phases** (Warm-Up + 8 numbered
   phases) — more elaborate than doc/pr because it covers hooks + pre-commit +
@@ -535,44 +535,44 @@ A) + Phased pipeline (Shape C)** — directly modeled on `deep-research`. Files:
 All citations are absolute paths with line numbers. Depth L1 per sub-question
 spec.
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\SKILL.md:106-164`
+- `<SONASH_ROOT>\.claude\skills\deep-research\SKILL.md:106-164`
   (phase overview); `SKILL.md:179-181` (domain YAML load); `SKILL.md:208-211`
   (agent spawn with domain config); `SKILL.md:237-291` (phases 2.5–3.97
   sub-agent dispatch); `SKILL.md:15-16` (REFERENCE.md extraction rationale);
   `SKILL.md:36-40`, `221-223`, `255-266` (Windows 0-byte fallback).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\REFERENCE.md:15-38`
+- `<SONASH_ROOT>\.claude\skills\deep-research\REFERENCE.md:15-38`
   (22-section TOC confirms monolithic reference doc).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\deep-research\domains\academic.yaml:13-27`
+- `<SONASH_ROOT>\.claude\skills\deep-research\domains\academic.yaml:13-27`
   (source_authority + verification_rules sample).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\mcp-builder\SKILL.md:34-112`
+- `<SONASH_ROOT>\.claude\skills\mcp-builder\SKILL.md:34-112`
   (4-phase workflow + conditional language reference loading);
   `SKILL.md:100-105` (Python path); `SKILL.md:107-112` (Node path).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\skill-creator\SKILL.md:18-33`
+- `<SONASH_ROOT>\.claude\skills\skill-creator\SKILL.md:18-33`
   (Critical Rules 1-7 including state-per-phase); `SKILL.md:84-93` (7 phases);
   `SKILL.md:142-143` (REFERENCE.md delegation); `SKILL.md:217-218`
   (scaffolding script invocation); `SKILL.md:15` (shared SKILL_STANDARDS.md).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\doc-ecosystem-audit\SKILL.md:45-55`
+- `<SONASH_ROOT>\.claude\skills\doc-ecosystem-audit\SKILL.md:45-55`
   (8-rule shared chassis reference); `SKILL.md:60-65` (compaction guard
   delegation); `SKILL.md:68-176` (6 phases with checker script invocation).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\pr-ecosystem-audit\SKILL.md:42-55`
+- `<SONASH_ROOT>\.claude\skills\pr-ecosystem-audit\SKILL.md:42-55`
   (identical shared-chassis pattern).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\hook-ecosystem-audit\SKILL.md:26-41`
+- `<SONASH_ROOT>\.claude\skills\hook-ecosystem-audit\SKILL.md:26-41`
   (8 critical rules); `SKILL.md:74-86` (8-phase overview);
   `SKILL.md:139-152` (single-threaded declaration + orchestrator return
   protocol); `SKILL.md:156-184` (Phase 1 runner invocation + state init);
   `SKILL.md:304-347` (Phase 5 self-audit + gate effectiveness review).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\hook-ecosystem-audit\scripts\run-hook-ecosystem-audit.js:1-80`
+- `<SONASH_ROOT>\.claude\skills\hook-ecosystem-audit\scripts\run-hook-ecosystem-audit.js:1-80`
   (orchestrator entry + lib module loading).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\ecosystem-audit\CRITICAL_RULES.md:1-40`
+- `<SONASH_ROOT>\.claude\skills\_shared\ecosystem-audit\CRITICAL_RULES.md:1-40`
   (shared chassis self-description, 8 rules formal definition).
 - Directory listings confirming file counts and byte-identical
   `safe-fs.js` (24,810 bytes) across the three audit families:
-  `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\doc-ecosystem-audit\scripts\lib\`,
+  `<SONASH_ROOT>\.claude\skills\doc-ecosystem-audit\scripts\lib\`,
   `.../pr-ecosystem-audit/scripts/lib/`, `.../hook-ecosystem-audit/scripts/lib/`.
 - Cross-reference to sibling finding `D7-cas-precedent.md` for Shape D
   (router-plus-ancillary-skills), which is absent from this set.
 - BRAINSTORM.md §2 (bones), §3 (D20–D29), §5 Q7 (the spawning question for
-  this sub-question): `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md`.
+  this sub-question): `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md`.
 
 ---
 

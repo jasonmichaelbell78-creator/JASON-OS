@@ -3,7 +3,7 @@
 **Agent:** Phase 1 D-agent D6-cas-scripts-deep
 **Sub-question:** SQ-D6b — Deep-dive `scripts/cas/` (12 files, 4368 lines). Produce a surgical-rewrite list for porting into JASON-OS.
 **Scope:** Read-only against SoNash. Findings only. No code moved.
-**Target repo:** `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\`
+**Target repo:** `<SONASH_ROOT>\scripts\cas\`
 
 ---
 
@@ -359,17 +359,17 @@ Prerequisites come first. Each row below assumes the previous row is green.
 
 ## Sources
 
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\backfill-candidates.js` (285 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\backfill-tags.js` (152 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\fix-depth-mislabel.js` (179 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\generate-extractions-md.js` (248 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\migrate-schemas.js` (374 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\migrate-v3.js` (348 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\promote-firecrawl-to-journal.js` (220 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\rebuild-index.js` (399 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\recall.js` (476 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\retag.js` (415 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\self-audit.js` (814 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\update-index.js` (459 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\` (listing only — 21 files including `security-helpers.js`, `safe-fs.js`, `safe-cas-io.js`, `analysis-schema.js`, `parse-jsonl-line.js`, `read-jsonl.js`, `retag-mutations.js`, `sanitize-error.cjs`, `validate-paths.js`, `normalize-category.js`, `normalize-file-path.js`, plus 10 others)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 D19, §5 Q6
+- `<SONASH_ROOT>\scripts\cas\backfill-candidates.js` (285 lines)
+- `<SONASH_ROOT>\scripts\cas\backfill-tags.js` (152 lines)
+- `<SONASH_ROOT>\scripts\cas\fix-depth-mislabel.js` (179 lines)
+- `<SONASH_ROOT>\scripts\cas\generate-extractions-md.js` (248 lines)
+- `<SONASH_ROOT>\scripts\cas\migrate-schemas.js` (374 lines)
+- `<SONASH_ROOT>\scripts\cas\migrate-v3.js` (348 lines)
+- `<SONASH_ROOT>\scripts\cas\promote-firecrawl-to-journal.js` (220 lines)
+- `<SONASH_ROOT>\scripts\cas\rebuild-index.js` (399 lines)
+- `<SONASH_ROOT>\scripts\cas\recall.js` (476 lines)
+- `<SONASH_ROOT>\scripts\cas\retag.js` (415 lines)
+- `<SONASH_ROOT>\scripts\cas\self-audit.js` (814 lines)
+- `<SONASH_ROOT>\scripts\cas\update-index.js` (459 lines)
+- `<SONASH_ROOT>\scripts\lib\` (listing only — 21 files including `security-helpers.js`, `safe-fs.js`, `safe-cas-io.js`, `analysis-schema.js`, `parse-jsonl-line.js`, `read-jsonl.js`, `retag-mutations.js`, `sanitize-error.cjs`, `validate-paths.js`, `normalize-category.js`, `normalize-file-path.js`, plus 10 others)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 D19, §5 Q6

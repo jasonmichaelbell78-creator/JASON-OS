@@ -49,7 +49,7 @@ reveals further idiom needs mid-execute — fixed up-front waves don't fit.
 
 ### Pattern 1: Fixed-wave staged dispatch (comprehensive-ecosystem-audit)
 
-**Source:** `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:64-96`
+**Source:** `<SONASH_ROOT>\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:64-96`
 
 Stage 1: 5 parallel agents (hook / session / TDMS / PR / health). Stage 2:
 3 parallel agents (skill / doc / script). Stage 3: sequential aggregation.
@@ -71,7 +71,7 @@ output.
 
 ### Pattern 2: Byte-weighted batching with primary+secondary cross-check (label-audit)
 
-**Source:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\label-audit\SKILL.md:132-167`
+**Source:** `<JASON_OS_ROOT>\.claude\skills\label-audit\SKILL.md:132-167`
 
 Target per batch: **120-150 KB of file content**; files >50 KB count as 2
 units; small files pack tightly. Each batch spawns **2 independent agents**
@@ -91,7 +91,7 @@ signal risk.
 
 ### Pattern 3: Wave-with-queue via allocation formula (deep-research Phase 1)
 
-**Source:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:203-222` + `REFERENCE.md:843-856`
+**Source:** `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:203-222` + `REFERENCE.md:843-856`
 
 Formula: `D + 3 + floor(D/5)` (Critical Rule 7, SKILL.md:47-48) where D =
 sub-question count. Agents dispatched in waves, "Respect 4-agent
@@ -111,7 +111,7 @@ many sub-questions (e.g. reshape unit + ripple + idiom + precedent).
 
 ### Pattern 4: Scaling-by-depth (verification + challenges)
 
-**Source:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:239-277`
+**Source:** `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:239-277`
 
 Verification agents: L1=2, L2=2, L3=3, L4=4+. Contrarian+OTB challenges:
 L1-L2 (1+1), L3 (2+2), L4 (3+3 + red team + pre-mortem). Always spawn
@@ -127,7 +127,7 @@ challenge/verification agents by risk tier of the rewrite, not by count.
 
 ### Pattern 5: Conditional gap pursuit with capped fan-out
 
-**Source:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\REFERENCE.md:1232-1254`
+**Source:** `<JASON_OS_ROOT>\.claude\skills\deep-research\REFERENCE.md:1232-1254`
 
 Formula: `ceil(G/2)` gap agents where G = actionable gap count.
 Depth caps: L1=4, L2=4, L3=6, L4=10. **One round only** (Critical Rule 9
@@ -144,7 +144,7 @@ a hard ceiling, one round only, skip phase if none surface.
 
 ### Pattern 6: Context-exhaustion re-spawn (Critical Rule 8)
 
-**Source:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:49-51`, applied at REFERENCE.md:1069-1074
+**Source:** `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:49-51`, applied at REFERENCE.md:1069-1074
 
 > "Context exhaustion = immediate re-spawn. If any agent fails to write
 > complete findings, re-spawn across 2+ smaller agents splitting the
@@ -159,7 +159,7 @@ before dispatch, not after failure.
 
 ### Pattern 7: Windows 0-byte fallback capture (Critical Rule 4)
 
-**Source:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:37-43`, `216-219`, `250-263`
+**Source:** `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:37-43`, `216-219`, `250-263`
 
 After each agent completes:
 1. `wc -c` the expected FINDINGS.md path.
@@ -176,7 +176,7 @@ are load-bearing for the commit, cannot tolerate a silent empty.
 
 ### Pattern 8: TeamCreate for interdependent sub-questions (L4 only)
 
-**Source:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:211` + web docs
+**Source:** `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:211` + web docs
 
 SKILL.md:211: "**L4:** TeamCreate for interdependent sub-questions."
 
@@ -358,24 +358,24 @@ discipline**:
 
 ### Codebase (file:line)
 
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:37-43` — Windows 0-byte fallback (Critical Rule 4)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:49-51` — Context exhaustion re-spawn (Critical Rule 8)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:209-211` — 4-agent concurrency + TeamCreate L4
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:216-219` — Post-completion 0-byte check
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:250-263` — Persistence safety net (cross-phase)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:268-274` — Parallel contrarian+OTB dispatch
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\REFERENCE.md:843-856` — Waves schema in state file
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\REFERENCE.md:1232-1254` — Gap agent scaling, depth caps, clustering
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\REFERENCE.md:1069-1074` — Context exhaustion split + append
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\convergence-loop\SKILL.md:129-180` — Min 2 passes, graduated convergence, agent dispatch
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\label-audit\SKILL.md:132-167` — Byte-weighted batching + primary/secondary
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\label-audit\SKILL.md:204-262` — Self-audit Phase 8 coverage checks
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\label-audit\SKILL.md:232-238` — Empty-output detection (Windows bug applied)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:30-42` — Critical rules (return protocol)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:64-96` — Stage 1 (5 parallel) + Stage 2 (3 parallel)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:136-138` — Partial failure handling
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md:12,28-31,57,73,82-84,102` — Migration scope (D8/D19/D23/D24/D25, R4)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md §4 rule 15` — Never accept empty agent results silently
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:37-43` — Windows 0-byte fallback (Critical Rule 4)
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:49-51` — Context exhaustion re-spawn (Critical Rule 8)
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:209-211` — 4-agent concurrency + TeamCreate L4
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:216-219` — Post-completion 0-byte check
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:250-263` — Persistence safety net (cross-phase)
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:268-274` — Parallel contrarian+OTB dispatch
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\REFERENCE.md:843-856` — Waves schema in state file
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\REFERENCE.md:1232-1254` — Gap agent scaling, depth caps, clustering
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\REFERENCE.md:1069-1074` — Context exhaustion split + append
+- `<JASON_OS_ROOT>\.claude\skills\convergence-loop\SKILL.md:129-180` — Min 2 passes, graduated convergence, agent dispatch
+- `<JASON_OS_ROOT>\.claude\skills\label-audit\SKILL.md:132-167` — Byte-weighted batching + primary/secondary
+- `<JASON_OS_ROOT>\.claude\skills\label-audit\SKILL.md:204-262` — Self-audit Phase 8 coverage checks
+- `<JASON_OS_ROOT>\.claude\skills\label-audit\SKILL.md:232-238` — Empty-output detection (Windows bug applied)
+- `<SONASH_ROOT>\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:30-42` — Critical rules (return protocol)
+- `<SONASH_ROOT>\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:64-96` — Stage 1 (5 parallel) + Stage 2 (3 parallel)
+- `<SONASH_ROOT>\.claude\skills\comprehensive-ecosystem-audit\SKILL.md:136-138` — Partial failure handling
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md:12,28-31,57,73,82-84,102` — Migration scope (D8/D19/D23/D24/D25, R4)
+- `<JASON_OS_ROOT>\CLAUDE.md §4 rule 15` — Never accept empty agent results silently
 
 ### Web (URL + date accessed 2026-04-21)
 

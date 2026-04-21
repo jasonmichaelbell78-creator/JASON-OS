@@ -32,10 +32,10 @@
   "finalReSynthesisPerformed": true,
   "totalClaimsPostGap": 156,
   "gapSources": [
-    "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\migration-skill\\findings\\G1-loop-control.md",
-    "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\migration-skill\\findings\\G2-sonash-source-cost.md",
-    "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\migration-skill\\findings\\GV1-loop-control-verify.md",
-    "C:\\Users\\jbell\\.local\\bin\\JASON-OS\\.research\\migration-skill\\findings\\GV2-sonash-cost-verify.md"
+    "<JASON_OS_ROOT>\\.research\\migration-skill\\findings\\G1-loop-control.md",
+    "<JASON_OS_ROOT>\\.research\\migration-skill\\findings\\G2-sonash-source-cost.md",
+    "<JASON_OS_ROOT>\\.research\\migration-skill\\findings\\GV1-loop-control-verify.md",
+    "<JASON_OS_ROOT>\\.research\\migration-skill\\findings\\GV2-sonash-cost-verify.md"
   ],
   "reSynthesisTriggered": true,
   "reSynthesisDetails": {

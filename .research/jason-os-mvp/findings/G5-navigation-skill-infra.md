@@ -495,7 +495,7 @@ from the `.nvmrc` pin.
 22
 ```
 
-Path: `C:\Users\jason\Workspace\dev-projects\jason-os\.nvmrc`
+Path: `<JASON_OS_ROOT>\.nvmrc`
 
 **Claims:**
 - **[C-G5-16]** SoNash pins Node 22 via a single-line `.nvmrc` containing `22`.

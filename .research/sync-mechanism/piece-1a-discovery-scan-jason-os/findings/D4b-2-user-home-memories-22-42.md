@@ -2,7 +2,7 @@
 
 **Agent:** D4b-2
 **Date:** 2026-04-18
-**Source directory:** `C:\Users\jason\.claude\projects\C--Users-jason-Workspace-dev-projects-JASON-OS\memory\`
+**Source directory:** `<JASON_OS_CLAUDE_SESSION_ROOT>\memory\`
 **Canonical reference:** `.claude/canonical-memory/` (12 files)
 **Files covered:** 21 (indices 22–42)
 

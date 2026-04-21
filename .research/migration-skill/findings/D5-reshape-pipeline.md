@@ -196,7 +196,7 @@ Resume (R3) replays the evidence+prior-answers for context, **re-asks for confir
 
 ## 6. Concrete walkthrough — `audit-code` SoNash → JASON-OS
 
-Source: `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-code\SKILL.md` (370 lines, Firestore+Next.js heavy, AUDIT_TEMPLATE reference, Zod, MCP-SonarCloud, Session-#128 episodic-memory pattern).
+Source: `<SONASH_ROOT>\.claude\skills\audit-code\SKILL.md` (370 lines, Firestore+Next.js heavy, AUDIT_TEMPLATE reference, Zod, MCP-SonarCloud, Session-#128 episodic-memory pattern).
 
 ### Phase sequence
 
@@ -280,7 +280,7 @@ Phase 5 — Execute (active transformation, gated)
   └────────────────────────────────────────────────────────┘
   # user: accept
 
-  write to: C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\audit-code\SKILL.md
+  write to: <JASON_OS_ROOT>\.claude\skills\audit-code\SKILL.md
 
 Phase 6 — Prove (convergence-loop verification)
 
@@ -312,12 +312,12 @@ gate count this run: 5 (G-VERDICT, G-RESEARCH, G-PLAN, G-PREVIEW, G-CONFIRM)
 ## 7. Sources
 
 **In-house:**
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\sanitize-error.cjs` — sanitize primitive (P2), 15 baseline regex patterns re-used.
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\_shared\SKILL_STANDARDS.md` — skill-structure idiom source (P5, P7).
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\audit-code\SKILL.md` — walkthrough subject.
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\quick-fix\SKILL.md` — reshape-adjacent pattern (auto-fix framing).
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` — IdiomProfile v0 source of truth.
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 D23/D24/D25, §5 Q5.
+- `<SONASH_ROOT>\scripts\lib\sanitize-error.cjs` — sanitize primitive (P2), 15 baseline regex patterns re-used.
+- `<SONASH_ROOT>\.claude\skills\_shared\SKILL_STANDARDS.md` — skill-structure idiom source (P5, P7).
+- `<SONASH_ROOT>\.claude\skills\audit-code\SKILL.md` — walkthrough subject.
+- `<SONASH_ROOT>\.claude\skills\quick-fix\SKILL.md` — reshape-adjacent pattern (auto-fix framing).
+- `<JASON_OS_ROOT>\CLAUDE.md` — IdiomProfile v0 source of truth.
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 D23/D24/D25, §5 Q5.
 
 **Web:**
 - [OpenRewrite recipes](https://docs.openrewrite.org/concepts-and-explanations/recipes) — 3-recipe-type model (declarative/refaster/imperative) informs primitive P4 (declarative) / P6-P10 (imperative) split.
@@ -340,5 +340,5 @@ gate count this run: 5 (G-VERDICT, G-RESEARCH, G-PLAN, G-PREVIEW, G-CONFIRM)
 - **idiom-detection approach recommended:** **3-source hybrid** — static-scan (authoritative) + optional `IDIOM_MANIFEST.yaml` (explicit override) + few-shot LLM exemplar inference (gap filler, gated)
 - **primitive count:** **11** (P1–P11); reshape uses P1–P7, rewrite uses P1–P11
 - **gate count per verdict:** copy-as-is=**1**, sanitize=**2**, reshape=**3**, rewrite=**4** (rewrite's G-RESEARCH only fires when P11 dispatches)
-- **findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D5-reshape-pipeline.md`
+- **findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\D5-reshape-pipeline.md`
 - **file size:** see reported by caller after write

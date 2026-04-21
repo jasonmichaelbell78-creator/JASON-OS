@@ -26,7 +26,7 @@ The CAS data layer is **thin, regenerable, and well-isolated**. It consists of:
 
 ## 1. Zod Schema Catalog — `scripts/lib/analysis-schema.js`
 
-File: `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\analysis-schema.js` (494 lines, 14.7 KB).
+File: `<SONASH_ROOT>\scripts\lib\analysis-schema.js` (494 lines, 14.7 KB).
 
 ### 1.1 Enums (15)
 
@@ -95,7 +95,7 @@ Module exports 6 top-level schemas, 4 type-specific field bundles, 8 synthesis s
 
 ### 1.6 Companion: `.claude/skills/schemas/analysis-schema.ts`
 
-File: `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\schemas\analysis-schema.ts`.
+File: `<SONASH_ROOT>\.claude\skills\schemas\analysis-schema.ts`.
 Header (line 1-4): "Zod schema for repo-analysis analysis.json (**v4.2 runtime format**). Canonical source of truth — REFERENCE.md must match this, not vice versa."
 
 This is a **different schema shape** from analysis-schema.js. It uses camelCase (`skillVersion`, `scanDepth`, `lastPush`) while the canonical module uses snake_case (`schema_version`, `depth`, `last_push`). It appears to be a legacy or handler-local artifact. It is NOT imported by `scripts/lib/` code. Three files in the schemas skill: `analysis-schema.ts`, `findings-schema.ts`, `validate-artifact.ts`.
@@ -303,21 +303,21 @@ Test directory: `tests/scripts/cas/` contains 4 tests:
 
 ### Primary files examined
 
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\analysis-schema.js` (read in full — 494 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\schemas\analysis-schema.ts` (header + first 60 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\rebuild-index.js` (read in full — 400 lines)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\recall.js` (partial — lines 1-100)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\update-index.js` (grep'd for CREATE TABLE + prepare + pragma)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\cas\migrate-v3.js` (grep'd for schema_version)
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\skills\synthesize\self-audit.js:695-714` (knowledge.sqlite reference)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\hooks\session-start.js:488-491` (better-sqlite3 dep check)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\recall\SKILL.md:1-40, 99, 112`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\SKILL.md:97, 146`
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\REFERENCE.md:542, 663`
-- `C:\Users\jbell\.local\bin\sonash-v0\.planning\content-analysis-system\DECISIONS.md` (referenced in code comments — not directly read)
-- `C:\Users\jbell\.local\bin\sonash-v0\.planning\session-285\RESUME.md:55` (knowledge.sqlite path-drift note)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\state\synthesize.slice-4.json:434-435` (schema-migration debt note)
-- `C:\Users\jbell\.local\bin\sonash-v0\.gitignore:167-169` (DB files gitignored)
+- `<SONASH_ROOT>\scripts\lib\analysis-schema.js` (read in full — 494 lines)
+- `<SONASH_ROOT>\.claude\skills\schemas\analysis-schema.ts` (header + first 60 lines)
+- `<SONASH_ROOT>\scripts\cas\rebuild-index.js` (read in full — 400 lines)
+- `<SONASH_ROOT>\scripts\cas\recall.js` (partial — lines 1-100)
+- `<SONASH_ROOT>\scripts\cas\update-index.js` (grep'd for CREATE TABLE + prepare + pragma)
+- `<SONASH_ROOT>\scripts\cas\migrate-v3.js` (grep'd for schema_version)
+- `<SONASH_ROOT>\scripts\skills\synthesize\self-audit.js:695-714` (knowledge.sqlite reference)
+- `<SONASH_ROOT>\.claude\hooks\session-start.js:488-491` (better-sqlite3 dep check)
+- `<SONASH_ROOT>\.claude\skills\recall\SKILL.md:1-40, 99, 112`
+- `<SONASH_ROOT>\.claude\skills\analyze\SKILL.md:97, 146`
+- `<SONASH_ROOT>\.claude\skills\analyze\REFERENCE.md:542, 663`
+- `<SONASH_ROOT>\.planning\content-analysis-system\DECISIONS.md` (referenced in code comments — not directly read)
+- `<SONASH_ROOT>\.planning\session-285\RESUME.md:55` (knowledge.sqlite path-drift note)
+- `<SONASH_ROOT>\.claude\state\synthesize.slice-4.json:434-435` (schema-migration debt note)
+- `<SONASH_ROOT>\.gitignore:167-169` (DB files gitignored)
 
 ### Live DB introspection
 
@@ -328,7 +328,7 @@ Test directory: `tests/scripts/cas/` contains 4 tests:
 
 ### Brainstorm context
 
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §5 Q6 (line 129), §3 D19 (line 73)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §5 Q6 (line 129), §3 D19 (line 73)
 
 ---
 
@@ -337,4 +337,4 @@ Test directory: `tests/scripts/cas/` contains 4 tests:
 - **Zod schema table count:** 32 named schemas (3 root records + 1 ledger + 13 sub-schemas + 15 enums), +1 legacy `analysis-schema.ts` in schemas skill.
 - **DB table count:** 6 application tables (5 regular + 1 FTS5 that fans out to 4 shadow tables) + 2 FTS5 virtual tables = 7 logical / 13 physical. Second DB (`knowledge.sqlite`) is a byte-identical alias.
 - **Recommended port strategy:** **(b) Regenerate from source.** Ship the scripts, skip the DB files, rely on `rebuild-index.js` at first use. Plus: fix the `knowledge.sqlite` path-drift in `synthesize/self-audit.js:704` during the port.
-- **Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D6-cas-dbs-schemas.md`
+- **Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\D6-cas-dbs-schemas.md`

@@ -876,4 +876,4 @@ during plan assembly.
 
 — otb-challenger
 
-**Findings file:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\challenges\otb.md`
+**Findings file:** `<JASON_OS_ROOT>\.research\migration-skill\challenges\otb.md`

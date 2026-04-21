@@ -195,11 +195,11 @@ Any /migration `port-lib` operation on a single hook MUST drag in its transitive
 
 ## Sources
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\hooks\` — directory listing via `ls -la`, 28 entries.
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\hooks\lib\` — 6 entries.
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\hooks\global\` — 2 entries.
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\lib\` — 20 entries.
-- `C:\Users\jbell\.local\bin\sonash-v0\scripts\hooks\` — 1 entry (`check-review-record.js`).
+- `<SONASH_ROOT>\.claude\hooks\` — directory listing via `ls -la`, 28 entries.
+- `<SONASH_ROOT>\.claude\hooks\lib\` — 6 entries.
+- `<SONASH_ROOT>\.claude\hooks\global\` — 2 entries.
+- `<SONASH_ROOT>\scripts\lib\` — 20 entries.
+- `<SONASH_ROOT>\scripts\hooks\` — 1 entry (`check-review-record.js`).
 - Full read: `scripts/lib/sanitize-error.cjs` (L1-97), `scripts/lib/sanitize-error.js` (L1-149), `scripts/lib/security-helpers.js` (L1-506), `scripts/lib/safe-fs.js` (L1-757).
 - Headers read (10-40 lines each): all 25 hook JS files, 6 hook-lib files, 16 scripts/lib modules, `ensure-fnm.sh`, `global/*.js`, `scripts/hooks/check-review-record.js`.
 - Coupling grep: `firestore|sonash|Firebase|App Check|httpsCallable|journal|daily_logs|inventoryEntries|react|Next\.js|next\.config|\.next/` across `.claude/hooks/` (7 files, 70 hits — concentrated in `post-write-validator.js` L5-19 header, `session-start.js` L9-23 header, `deploy-safeguard.js`, `firestore-rules-guard.js`, `user-prompt-handler.js`, `pre-commit-agent-compliance.js`, `lib/inline-patterns.js` L24-34).
@@ -217,5 +217,5 @@ Any /migration `port-lib` operation on a single hook MUST drag in its transitive
 - **Total files inventoried:** 55
 - **Verdict distribution:** copy=4, sanitize=9, reshape=7, rewrite=8, skip=26 (+ 1 post-commit helper skipped) = 54 verdicts across scorable files; GSD/bash-only counted under skip.
 - **Dep-chain depth:** 4 levels (L0 leaf → L4 session-start aggregator)
-- **Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\D2-hooks-lib.md`
+- **Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\D2-hooks-lib.md`
 - **File size:** ~16 KB (>1 KB requirement satisfied)

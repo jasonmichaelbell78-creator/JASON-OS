@@ -393,6 +393,6 @@ Web (all accessed 2026-04-21):
 
 In-house:
 
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §3 D3 (MIGRATION_PLAN.md artifact), §3 D8 (nothing silent), §3 D23 (verdict legend), §3 D24 (phase 5 content), §3 D26 (output modes), §3 D29 (v1 local-only), §5 Q4 (this question)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-plan\SKILL.md` lines 72–76, 224–238 (DIAGNOSIS / DECISIONS / PLAN artifact structure — the in-house precedent for separate machine+human readable plan artifacts), lines 309–322 (handoff routing — analogous to our Channel A/B/C invocation routing)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` §1 (Node 22 runtime baseline — informs Channel C runner language choice)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §3 D3 (MIGRATION_PLAN.md artifact), §3 D8 (nothing silent), §3 D23 (verdict legend), §3 D24 (phase 5 content), §3 D26 (output modes), §3 D29 (v1 local-only), §5 Q4 (this question)
+- `<JASON_OS_ROOT>\.claude\skills\deep-plan\SKILL.md` lines 72–76, 224–238 (DIAGNOSIS / DECISIONS / PLAN artifact structure — the in-house precedent for separate machine+human readable plan artifacts), lines 309–322 (handoff routing — analogous to our Channel A/B/C invocation routing)
+- `<JASON_OS_ROOT>\CLAUDE.md` §1 (Node 22 runtime baseline — informs Channel C runner language choice)

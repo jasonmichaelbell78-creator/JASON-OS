@@ -27,7 +27,7 @@ both repos share the same benign-but-fragile pattern.
 
 #### What the skill requires (ground truth)
 
-Full read of `C:\Users\jason\Workspace\dev-projects\jason-os\.claude\skills\todo\SKILL.md`
+Full read of `<JASON_OS_ROOT>\.claude\skills\todo\SKILL.md`
 (369 lines, v1.2, 2026-04-10). JASON-OS todo SKILL.md is byte-for-byte identical
 to SoNash v1.2 — confirmed by tail comparison.
 
@@ -67,7 +67,7 @@ invocation tracker. Also absent from JASON-OS.
 | `sanitize-error.js` | `scripts/lib/sanitize-error.js` | ESM import (line 47) |
 
 `safe-fs.js` and `sanitize-error.js` ARE already present in JASON-OS at
-`C:\Users\jason\Workspace\dev-projects\jason-os\scripts\lib\`. Only
+`<JASON_OS_ROOT>\scripts\lib\`. Only
 `todos-cli.js`, `render-todos.js`, and `todos-mutations.js` are missing.
 
 #### What programmatically calls /todo in JASON-OS
@@ -336,7 +336,7 @@ is intentional.
 - Content: 11 feedback files + 5 project files + 4 reference files + 3 user files
   + MEMORY.md (from filesystem inspection)
 
-**SoNash global memory** (`C:\Users\jason\.claude\projects\C--Users-jason-...\memory\`):
+**SoNash global memory** (`<HOME>\.claude\projects\C--Users-jason-...\memory\`):
 - 77+ files (the full live set, per D2d Finding 8)
 - Machine-local, NOT git-tracked
 - Much richer than canonical (37 feedback + 28 project + 7 reference + 4 user)
@@ -376,7 +376,7 @@ operating state for a curated subset.
 - Content matches the bootstrapped set: 7 feedback + 3 user + 0 project + 0 reference
 - Committed to git — travels with the repo
 
-**JASON-OS global memory** (`C:\Users\jason\.claude\projects\C--Users-jason-...-jason-os\memory\`):
+**JASON-OS global memory** (`<HOME>\.claude\projects\C--Users-jason-...-jason-os\memory\`):
 - 11 files: MEMORY.md + 10 topic files
 - **Identical content to canonical-memory** (verified by filesystem comparison)
 
@@ -449,7 +449,7 @@ silently merge with a clean live memory.
 #### On the per-machine sync problem
 
 Both SoNash and JASON-OS have the same fundamental limitation: memory slugs are
-path-derived, so `C:\Users\jason\...` and `/home/jason/...` produce different
+path-derived, so `<HOME>\...` and `/home/jason/...` produce different
 slugs and different memory directories. The canonical-memory pattern sidesteps
 this entirely — the operator copies files to the correct slug directory on each
 machine. This is the correct architecture for a portable OS with multi-machine

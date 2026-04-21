@@ -216,7 +216,7 @@ verification now.
      (`convergence-loop/SKILL.md:237-263` + `deep-plan/SKILL.md:149-155`
      exact-string match); this is the cleanest precedent citation in the V4
      set and should anchor the /migration Phase 6 design.
-- **Findings path:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\findings\V4-design-web.md`
+- **Findings path:** `<JASON_OS_ROOT>\.research\migration-skill\findings\V4-design-web.md`
 
 ---
 

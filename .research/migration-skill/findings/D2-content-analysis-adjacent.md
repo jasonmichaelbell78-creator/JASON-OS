@@ -135,12 +135,12 @@ Skill("<cas-skill>", args="<target> [--depth=standard] [--type=<t>]")
 
 ## Sources
 
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\analyze\SKILL.md` (v2.0, 2026-04-15)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\document-analysis\SKILL.md` (v2.0, 2026-04-15)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\media-analysis\SKILL.md` (v2.0, 2026-04-15)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\recall\SKILL.md` (v1.2, 2026-04-17)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\repo-analysis\SKILL.md` (v5.0, 2026-04-15)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\synthesize\SKILL.md` (v2.0, 2026-04-15)
-- `C:\Users\jbell\.local\bin\sonash-v0\.claude\skills\repo-synthesis\SKILL.md` (v1.3-D, DEPRECATED 2026-04-09)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` §5 Q2, §3 D19/D27, §6 Dependencies
-- `C:\Users\jbell\.local\bin\sonash-v0\CLAUDE.md` v6.0 §7 PRE-TASK (prior-art rule)
+- `<SONASH_ROOT>\.claude\skills\analyze\SKILL.md` (v2.0, 2026-04-15)
+- `<SONASH_ROOT>\.claude\skills\document-analysis\SKILL.md` (v2.0, 2026-04-15)
+- `<SONASH_ROOT>\.claude\skills\media-analysis\SKILL.md` (v2.0, 2026-04-15)
+- `<SONASH_ROOT>\.claude\skills\recall\SKILL.md` (v1.2, 2026-04-17)
+- `<SONASH_ROOT>\.claude\skills\repo-analysis\SKILL.md` (v5.0, 2026-04-15)
+- `<SONASH_ROOT>\.claude\skills\synthesize\SKILL.md` (v2.0, 2026-04-15)
+- `<SONASH_ROOT>\.claude\skills\repo-synthesis\SKILL.md` (v1.3-D, DEPRECATED 2026-04-09)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` §5 Q2, §3 D19/D27, §6 Dependencies
+- `<SONASH_ROOT>\CLAUDE.md` v6.0 §7 PRE-TASK (prior-art rule)

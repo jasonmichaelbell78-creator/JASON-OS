@@ -24,15 +24,15 @@ Key numbers:
 
 ### What works in the current triad
 
-**BRAINSTORM.md (crystallized) is clean-enough:** `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` organizes D1–D29 under three thematic tables (Skill-shape / Direction+endpoint / Weave+reframe / Process+scope) with a clear "Session 2 additions" sub-header at line 66. Reader can trace which session birthed which decision. This is an implicit-but-working meta-ledger inside the artifact.
+**BRAINSTORM.md (crystallized) is clean-enough:** `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` organizes D1–D29 under three thematic tables (Skill-shape / Direction+endpoint / Weave+reframe / Process+scope) with a clear "Session 2 additions" sub-header at line 66. Reader can trace which session birthed which decision. This is an implicit-but-working meta-ledger inside the artifact.
 
 **BRAINSTORM_WIP.md is surprisingly clean as a session-ledger.** Line 22-26 (`Reframes through the sessions`) is a five-bullet chronological reframe log — exactly the "decision-evolution narrative" an ADR supersede chain provides. Line 39-76 preserves the D1–D15 / D16–D29 session split. The document **explicitly marks itself SUPERSEDED at the top** (line 3) — the ADR pattern applied correctly.
 
-**Brainstorm SKILL.md has an embryonic meta-ledger pattern:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\brainstorm\SKILL.md:134-136` Phase 0 step 6 (Duplicate check → offer resume/start-fresh/rename). This enforces re-entry awareness but does NOT record re-entry metadata — the skill detects the loop-return situation but has no artifact slot to log it.
+**Brainstorm SKILL.md has an embryonic meta-ledger pattern:** `<JASON_OS_ROOT>\.claude\skills\brainstorm\SKILL.md:134-136` Phase 0 step 6 (Duplicate check → offer resume/start-fresh/rename). This enforces re-entry awareness but does NOT record re-entry metadata — the skill detects the loop-return situation but has no artifact slot to log it.
 
-**Deep-research has post-challenge re-synthesis:** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:291-294` Phase 3.9 "Re-synthesize if >20% of claims changed" is **within-iteration** re-synthesis. Line 328-333 Phase 3.97 "Final Re-Synthesis" mandates an **edit**, not rewrite, of RESEARCH_OUTPUT.md — explicitly preserving prior-state diff. This is the closest existing pattern to a meta-ledger, but it's scoped to one research run, not cross-skill loops.
+**Deep-research has post-challenge re-synthesis:** `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:291-294` Phase 3.9 "Re-synthesize if >20% of claims changed" is **within-iteration** re-synthesis. Line 328-333 Phase 3.97 "Final Re-Synthesis" mandates an **edit**, not rewrite, of RESEARCH_OUTPUT.md — explicitly preserving prior-state diff. This is the closest existing pattern to a meta-ledger, but it's scoped to one research run, not cross-skill loops.
 
-**Deep-plan DECISIONS.md is already standalone (Critical Rule 5):** `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-plan\SKILL.md:35, 226` — DECISIONS.md is explicitly not embedded in the plan. This is an ADR-style separation.
+**Deep-plan DECISIONS.md is already standalone (Critical Rule 5):** `<JASON_OS_ROOT>\.claude\skills\deep-plan\SKILL.md:35, 226` — DECISIONS.md is explicitly not embedded in the plan. This is an ADR-style separation.
 
 ### What breaks under D28 loop re-entry
 
@@ -180,18 +180,18 @@ Rejected.
 ## Sources
 
 **Codebase (file:line):**
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md:66` — session-header session-2-additions separator
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md:92` — D28 iterative re-entry decision
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md:134` — research Q11 "Process meta-ledger" (this sub-question's origin)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md:161-167` — §7 loop diagram
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM_WIP.md:3` — SUPERSEDED marker (the manual ADR pattern)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM_WIP.md:22-26` — session reframes bullet log
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM_WIP.md:53` — D11 `Dropped direction` (collision anchor)
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM_WIP.md:75` — D28 row with `Turn 10` source
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\brainstorm\SKILL.md:134-136` — Phase 0 duplicate-check offer-resume pattern (embryonic meta-ledger awareness)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:291-294` — Phase 3.9 post-challenge re-synthesis (in-iteration precedent)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-research\SKILL.md:328-333` — Phase 3.97 final re-synthesis: edits not rewrites
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\deep-plan\SKILL.md:35, 226` — DECISIONS.md is standalone (ADR-style separation already in place)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md:66` — session-header session-2-additions separator
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md:92` — D28 iterative re-entry decision
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md:134` — research Q11 "Process meta-ledger" (this sub-question's origin)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md:161-167` — §7 loop diagram
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM_WIP.md:3` — SUPERSEDED marker (the manual ADR pattern)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM_WIP.md:22-26` — session reframes bullet log
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM_WIP.md:53` — D11 `Dropped direction` (collision anchor)
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM_WIP.md:75` — D28 row with `Turn 10` source
+- `<JASON_OS_ROOT>\.claude\skills\brainstorm\SKILL.md:134-136` — Phase 0 duplicate-check offer-resume pattern (embryonic meta-ledger awareness)
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:291-294` — Phase 3.9 post-challenge re-synthesis (in-iteration precedent)
+- `<JASON_OS_ROOT>\.claude\skills\deep-research\SKILL.md:328-333` — Phase 3.97 final re-synthesis: edits not rewrites
+- `<JASON_OS_ROOT>\.claude\skills\deep-plan\SKILL.md:35, 226` — DECISIONS.md is standalone (ADR-style separation already in place)
 
 **Web (URL + date):**
 - https://adr.github.io/ — ADR central resource, supersede chain pattern. Accessed 2026-04-21.

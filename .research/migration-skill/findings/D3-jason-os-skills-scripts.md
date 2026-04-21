@@ -128,15 +128,15 @@ Rank 1 = highest shift risk (unbuilt or explicitly stubbed; schema / interface v
 
 ## Sources
 
-- `C:\Users\jbell\.local\bin\JASON-OS\.research\migration-skill\BRAINSTORM.md` — §2 bones (7 phases 0-6), §3 D19 (CAS) / D23-D24 (verdicts) / D29 (local-filesystem v1), §5 Q3 (blocker inventory prompt), §6 dependencies table, §9 pointers (line 195 names SoNash CAS path)
-- `C:\Users\jbell\.local\bin\JASON-OS\CLAUDE.md` — §2 security helpers (lines 40-55), §4 behavioral guardrails with `[GATE]`/`[BEHAVIORAL]`/`NEEDS_GATE` annotations (lines 81-117), §5 anti-patterns (lines 118-132), §7 triggers (lines 143-159)
-- `C:\Users\jbell\.local\bin\JASON-OS\.planning\jason-os\BOOTSTRAP_DEFERRED.md` — lines 11-70 deferred skills (`session-end` original ref, `pr-review`, `pr-retro`); lines 156-176 sync-mechanism progress pointer (Piece 3 *Next*; Pieces 3.5/4/5 after)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\skills\*\SKILL.md` — 14 files: `brainstorm`, `checkpoint`, `convergence-loop`, `deep-plan`, `deep-research`, `skill-creator`, `todo`, `add-debt`, `pr-review`, `pre-commit-fixer`, `session-begin`, `skill-audit`, `session-end`, `label-audit`. Each head (frontmatter + first 40 lines) read for status + scope notes.
-- `C:\Users\jbell\.local\bin\JASON-OS\scripts\lib\` — 7 helpers (sanitize-error.cjs + .d.ts, safe-fs.js, security-helpers.js, parse-jsonl-line.js, read-jsonl.js, todos-mutations.js, resolve-exec.js)
-- `C:\Users\jbell\.local\bin\JASON-OS\scripts\planning\` — todos-cli.js, render-todos.js, package.json, lib/read-jsonl.js
-- `C:\Users\jbell\.local\bin\JASON-OS\scripts\session-end-commit.js` + `scripts\config\propagation-patterns.seed.json`
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\hooks\` — block-push-to-main.js (gated), check-mcp-servers.js, large-file-gate.js, settings-guardian.js, commit-tracker.js, compact-restore.js, pre-compaction-save.js, lib/symlink-guard.js (from Glob results)
-- `C:\Users\jbell\.local\bin\JASON-OS\.claude\sync\` — schema/ (Piece 2 complete: SCHEMA.md, EVOLUTION.md, EXAMPLES.md), label/ (Piece 3 scaffold: lib/, hooks/, skill/, backfill/, docs/). No engine/ or registry/ dir — Pieces 4+5 unbuilt, matches BOOTSTRAP_DEFERRED.md ledger.
+- `<JASON_OS_ROOT>\.research\migration-skill\BRAINSTORM.md` — §2 bones (7 phases 0-6), §3 D19 (CAS) / D23-D24 (verdicts) / D29 (local-filesystem v1), §5 Q3 (blocker inventory prompt), §6 dependencies table, §9 pointers (line 195 names SoNash CAS path)
+- `<JASON_OS_ROOT>\CLAUDE.md` — §2 security helpers (lines 40-55), §4 behavioral guardrails with `[GATE]`/`[BEHAVIORAL]`/`NEEDS_GATE` annotations (lines 81-117), §5 anti-patterns (lines 118-132), §7 triggers (lines 143-159)
+- `<JASON_OS_ROOT>\.planning\jason-os\BOOTSTRAP_DEFERRED.md` — lines 11-70 deferred skills (`session-end` original ref, `pr-review`, `pr-retro`); lines 156-176 sync-mechanism progress pointer (Piece 3 *Next*; Pieces 3.5/4/5 after)
+- `<JASON_OS_ROOT>\.claude\skills\*\SKILL.md` — 14 files: `brainstorm`, `checkpoint`, `convergence-loop`, `deep-plan`, `deep-research`, `skill-creator`, `todo`, `add-debt`, `pr-review`, `pre-commit-fixer`, `session-begin`, `skill-audit`, `session-end`, `label-audit`. Each head (frontmatter + first 40 lines) read for status + scope notes.
+- `<JASON_OS_ROOT>\scripts\lib\` — 7 helpers (sanitize-error.cjs + .d.ts, safe-fs.js, security-helpers.js, parse-jsonl-line.js, read-jsonl.js, todos-mutations.js, resolve-exec.js)
+- `<JASON_OS_ROOT>\scripts\planning\` — todos-cli.js, render-todos.js, package.json, lib/read-jsonl.js
+- `<JASON_OS_ROOT>\scripts\session-end-commit.js` + `scripts\config\propagation-patterns.seed.json`
+- `<JASON_OS_ROOT>\.claude\hooks\` — block-push-to-main.js (gated), check-mcp-servers.js, large-file-gate.js, settings-guardian.js, commit-tracker.js, compact-restore.js, pre-compaction-save.js, lib/symlink-guard.js (from Glob results)
+- `<JASON_OS_ROOT>\.claude\sync\` — schema/ (Piece 2 complete: SCHEMA.md, EVOLUTION.md, EXAMPLES.md), label/ (Piece 3 scaffold: lib/, hooks/, skill/, backfill/, docs/). No engine/ or registry/ dir — Pieces 4+5 unbuilt, matches BOOTSTRAP_DEFERRED.md ledger.
 
 **Negative evidence (referenced but not found):**
 

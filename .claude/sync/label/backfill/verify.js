@@ -39,9 +39,17 @@ const { detectType } = require(
 const { sanitize } = require(
   path.join(REPO_ROOT_SENTINEL, ".claude", "sync", "label", "lib", "sanitize.js")
 );
-const { validatePathInDir } = require(
+const { validatePathInDir, parseCliArgs } = require(
   path.join(REPO_ROOT_SENTINEL, "scripts", "lib", "security-helpers.js")
 );
+const { readTextWithSizeGuard } = require(
+  path.join(REPO_ROOT_SENTINEL, "scripts", "lib", "safe-fs.js")
+);
+
+// Size ceiling for per-record content heuristic reads. detectType falls back
+// to path-only when content is empty, so oversize files are a sanity warning
+// rather than a hard error.
+const MAX_CONTENT_READ_SIZE_BYTES = 256 * 1024;
 
 // Known well-formed values — used for sanity-but-not-reject warnings.
 const KNOWN_TOOL_DEPS = new Set([
@@ -130,15 +138,12 @@ function verifyRecord(record, opts = {}) {
     try {
       let content = "";
       try {
-        if (fs.existsSync(abs)) {
-          const stat = fs.statSync(abs);
-          // Skip content read for >256 KB — detectType mostly uses path anyway.
-          if (stat.size <= 256 * 1024) {
-            content = fs.readFileSync(abs, "utf8");
-          }
-        }
-      } catch {
-        // swallow — detectType tolerates empty content
+        content = readTextWithSizeGuard(abs, { maxBytes: MAX_CONTENT_READ_SIZE_BYTES });
+      } catch (err) {
+        // detectType tolerates empty content, so degrade gracefully while
+        // surfacing the reason (size-cap rejection, permission denied, or
+        // concurrent delete). Prior implementation swallowed silently.
+        sanityWarnings.push(`content read failed for ${record.path}: ${sanitize(err)}`);
       }
       const expected = detectType(record.path, content);
       if (expected && expected !== record.type) {
@@ -443,21 +448,47 @@ function crossBatchConsistency(allRecords) {
 
 // CLI mode — reads JSONL from a file and prints the report.
 function cli() {
-  const args = process.argv.slice(2);
-  const jsonlPath = args.find((a) => !a.startsWith("--"));
-  const batchIdArg = args.find((a) => a.startsWith("--batch-id="));
+  // Normalize --flag=VALUE to --flag VALUE so parseCliArgs (space-separated)
+  // handles both invocation styles without breaking existing usage.
+  const normalizedArgs = [];
+  for (const a of process.argv.slice(2)) {
+    if (a.startsWith("--") && a.includes("=")) {
+      const eq = a.indexOf("=");
+      normalizedArgs.push(a.slice(0, eq), a.slice(eq + 1));
+    } else {
+      normalizedArgs.push(a);
+    }
+  }
+
+  let parsed;
+  try {
+    parsed = parseCliArgs(normalizedArgs, {
+      "--batch-id": { type: "string", required: false },
+    });
+  } catch (err) {
+    process.stderr.write(`verify: ${sanitize(err)}\n`);
+    process.exit(2);
+  }
+
+  // Positional arg = first non-flag token that isn't the value of a preceding flag.
+  const jsonlPath = normalizedArgs.find((a, i) => {
+    if (a.startsWith("--")) return false;
+    const prev = normalizedArgs[i - 1];
+    return !(prev && prev.startsWith("--"));
+  });
+
   if (!jsonlPath) {
     process.stderr.write("usage: node verify.js <records.jsonl> [--batch-id=B01]\n");
     process.exit(2);
   }
+
   try {
-    const raw = fs.readFileSync(jsonlPath, "utf8");
+    const raw = readTextWithSizeGuard(jsonlPath);
     const records = raw
       .split("\n")
       .filter((line) => line.trim().length > 0)
       .map((line) => JSON.parse(line));
-    const batchId = batchIdArg ? batchIdArg.split("=")[1] : undefined;
-    const report = verifyBatch(records, { batchId });
+    const report = verifyBatch(records, { batchId: parsed["--batch-id"] });
     process.stdout.write(formatReport(report) + "\n");
     process.exit(report.clean ? 0 : 1);
   } catch (err) {

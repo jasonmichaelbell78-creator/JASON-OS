@@ -86,6 +86,84 @@ test("verifyRecord: existing in-repo path passes sanity layer", () => {
   );
 });
 
+test("verifyRecord: content-read failure surfaces as sanityWarning (not silent swallow)", () => {
+  const { verifyRecord } = require(MOD);
+  // Point at a file we know is oversized for the 256 KB heuristic cap.
+  // package-lock.json is large enough in most Node projects; if missing,
+  // fall back to any repo file >256 KB, or skip.
+  const repoRoot = path.join(__dirname, "..", "..", "..", "..", "..");
+  const candidates = [
+    "package-lock.json",
+    ".research/sync-mechanism/piece-1b-discovery-scan-sonash/findings/D20d-dep-map-merged.jsonl",
+    ".research/migration-skill/RESEARCH_OUTPUT.md",
+    ".research/migration-skill/TRANSCRIPT.md",
+  ];
+  let bigPath = null;
+  for (const c of candidates) {
+    const abs = path.join(repoRoot, c);
+    try {
+      const st = fs.statSync(abs);
+      if (st.size > 256 * 1024) {
+        bigPath = c;
+        break;
+      }
+    } catch {
+      // try next
+    }
+  }
+  if (!bigPath) {
+    // Synthesize one in a temp location relative to repoRoot — but we need a
+    // path INSIDE the repo or the traversal guard will reject it. Skip if
+    // no oversize file exists.
+    console.log("# skip oversize test: no candidate file >256 KB in repo");
+    return;
+  }
+  const result = verifyRecord(baseRecord({ path: bigPath, type: "docs" }));
+  assert.ok(
+    result.sanityWarnings.some((w) => w.includes("content read failed")),
+    `expected content-read warning on oversize file, got: ${JSON.stringify(result.sanityWarnings)}`
+  );
+});
+
+test("CLI: parseCliArgs handles both --batch-id=X and --batch-id X forms", () => {
+  // Smoke-test the CLI via a subprocess round-trip. Write a tiny JSONL to
+  // a tmp location inside the repo, invoke both forms, confirm non-zero
+  // exit doesn't crash before we see the usage line (we expect exit=1 due
+  // to schema failures on the minimal fixture — but the CLI should at
+  // least parse args and run verifyBatch).
+  const { execFileSync } = require("node:child_process");
+  const repoRoot = path.join(__dirname, "..", "..", "..", "..", "..");
+  const tmp = path.join(os.tmpdir(), `verify-cli-${process.pid}.jsonl`);
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(baseRecord()) + "\n");
+    // Feed the positional arg INSIDE the repo — traversal guard rejects
+    // outside paths for Layer 2, but the CLI itself reads the JSONL from
+    // any path (that's the outer fs read, not record.path).
+    for (const form of [
+      ["node", [path.join(repoRoot, ".claude/sync/label/backfill/verify.js"), tmp, "--batch-id=B01"]],
+      ["node", [path.join(repoRoot, ".claude/sync/label/backfill/verify.js"), tmp, "--batch-id", "B01"]],
+    ]) {
+      let stdout = "";
+      try {
+        stdout = String(execFileSync(form[0], form[1], { stdio: ["ignore", "pipe", "pipe"] }));
+      } catch (err) {
+        // Non-zero exit is fine — we just need the report to render.
+        stdout = err.stdout ? String(err.stdout) : "";
+      }
+      assert.ok(
+        stdout.includes("Verification report"),
+        `expected report header in stdout for form ${JSON.stringify(form[1])}, got: ${stdout.slice(0, 200)}`
+      );
+      assert.ok(
+        stdout.includes("B01"),
+        `expected batchId "B01" in report for form ${JSON.stringify(form[1])}`
+      );
+    }
+  } finally {
+    try { fs.unlinkSync(tmp); } catch { /* ignore */ }
+  }
+});
+
 test("verifyBatch: statistical flag fires when all records share one type", () => {
   const { verifyBatch } = require(MOD);
   // Use 4 records sharing one type/portability — should flag degenerate dist.

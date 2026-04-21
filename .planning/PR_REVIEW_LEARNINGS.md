@@ -1,6 +1,139 @@
 # PR Review Learnings
 
-#### Review #16: Piece 3 structural-fix + migration-skill deep-research (PR #10) — Round 1 (2026-04-21)
+#### Review #17: Piece 3 structural-fix + migration-skill deep-research (PR #10) — Round 2 (2026-04-21)
+
+**Source:** Qodo (Gemini did not post on R2)
+**PR/Branch:** PR #10 / `piece-3-labeling-mechanism` → `main`
+**Items:** 11 unique (Critical: 1, Major: 0, Minor: 4, Trivial: 0, + 2 R1 dedups, + 4 Qodo-self-rejected)
+
+**Patterns Identified:**
+
+1. **Absolute user-path PII leak across research artifacts (repo-wide).**
+   Qodo flagged `C:\Users\jbell\.local\bin\JASON-OS\...` paths in
+   `D6-cas-skills-deep.md` and `RESEARCH_OUTPUT.md`. Propagation sweep
+   showed the same pattern in 60 files with 782 total occurrences —
+   spanning `.research/migration-skill/` (this PR), `.research/jason-os-
+   mvp/` (prior PR), `.research/file-registry-portability-graph/`
+   (prior PR), and `.planning/piece-2-schema-design/PLAN.md`.
+   - Root cause: research findings include source-provenance blocks
+     that were serialized with absolute paths from the author's
+     workstation, across both operator locales (`jbell` and `jason`)
+     and both bin layouts (`.local/bin/` and `Workspace/dev-projects/`).
+   - Prevention: deep-research output serialization should use
+     placeholders (`<JASON_OS_ROOT>`, `<SONASH_ROOT>`,
+     `<JASON_OS_CLAUDE_SESSION_ROOT>`) from the start — store the
+     operator's working directory resolved against the placeholder set,
+     never the raw `process.cwd()`. Candidate gate: pre-commit regex
+     refusing `C:\\Users\\\w+\\` in tracked artifacts (honor-only until
+     implemented).
+
+2. **Qodo self-rejecting suggestions are a distinct disposition class.**
+   Four R2 suggestions had Qodo-authored rationale arguing AGAINST
+   applying them (importance 1-2, with prose like "arbitrary
+   alteration," "redundant with gapPursuitRefs," "using magic strings
+   is an anti-pattern"). These are not false positives — Qodo flagged
+   the anomaly AND flagged that the proposed fix is wrong. Correct
+   disposition is REJECT with Qodo's own rationale cited. Observed
+   four times in a single round (C-147b, C-150b, C-138 UNREGISTERED,
+   C-143b).
+   - Prevention: add an implicit "if Qodo importance ≤ 2 AND Qodo
+     self-explanation argues against the fix, auto-REJECT with Qodo
+     rationale" rule to `/pr-review` Step 2. Avoids wasted triage
+     cycles on items Qodo itself doesn't endorse.
+
+3. **Cross-round stale-diff dedup working as designed.** Two R2
+   "compliance WHITE" items (Secure Error Handling, Secure Logging
+   Practices) are exact file+rule dupes of R1 items 4 and 5 — both
+   already rejected with full technical justification. Auto-rejected
+   without re-triage cycles. Saved a round of investigation.
+
+4. **Qodo technical claim verification still matters.** Qodo's
+   "unrestricted file read path" item (WHITE) claimed the CLI
+   positional-arg heuristic could misidentify a flag value as the
+   JSONL path. Traced the normalization logic: after `--flag=VALUE`
+   expands to `[--flag, VALUE]`, the heuristic `prev.startsWith("--")`
+   correctly skips VALUE. The attack scenario Qodo described cannot
+   trigger. Rejected with technical justification rather than
+   applied-without-thinking. R1 Learning #5 (validate critical claims)
+   reaffirmed.
+
+5. **Off-by-one introduced during R1 constant extraction.** R1 commit
+   a6685a0 renamed `records.length > 3` to `records.length >
+   MIN_RECORDS_FOR_DEGENERATE_CHECK` (keeping `>`), but the constant
+   name ("MINIMUM records to trigger") reads as "`>=` semantics." Qodo
+   caught the name/operator mismatch. Fixed to `>=` and added a
+   boundary test at exactly 3 records. Minor behavior change: now
+   fires at 3 records (previously needed 4). Alignment with constant
+   name > behavior preservation here because the original `> 3` was a
+   quiet bug.
+   - Prevention: when extracting magic numbers, re-read the operator
+     against the new name — `MIN_*` almost always wants `>=`, `MAX_*`
+     almost always wants `<=` or `<`.
+
+**Resolution:**
+
+- **Fixed: 3 items**
+  - CRITICAL: PII path scrub (60 files, 782 replacements)
+  - MINOR: degenerate-check operator (`>` → `>=`) + boundary test
+  - MINOR: C-140b confidence "HIGH (v1.1 only)" → `confidence:"HIGH"` + `confidenceNote:"v1.1 only"`
+- **Deferred: 0 items**
+- **Rejected: 8 items** (with justification):
+  - **Secure Error Handling (R1 item 4 dup):** cross-round dedup.
+    `sanitize()` routes through canonical `scripts/lib/sanitize-
+    error.cjs` with SENSITIVE_PATTERNS redaction.
+  - **Secure Logging Practices (R1 item 5 dup):** cross-round dedup.
+    `formatReport` printing record paths IS the verifier's core
+    function.
+  - **Unrestricted file read path:** technical claim incorrect —
+    normalization makes the positional heuristic correct; deeper
+    "CLI jsonlPath not repo-root-bounded" concern is outside the
+    operator-invoked debug-CLI trust model (matches safe-fs.js
+    TRUST MODEL).
+  - **C-147b HIGH+empty sourceIds (Qodo self-rejects):** Qodo's own
+    rationale — "arbitrary alteration; evidence field already
+    contains detailed justification."
+  - **C-150b id split (Qodo self-rejects):** Qodo's own rationale —
+    "string identifiers like `C-150b` are standard, lexicographically
+    sortable; splitting adds unnecessary schema complexity."
+  - **Cache validators at module level:** `getValidators()` already
+    caches via `cachedValidator` at `validate-catalog.js:45`. Qodo
+    acknowledged this possibility in its own importance-6-but-low
+    rating.
+  - **C-138 S-UNREGISTERED placeholder (Qodo self-rejects):** Qodo's
+    own rationale — "adding a dummy value like `S-UNREGISTERED` is
+    an anti-pattern; `gapPursuitRefs` already captures this."
+  - **C-143b unregisteredSourceIds (Qodo self-rejects):** Qodo's own
+    rationale — "redundant with `gapPursuitRefs` which already
+    tracks `G1`."
+
+**Commit breakdown:**
+
+- `088a077` CRITICAL: PII path scrub across 60 files
+- `<commit-B>` MINOR: off-by-one + C-140b normalization + learning log
+
+**Key Learnings:**
+
+- **PII in research output is a repo-wide concern, not a per-PR one.**
+  60 files with 782 occurrences across 3 PRs' worth of research
+  artifacts. Fixed all in one sweep because partial scrubbing would
+  just re-surface the same finding on the next unrelated PR. Generalize:
+  repo-wide security fixes should not be deferred to "later" — the
+  reviewer bot will re-file on every subsequent PR touching the same
+  trees.
+- **Qodo self-rejection is a legitimate signal.** Low-importance
+  suggestions with Qodo-authored prose explaining why the fix is
+  wrong should skip manual triage entirely. Four instances in one
+  round — likely a pattern across all Qodo-reviewed repos.
+- **R1 fix quality matters for R2 noise.** The off-by-one caught here
+  was introduced by R1's own constant-rename commit. Qodo's
+  incremental-suggestion mode caught it because the constant NAME
+  made the OPERATOR wrong. Lesson: constant-extraction should re-read
+  the comparison operator against the new name, not just swap in the
+  symbol.
+- **Cross-round dedup saves real effort.** Two R1-rejected items
+  re-filed on R2 by Qodo (stale-diff); auto-rejected with prior
+  justification reference. Skill v4.6 dedup logic is doing load-
+  bearing work — keep it.
 
 **Source:** Mixed — Qodo + Gemini Code Assist
 **PR/Branch:** PR #10 / `piece-3-labeling-mechanism` → `main`

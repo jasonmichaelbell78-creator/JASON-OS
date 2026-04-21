@@ -324,7 +324,8 @@ function statisticalSanity(records) {
   }
 
   // Flag: if we have enough records and all share one type/portability value, that's suspicious.
-  if (records.length > MIN_RECORDS_FOR_DEGENERATE_CHECK) {
+  // The constant names the MINIMUM count needed to trigger, so the operator is `>=` not `>`.
+  if (records.length >= MIN_RECORDS_FOR_DEGENERATE_CHECK) {
     if (Object.keys(typeDistribution).length === 1) {
       flags.push(`all ${records.length} records share type="${Object.keys(typeDistribution)[0]}"`);
     }

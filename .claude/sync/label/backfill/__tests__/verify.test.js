@@ -180,3 +180,20 @@ test("verifyBatch: statistical flag fires when all records share one type", () =
     `expected degenerate-type flag, got: ${flagsText}`
   );
 });
+
+test("verifyBatch: degenerate-flag fires at MIN_RECORDS_FOR_DEGENERATE_CHECK boundary (3 records)", () => {
+  // Boundary test for PR #10 R2 Qodo suggestion #1 — the degenerate check
+  // must fire at exactly the named-constant threshold, not threshold+1.
+  const { verifyBatch } = require(MOD);
+  const records = [
+    baseRecord({ path: "scripts/lib/safe-fs.js", name: "r1" }),
+    baseRecord({ path: "scripts/lib/sanitize-error.cjs", name: "r2" }),
+    baseRecord({ path: "scripts/lib/security-helpers.js", name: "r3" }),
+  ];
+  const report = verifyBatch(records);
+  const flagsText = report.statistical.flags.join(" | ");
+  assert.ok(
+    flagsText.includes("share type"),
+    `expected degenerate-type flag to fire at exactly 3 records, got: ${flagsText}`
+  );
+});

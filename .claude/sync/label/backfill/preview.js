@@ -126,7 +126,23 @@ function writePreview(records, opts = {}) {
   try {
     writeCatalog(localPath, local);
   } catch (err) {
-    throw new Error(`preview.writePreview: local write failed: ${sanitize(err)}`);
+    // R2 Q6: failure-atomic preview — if local write fails after shared
+    // landed, clean up the half-written shared so the preview dir is
+    // either fully populated or empty. Re-running writePreview would
+    // otherwise leave a stale mismatched shared+local pair on disk.
+    let cleanupErr = null;
+    try {
+      require("node:fs").rmSync(sharedPath, { force: true });
+    } catch (rmErr) {
+      cleanupErr = sanitize(rmErr);
+    }
+    const primary = `preview.writePreview: local write failed: ${sanitize(err)}`;
+    if (cleanupErr !== null) {
+      throw new Error(
+        `${primary}; cleanup of partial shared ALSO failed: ${cleanupErr}`
+      );
+    }
+    throw new Error(`${primary}; cleaned partial shared preview`);
   }
 
   return {

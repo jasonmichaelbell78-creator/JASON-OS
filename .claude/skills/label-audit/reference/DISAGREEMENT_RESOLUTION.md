@@ -36,10 +36,13 @@ field**. Each comparison falls into one of the cases below.
 field is a simple scalar (type, status, source_scope, etc.).
 
 **Action:**
-- Preview stores `null` for the field — the schema (v1.2+) enforces
-  `additionalProperties: false` on every scalar enum field, so any
-  non-null non-enum shape would fail validation at pre-commit. The
-  value is `null` in the preview record itself:
+- Preview stores `null` for the field. The schema (v1.2+) enforces
+  `additionalProperties: false` on the **record object**; scalar fields
+  like `type` are constrained separately by their enum definition. An
+  attempt to store an object shape (e.g. `{value, candidates}`) in a
+  scalar field would fail validation because the value no longer
+  matches the enum's string type — the preview therefore writes the
+  field as `null` and carries candidates on the sidecar below:
   ```json
   "type": null
   ```

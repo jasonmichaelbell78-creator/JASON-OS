@@ -302,10 +302,26 @@ function approveAndPromote(opts = {}) {
     opts.checkpointPath ? { path: opts.checkpointPath } : {}
   );
 
+  // R2 Compliance (Comprehensive Audit Trails / Qodo ⚪): include an
+  // operator identity so audit rows are reconstructable per-actor. For
+  // JASON-OS (single-user dev CLI) this is the OS-level username from
+  // `os.userInfo().username`, with env-var fallback. Not a security-
+  // bearing identity (no auth system exists); it's forensic signal.
+  let operatorId = "unknown";
+  try {
+    operatorId =
+      require("node:os").userInfo().username ||
+      process.env.USER ||
+      process.env.USERNAME ||
+      "unknown";
+  } catch {
+    operatorId = process.env.USER || process.env.USERNAME || "unknown";
+  }
   const auditEntry = {
     ts,
     action: "promote-preview-to-real",
     outcome: "success",
+    operator_id: operatorId,
     shared_path: result.sharedPath,
     local_path: result.localPath,
     counts: result.counts,

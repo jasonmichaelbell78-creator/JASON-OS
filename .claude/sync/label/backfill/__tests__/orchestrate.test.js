@@ -206,7 +206,9 @@ test("e2e: approveAndPromote writes real catalog atomically", async () => {
   const realLocal = catalogIo.readCatalog(promoted.localPath);
   assert.equal(realShared.length + realLocal.length, 6);
 
-  // R1 Q7: promote audit row must exist with expected schema.
+  // R1 Q7 + R2 Compliance: promote audit row must exist with expected
+  // schema, including R2's `operator_id` field for forensic actor
+  // reconstruction.
   assert.ok(fs.existsSync(auditPath), "promote audit file must be created");
   const auditLines = fs.readFileSync(auditPath, "utf8").trim().split("\n");
   assert.equal(auditLines.length, 1);
@@ -215,6 +217,10 @@ test("e2e: approveAndPromote writes real catalog atomically", async () => {
   assert.equal(auditEntry.outcome, "success");
   assert.ok(typeof auditEntry.ts === "string" && auditEntry.ts.length > 0);
   assert.equal(auditEntry.counts.shared + auditEntry.counts.local, 6);
+  assert.ok(
+    typeof auditEntry.operator_id === "string" && auditEntry.operator_id.length > 0,
+    "audit row must include operator_id (R2 Comprehensive Audit Trails)"
+  );
 
   const latest = orch.loadCheckpoint({ path: checkpointPath });
   assert.equal(latest.phase, "promoted");

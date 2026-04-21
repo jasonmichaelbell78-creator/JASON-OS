@@ -33,8 +33,33 @@ const {
 const { sanitize, logger } = require("../lib/sanitize");
 
 /**
+ * Piece 3 machinery fields (v1.2 schema). These belong to the orchestrator
+ * layer — the PostToolUse hook populates them on write and the back-fill
+ * orchestrator re-stamps them at promote time. Agents are TOLD to emit
+ * them (DERIVATION_RULES.md §4) but their values are not cross-check-
+ * comparable:
+ *   - `last_hook_fire` timestamps differ between primary / secondary by
+ *     construction (each agent calls `new Date().toISOString()`),
+ *     producing a guaranteed Case C disagreement on every record.
+ *   - `pending_agent_fill`, `manual_override`, `needs_review`,
+ *     `schema_version` are orchestrator-owned — cross-checking them is
+ *     noise.
+ * Excluding them from unionFieldNames preserves the schema-compliant
+ * preview (orchestrator re-stamps on write) without polluting the
+ * disagreements sidecar with non-informative entries. R2 Qodo Low.
+ */
+const MACHINERY_FIELDS = new Set([
+  "pending_agent_fill",
+  "manual_override",
+  "needs_review",
+  "last_hook_fire",
+  "schema_version",
+]);
+
+/**
  * Extract the set of field names to cross-check — union of primary &
- * secondary keys, excluding reserved slots (`path`, `confidence`).
+ * secondary keys, excluding reserved slots (`path`, `confidence`) and
+ * orchestrator-owned machinery fields (R2 Q5).
  * @param {object} primary
  * @param {object} secondary
  * @returns {string[]}
@@ -47,6 +72,7 @@ function unionFieldNames(primary, secondary) {
     if (!src || typeof src !== "object") continue;
     for (const key of Object.keys(src)) {
       if (reserved.has(key)) continue;
+      if (MACHINERY_FIELDS.has(key)) continue;
       if (!seen.has(key)) {
         seen.add(key);
         out.push(key);

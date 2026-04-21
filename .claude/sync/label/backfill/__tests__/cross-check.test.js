@@ -195,6 +195,52 @@ test("Case G: type mismatch → null in preview (schema-compliant), type_mismatc
   assert.equal(d.candidates.length, 2);
 });
 
+// --- R2 Q5: machinery fields excluded from cross-check ---
+test("Machinery fields: primary/secondary disagreement on last_hook_fire does NOT surface", () => {
+  // R2 Q5: orchestrator-owned fields (pending_agent_fill, manual_override,
+  // needs_review, last_hook_fire, schema_version) MUST be excluded from the
+  // cross-check field iteration — agent timestamps differ by construction
+  // and would otherwise produce a guaranteed Case C disagreement per record.
+  const { crossCheck } = require(MOD);
+  const primary = {
+    path: "m.js",
+    type: "script",
+    last_hook_fire: "2026-04-20T18:00:00.000Z",
+    pending_agent_fill: false,
+    manual_override: ["type"],
+    needs_review: ["purpose"],
+    schema_version: "1.2",
+    confidence: { type: 0.95 },
+  };
+  const secondary = {
+    path: "m.js",
+    type: "script",
+    last_hook_fire: "2026-04-20T18:00:00.999Z", // different timestamp
+    pending_agent_fill: false,
+    manual_override: [], // primary has ["type"], secondary has []
+    needs_review: [], // different too
+    schema_version: "1.2",
+    confidence: { type: 0.92 },
+  };
+  const { preview, needsReview, disagreements } = crossCheck({
+    primary,
+    secondary,
+  });
+  // Only `type` should be cross-checked (agreement).
+  assert.equal(preview.type, "script");
+  assert.deepEqual(disagreements, []);
+  assert.deepEqual(needsReview, []);
+  // Machinery fields are excluded from the preview too — orchestrator
+  // re-stamps them at promote time.
+  assert.ok(!("last_hook_fire" in preview));
+  assert.ok(!("pending_agent_fill" in preview));
+  assert.ok(!("manual_override" in preview));
+  assert.ok(!("needs_review" in preview) || Array.isArray(preview.needs_review));
+  // (needs_review is added by the machinery layer — tolerate either absence
+  // or empty-array presence depending on downstream merge.)
+  assert.ok(!("schema_version" in preview));
+});
+
 // --- Record unreachable: primary null ---
 test("Record unreachable: primary null → { unreachable: true }", () => {
   const { crossCheck } = require(MOD);

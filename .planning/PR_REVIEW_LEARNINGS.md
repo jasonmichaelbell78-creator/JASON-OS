@@ -861,3 +861,77 @@ PR #3 still pending across all subsequent PRs — not a PR #5 blocker.)
   resume-feature PRs.
 - "safe-fs.js bypass is a recurring violation; candidate pre-commit
   grep" → `/todo` candidate.
+
+#### Review #14: PR #9 — Round 2 (2026-04-20)
+
+**Source:** Qodo (primary — Compliance Guide + Code Suggestions; no Gemini this round)
+**PR/Branch:** PR #9 / `piece-3-labeling-mechanism` → `main`
+**Items:** 11 unique after dedup (Major: 1, Minor: 4, Trivial: 2, Compliance-advisory: 2, Auto-rejected via cross-round dedup: 2). 4 fixed, 7 rejected, 0 deferred.
+
+**Resolution:**
+
+- Fixed: 4 items across 2 commits
+  - MAJOR R2-Q1 (per-batch missing-rehydration) → `79eb716`
+  - MINOR batch: R2-Q2 doc rationale, R2-Q5 machinery-field exclusion, R2-Q6 torn preview cleanup, Compliance operator_id on audit row → `<next>`
+- Rejected: 7 items
+  - **Path injection I/O** (compliance) — cross-round dedup ≡ R1 Q4/Q5; trust model already documented
+  - **Path trust assumption** (Security-First Input Validation) — cross-round dedup ≡ R1 Q4/Q5
+  - **R2-Q3** allow null for manual_override/needs_review arrays — Qodo's own "Why" states *"unnecessarily weakens the schema's strictness"* (self-flagged low-value)
+  - **R2-Q4** BigInt in stableStringify — Qodo's own "Why" states *"theoretical edge case irrelevant"* (self-flagged not applicable)
+  - **R2-Q7** template size guard fallback — Qodo's own "Why" states *"highly improbable DoS risk... unnecessary complexity for marginal benefit"* (self-flagged low-value)
+  - **Log format unclear** (compliance) — JASON-OS is a single-user dev CLI; text logs with `[label]` prefix + `sanitize()` redaction are appropriate. Structured JSON is a SIEM-ingest requirement that doesn't apply to local developer tooling.
+
+**Patterns Identified:**
+
+1. **Safety valves with all-or-nothing semantics waste work.** My R1
+   resume-rehydration fix had a safety valve: "if ANY claimed batch is
+   missing its cross-check-result in history, re-dispatch ALL completed
+   batches." Qodo caught that partial-truncation forces full re-dispatch
+   instead of surgical re-dispatch of just the missing batches. The
+   lesson: when writing recovery logic, the granularity of the recovery
+   should match the granularity of the damage. Per-batch claim → per-batch
+   check → per-batch recovery.
+
+2. **Doc text should describe the constraint, not the effect.** Qodo
+   R2-Q2 correction: I wrote "`additionalProperties: false` on every
+   scalar enum field" when the actual mechanism is "`additionalProperties:
+   false` on the record object, with scalar fields constrained separately
+   by their enum definition." Both prevent the same failure, but the
+   inaccurate description makes the doc less trustworthy as a reference.
+   Doc rationale corrections are higher-value than they look.
+
+3. **Cross-check should exclude orchestrator-owned fields (machinery-
+   layer).** The 5 Piece 3 machinery fields (`last_hook_fire`,
+   `pending_agent_fill`, `manual_override`, `needs_review`,
+   `schema_version`) are populated by the hook/orchestrator, not the
+   derivation agent. `last_hook_fire` timestamps differ between primary
+   and secondary by construction — every record would report a guaranteed
+   Case C disagreement. The cross-check needs a `MACHINERY_FIELDS` filter
+   to skip them in `unionFieldNames()`. Caught by Qodo at Low severity;
+   would have been a noisy high-false-positive-rate bug at S10.
+
+4. **Atomic-pair writers should be failure-atomic at both levels.** My
+   R1 promotePreview already had rollback (Case D: local fails after
+   shared succeeded → restore shared snapshot). But `writePreview` had
+   the same failure mode unguarded: shared writes, local fails, preview
+   dir left with mismatched pair. Fixed with parallel cleanup logic
+   (delete shared on local failure). Pattern: every atomic-pair writer
+   should treat "second write fails after first succeeded" as a distinct
+   rollback-needed case, not an implicit "caller retries."
+
+5. **Qodo self-flagged low-confidence suggestions are valid rejection
+   signal.** Three of R2's code suggestions (Q3, Q4, Q7) came with Qodo's
+   own "Why" explaining they're low-value or irrelevant. Taking those
+   rejections at face value is reasonable — the reviewer itself is
+   confirming the signal is weak. The skill's "never dismiss as trivial"
+   rule covers suppression of valid findings; it doesn't require
+   fighting a reviewer's own acknowledgment that a suggestion doesn't
+   apply.
+
+**Key learnings to promote to memory (candidates):**
+
+- "Safety-valve granularity must match damage granularity" → process
+  learning for future recovery-logic features.
+- "Machinery-layer fields belong to the orchestrator — cross-check
+  filters them" → sync-mechanism convention; consider a
+  MACHINERY_FIELDS constant in a shared module if the pattern recurs.

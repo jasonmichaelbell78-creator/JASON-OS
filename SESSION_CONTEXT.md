@@ -90,9 +90,14 @@ review).
   on all new/modified Piece 3 files
 - **S12 end-to-end tests T1–T9** (after S11) — hook + back-fill
   behavioral validation
-- **T28 `/migrate` skill** — deep-plan required
-- **Resume `/brainstorm port-skill`** — paused Phase 1 Q11/Q12;
-  resume pointer `.research/port-skill/RESUME.md`
+- **T28 `/migration` skill** — now unified into the migration-skill
+  brainstorm below (renamed 2026-04-20 session 2 from `/migrate`);
+  deep-research required before deep-plan
+- **Migration-skill brainstorm** — renamed from `port-skill` on
+  2026-04-20 session 2; Phase 1 complete (27 decisions D1–D27, rules
+  R1–R4). Next: Phase 2 (light) → Phase 3 → Phase 4 → `/deep-research`
+  per BRAINSTORM_WIP.md §7. Resume pointer
+  `.research/migration-skill/RESUME.md`.
 
 ### Pre-reading for S10
 
@@ -130,17 +135,17 @@ review).
 - Schema (v1.2): `.claude/sync/schema/` (schema-v1.json + enums.json
   + SCHEMA.md + EVOLUTION.md)
 
-**Port-skill brainstorm (paused Phase 1 at Q11/Q12):**
+**Migration-skill brainstorm (renamed from port-skill; Phase 1 complete, 27 decisions locked):**
 
-- Resume pointer: `.research/port-skill/RESUME.md`
-- WIP capture: `.research/port-skill/BRAINSTORM_WIP.md`
-- Transcript: `.research/port-skill/TRANSCRIPT.md`
+- Resume pointer: `.research/migration-skill/RESUME.md`
+- WIP capture: `.research/migration-skill/BRAINSTORM_WIP.md`
+- Transcript: `.research/migration-skill/TRANSCRIPT.md` (session-1 verbatim, `/port`-era)
 
 **Branch state:**
 
 - JASON-OS: `piece-3-labeling-mechanism` — 6 commits ahead of `main`
-  (ee4322b port-skill WIP + 5 session-11 commits; PR #8 already merged
-  v1.1 base via `ad79c2a`)
+  (ee4322b port-skill WIP, renamed to migration-skill in-session + 5
+  session-11 commits; PR #8 already merged v1.1 base via `ad79c2a`)
 - SoNash: `CAS-41826` unchanged since Session 8
 
 **Active todos:** `.planning/todos.jsonl` (31 entries; 22 pending,

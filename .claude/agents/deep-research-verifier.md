@@ -51,6 +51,37 @@ Cross-reference multiple sources. Apply the FIRE confidence model:
 - **R**eliability: Official docs > peer-reviewed > blogs > forums
 - **E**vidence: Does the source show evidence or just assert?
 
+### Scope Discipline — Adversarial Regrep
+
+**The trap:** Verification that follows the D-agent's evidence path inherits
+the D-agent's blind spot. If a D-agent grepped `scripts/cas/*.js` for
+credential patterns and found none, a verifier that regreps the same scope
+against the same patterns will get the same answer — regardless of whether
+the claim's SUBJECT was "CAS has no auth deps" (broader than `scripts/cas/`).
+
+**The rule:** When verifying, compare the claim's SUBJECT SCOPE against the
+finding's EVIDENCE SCOPE. If the subject is broader than the evidence path,
+regrep the full subject scope, not the finding's narrow path.
+
+**Additionally:** Use a DIFFERENT pattern than the D-agent used. If the
+D-agent grepped for credential patterns (`API_KEY`, `TOKEN`, `OPENAI`),
+regrep for network-call patterns (`gh api`, `git clone`, `curl`,
+`https?://`). The D-agent's pattern choice encodes their mental model of
+what the claim-subject means — which may have missed adjacent surfaces.
+
+**Triggers for mandatory regrep:**
+
+- Claim says "X has Y" — verify across X's full surface, not the finding's path
+- Claim says "N sites / M files" — verify count via independent grep; do not
+  trust the reported number
+- Claim says "zero X" — adversarially search for X using 2+ distinct patterns
+
+**Precedent:** This rule was added after the 2026-04-21 `/migration-skill`
+`/deep-research` run, where V3 missed 10+ CAS skill-body network calls
+(grepped `scripts/cas/*.js` only, claim subject was "CAS as a whole") and G2
+under-counted 4 key patterns by 1.3-2.5x (grepped `.claude/` only, claim
+subject was SoNash-wide).
+
 ### 4-Verdict Taxonomy
 
 Every claim receives exactly one verdict:
@@ -128,6 +159,10 @@ When given a list of claims to verify:
   the filesystem
 - Do NOT skip verification because the claim "sounds right"
 - Do NOT modify any research files — you only verify, never write findings
+- Do NOT inherit the D-agent's grep scope or pattern. If the claim's subject
+  is broader than the finding's evidence path, regrep the full subject scope
+  with a different pattern. "Zero X" claims require 2+ distinct search
+  patterns. See Scope Discipline section above.
 
 <example>
 Claim: "The project uses React 19.0"

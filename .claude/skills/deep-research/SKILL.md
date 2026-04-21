@@ -248,6 +248,15 @@ VERIFIED, REFUTED, UNVERIFIABLE, CONFLICTED) with evidence.
 "+80% improvement") MUST cite its measurement methodology, benchmark, or source.
 Unsubstantiated % claims are flagged as UNVERIFIABLE by verifiers.
 
+**Scope discipline rule (added 2026-04-21):** Verifier MUST regrep BROADER
+scope AND DIFFERENT patterns than the D-agent's evidence path. Verification
+that follows the finding's evidence path inherits its blind spot. See
+`deep-research-verifier.md` §"Scope Discipline — Adversarial Regrep" for the
+full rule + triggers. Surfaced during /migration-skill research where V3
+missed 10+ CAS skill-body network calls (grepped `scripts/cas/` only; claim
+subject was "CAS as a whole") and G2 under-counted 4 SoNash-side patterns by
+1.3-2.5× (grepped `.claude/` only; claim subject was SoNash-wide).
+
 **Persistence safety net (post-spawn — applies to verifier, challenger, and
 dispute-resolver agents across Phases 2.5, 3, 3.5, 3.9, and 3.96):** After
 each applicable agent returns, orchestrator MUST verify the expected

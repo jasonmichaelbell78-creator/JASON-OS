@@ -2,18 +2,21 @@
 /**
  * validate-catalog.js — Pre-commit validator for Piece 3 catalogs.
  *
- * Wraps ajv against `.claude/sync/schema/schema-v1.json` and adds Piece 3
- * commit-time rules (D3 + D5):
+ * Wraps ajv against `.claude/sync/schema/schema-v1.json` (v1.3) and adds
+ * Piece 3 commit-time rules (D3 + D5):
  *
  *   1. `status: partial` is rejected — must resolve the async fill first.
  *   2. `needs_review` MUST be an empty array — any non-empty list blocks.
  *   3. `pending_agent_fill: true` is rejected — async fills must settle.
- *   4. Optional: schema_version must match a known value.
+ *   4. `.name` uniqueness across the catalog (D4.3) — duplicate names
+ *      fail with both conflicting paths named in the error.
+ *   5. `schema_version` is informational — records stamped older than
+ *      "1.3" still validate by additive compatibility per D5.8.
  *
- * Also extends the in-memory copy of the schema's `status` enum with
- * `partial` so records in flight pass schema validation but fail the rule
- * layer. This avoids touching `schema-v1.json` until the minor bump lands
- * (see `.claude/sync/label/docs/CATALOG_SHAPE.md` §4.1).
+ * Structural-fix D5.8: single-path validation against v1.3. The old
+ * `extendStatusEnum` in-memory fallback was a pre-v1.1 belt-and-
+ * suspenders — schema has carried `partial` natively since v1.1 and
+ * it is now dead code. Removed.
  *
  * Invocation:
  *   node validate-catalog.js            # all 4 default catalogs
@@ -64,40 +67,26 @@ function getValidators() {
     throw new Error(`validate-catalog: schema load failed: ${sanitize(err)}`);
   }
 
-  // Extend status enum in memory: add `partial` so schema-valid records can
-  // be inflight; the rule layer below separately rejects them at commit.
-  // (Harmless now that schema-v1.json also carries `partial`; retained as
-  // belt-and-suspenders for pre-v1.1 schema files encountered during
-  // cross-repo sync windows.)
-  extendStatusEnum(schema, "partial");
+  // D5.8 (structural-fix): single-path validation against v1.3. The old
+  // in-memory `extendStatusEnum(schema, "partial")` belt-and-suspenders
+  // was for pre-v1.1 schema files during cross-repo sync windows; schema
+  // has carried `partial` natively since v1.1 — dead code removed.
 
+  // D2.2 (structural-fix): schema-v1.json needs ajv-formats because
+  // last_hook_fire carries format:date-time. Registering formats here
+  // matches the posture in .validate-test.cjs (Phase A).
+  const addFormats = require("ajv-formats");
   // allErrors:false — fail-fast on first validation error. Silences the
   // ajv-allerrors-true DoS advisory (Semgrep) and matches production-grade
   // usage; we still emit a specific diagnostic for the first failure, which
   // is enough to guide a local-dev fix.
   const ajv = new Ajv({ allErrors: false, strict: false });
+  addFormats(ajv);
   const validateFile = compileFileRecordValidator(ajv, schema);
   const validateComposite = compileCompositeValidator(ajv, schema);
   cachedValidator = { validateFile, validateComposite };
   return cachedValidator;
 }
-
-/**
- * Patch the status enum in an ajv-loaded schema. Searches common locations
- * (definitions, $defs) for `enum_status` and adds the value if missing.
- * @param {object} schema
- * @param {string} value
- */
-function extendStatusEnum(schema, value) {
-  const locations = [schema.definitions, schema.$defs];
-  for (const container of locations) {
-    if (!container) continue;
-    const def = container.enum_status;
-    if (!def || !Array.isArray(def.enum)) continue;
-    if (!def.enum.includes(value)) def.enum.push(value);
-  }
-}
-
 
 /**
  * Compile a validator for file records. Falls back to the whole schema if
@@ -148,6 +137,37 @@ function applyRuleLayer(record) {
 }
 
 /**
+ * D4.3 name-uniqueness enforcement. Builds a `{name → firstSeenRecord}`
+ * index; emits a Duplicate error for every subsequent record that shares
+ * a name, naming both conflicting paths in the message.
+ *
+ * @param {object[]} records
+ * @returns {Array<{line: number, path: string, messages: string[]}>}
+ */
+function checkNameUniqueness(records) {
+  const nameIndex = new Map();
+  const errors = [];
+  records.forEach((record, idx) => {
+    if (!record || typeof record !== "object") return;
+    if (typeof record.name !== "string" || record.name.length === 0) return;
+    const thisPath = typeof record.path === "string" ? record.path : `<line ${idx + 1}>`;
+    const prior = nameIndex.get(record.name);
+    if (prior) {
+      errors.push({
+        line: idx + 1,
+        path: thisPath,
+        messages: [
+          `Duplicate .name "${record.name}" between ${prior.path} and ${thisPath}`,
+        ],
+      });
+    } else {
+      nameIndex.set(record.name, { path: thisPath, line: idx + 1 });
+    }
+  });
+  return errors;
+}
+
+/**
  * Validate a single catalog file.
  * @param {string} catalogPath
  * @param {"file" | "composite"} [recordType="file"]
@@ -185,6 +205,10 @@ function validateCatalog(catalogPath, recordType = "file") {
       });
     }
   });
+
+  // D4.3: catalog-scope name uniqueness check (runs after per-record
+  // validation so schema errors and duplicate errors both surface).
+  errors.push(...checkNameUniqueness(records));
 
   return { valid: errors.length === 0, errors };
 }
@@ -298,6 +322,7 @@ module.exports = {
   DEFAULT_CATALOGS,
   getValidators,
   applyRuleLayer,
+  checkNameUniqueness,
   validateCatalog,
   filterStagedCatalogs,
   cli,

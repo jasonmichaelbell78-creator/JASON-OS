@@ -72,14 +72,34 @@ function deriveCheapFields(filePath, options = {}) {
     content = "";
   }
 
+  const type = detectType(rel, content);
   return {
-    name: path.basename(rel, path.extname(rel)),
+    name: deriveName(rel, type),
     path: rel,
-    type: detectType(rel, content),
+    type,
     fingerprint: content.length > 0 ? fingerprint(content) : `sha256:empty-or-binary-${stat.size}`,
     module_system: detectModuleSystem(rel, content),
     file_size: stat.size,
   };
+}
+
+/**
+ * D4.1 naming canon — type-dependent:
+ *   skill → directory slug (`.claude/skills/<slug>/SKILL.md` → `<slug>`)
+ *   others → basename without extension
+ * Collisions surface at validate time (D4.3) — this helper does NOT
+ * disambiguate.
+ *
+ * @param {string} filePath - Repo-relative, forward-slashed
+ * @param {string} type - Resolved type enum value
+ * @returns {string}
+ */
+function deriveName(filePath, type) {
+  if (type === "skill") {
+    const m = /^\.claude\/skills\/([^/]+)\/SKILL\.md$/i.exec(filePath);
+    if (m) return m[1];
+  }
+  return path.basename(filePath, path.extname(filePath));
 }
 
 /**
@@ -136,15 +156,37 @@ function detectType(filePath, content = "") {
   const base = path.basename(rel);
   const ext = path.extname(rel).toLowerCase();
 
+  // --- Piece 3 structural-fix additions (D4.5 + D4.6) ---
+  // Ordered most-specific first. Tests precede everything because a
+  // `*.test.js` file anywhere (including inside .claude/hooks/ or
+  // scripts/) should classify as `test`, not as its directory-type.
+
+  // Tests (D4.6) — both suffix form and __tests__ dir form
+  if (/\.(test|spec)\.(js|cjs|mjs|ts)$/i.test(rel)) return "test";
+  if (/(?:^|\/)__tests__\/[^/]+\.(js|cjs|mjs|ts)$/i.test(rel)) return "test";
+
+  // .husky/_/ shims → git-hook (D4.5e). Caller stamps status:generated.
+  if (/^\.husky\/_\//i.test(rel)) return "git-hook";
+  // .husky/_shared.sh + .husky/husky.sh → hook-lib (D4.5c)
+  if (/^\.husky\/(_shared|husky)\.sh$/i.test(rel)) return "hook-lib";
+  // .husky/<name> (no ext, top-level, not under _/) → git-hook (D4.5d)
+  if (/^\.husky\/[^/]+$/i.test(rel) && ext === "") return "git-hook";
+
+  // .claude/hooks/**/*.sh → hook-lib (D4.5 a+b — run-*.sh and any other
+  // .sh under the hooks tree). Must precede the `.js` Hooks rule below.
+  if (/^\.claude\/hooks\/.*\.sh$/i.test(rel)) return "hook-lib";
+
+  // --- Existing rules ---
+
   // Skills
   if (/^\.claude\/skills\/[^/]+\/SKILL\.md$/i.test(rel)) return "skill";
   // Agents
   if (/^\.claude\/agents\/[^/]+\.md$/i.test(rel)) return "agent";
   // Teams
   if (/^\.claude\/teams\/[^/]+\.md$/i.test(rel)) return "team";
-  // Hook libs
+  // Hook libs (.claude/hooks/lib/**)
   if (/^\.claude\/hooks\/lib\//i.test(rel)) return "hook-lib";
-  // Hooks
+  // Hooks (.claude/hooks/**/*.{js,cjs,mjs})
   if (/^\.claude\/hooks\//i.test(rel) && (ext === ".js" || ext === ".cjs" || ext === ".mjs")) {
     return "hook";
   }
@@ -384,6 +426,7 @@ module.exports = {
   PATH_TRAVERSAL_RE,
   toRepoRelative,
   deriveCheapFields,
+  deriveName,
   deriveUnderstandingFields,
   detectType,
   detectModuleSystem,

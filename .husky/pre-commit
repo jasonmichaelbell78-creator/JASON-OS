@@ -30,7 +30,29 @@ else
   echo "  Install: winget install Gitleaks.Gitleaks (Windows) or brew install gitleaks (macOS)" >&2
 fi
 
-# --- Check 2: label validation (Piece 3 D3 + D5) ---
+# --- Check 2: enums.json drift (Piece 3 structural-fix D3.5 + C.6) ---
+# If schema-v1.json OR enums.json is staged, verify enums.json matches the
+# schema. build-enums.js --check does a pure comparison (no write) and
+# exits non-zero on drift with guidance to re-run without --check.
+if is_skipped "enums"; then
+  require_skip_reason "SKIP_CHECKS=enums"
+  echo "  enums drift check skipped (SKIP_REASON: $SKIP_REASON)"
+elif command -v node >/dev/null 2>&1; then
+  if git diff --cached --name-only --diff-filter=ACMR | grep -Eq '^\.claude/sync/schema/(schema-v1\.json|enums\.json)$'; then
+    if ! node .claude/sync/schema/build-enums.js --check; then
+      echo "" >&2
+      echo "  Commit blocked: enums.json is out of sync with schema-v1.json" >&2
+      echo "  Fix: node .claude/sync/schema/build-enums.js; git add .claude/sync/schema/enums.json; re-commit." >&2
+      echo "  Skip (only if intentional): SKIP_CHECKS=enums SKIP_REASON=\"...\" git commit" >&2
+      exit 1
+    fi
+    echo "  enums: schema/enums.json in sync"
+  fi
+else
+  echo "  node not available — enums drift check skipped (advisory)" >&2
+fi
+
+# --- Check 3: label validation (Piece 3 D3 + D5) ---
 # Blocks commits that include label-catalog records in invalid commit-time
 # state: status:partial, pending_agent_fill:true, or non-empty needs_review.
 # Only validates catalogs present in the staged-file list; silent skip

@@ -98,19 +98,15 @@ function verifyRecord(record, opts = {}) {
   const sanityWarnings = [];
   const sanityErrors = [];
 
-  // Layer 1: schema
-  // `confidence` is a runtime cross-check metadata field — agents emit it,
-  // but it is intentionally NOT in schema-v1.json (file_record has
-  // `additionalProperties: false`). Strip before schema check; preserve the
-  // raw record for sanity checks below.
+  // Layer 1: schema (v1.3).
+  // Pre-v1.3, `confidence` was stripped before validation because schema's
+  // `additionalProperties: false` rejected it. v1.3 (D2.2) makes confidence
+  // an explicit optional top-level object on file_record + composite_record.
+  // verify.js now validates the raw agent output directly — strip-before-
+  // validate removed per structural-fix D5.6.
   try {
     const { validateFile } = getValidators();
-    let toValidate = record;
-    if (record && typeof record === "object" && "confidence" in record) {
-      const { confidence: _conf, ...rest } = record;
-      toValidate = rest;
-    }
-    const ok = validateFile(toValidate);
+    const ok = validateFile(record);
     if (!ok) {
       for (const e of validateFile.errors || []) {
         schemaErrors.push(`${e.instancePath || "(root)"}: ${e.message}`);

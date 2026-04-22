@@ -74,7 +74,7 @@ function getValidators() {
 
   // D2.2 (structural-fix): schema-v1.json needs ajv-formats because
   // last_hook_fire carries format:date-time. Registering formats here
-  // matches the posture in .validate-test.cjs (Phase A).
+  // matches the posture in validate.test.cjs (Phase A).
   const addFormats = require("ajv-formats");
   // allErrors:false — fail-fast on first validation error. Silences the
   // ajv-allerrors-true DoS advisory (Semgrep) and matches production-grade

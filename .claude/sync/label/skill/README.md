@@ -1,18 +1,11 @@
-# `skill/` — Reference material for the `/label-audit` skill
+# `skill/` — (placeholder; may be removed)
 
-Colocated reference docs the skill reads at runtime. The invokable skill
-definition itself lives at `.claude/skills/label-audit/` (standard skill
-location) per Plan §S7.
+**Session #15 reconciliation verdict:** all `/label-audit` reference
+material lives at `.claude/skills/label-audit/reference/`
+(`DERIVATION_RULES.md`, `DISAGREEMENT_RESOLUTION.md`,
+`BYTE_WEIGHTED_SPLITS.md`). This directory is empty.
 
-**Built in:** S7 (Plan §S7).
-
-## Planned contents
-
-| File | Purpose |
-| --- | --- |
-| (reserved) | Reference material colocated with the mechanism if S7 determines it belongs here rather than under `.claude/skills/label-audit/reference/` |
-
-**S7 will reconcile:** if all reference material fits cleanly under
-`.claude/skills/label-audit/reference/` (DERIVATION_RULES.md,
-DISAGREEMENT_RESOLUTION.md, BYTE_WEIGHTED_SPLITS.md), this directory may be
-removed. Retained for now per Plan §S0 tree.
+The directory is retained per Plan §S0 tree for historical consistency
+and may be removed in a later cleanup commit. No files under here are
+referenced by any code, hook, or skill as of structural-fix Session
+#15.

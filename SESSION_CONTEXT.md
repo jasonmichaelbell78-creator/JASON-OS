@@ -11,34 +11,46 @@ No (working tree clean after pause commits)
 
 ## Quick Recovery
 
-**Last Checkpoint**: 2026-04-22 (Session 16 pause at B36/70)
+**Last Checkpoint**: 2026-04-22 (Session 16 pause — G.1 + G.1.5 complete, G.2 next)
 **Branch**: `fixes-42226`
-**Working On**: Phase G.1 — Sequential back-fill dispatch, PAUSED mid-loop
-**Files Modified**: none (all in-flight state under gitignored `.claude/state/`)
-**Next Step**: Resume from B37 via `node .claude/state/batch-tmp/run-batch.js prepare 36` → dispatch primary+secondary agents → `record 36`. Loop through B37–B70.
+**Working On**: Structural-fix Phase G promotion gate, G.2 next
+**Files Modified**: none on disk (preview jsonls written to gitignored path)
+**Next Step**: Start G.2 — `node .claude/sync/label/backfill/verify.js .claude/sync/label/preview/shared.jsonl`; repeat for local.jsonl; then /label-audit dogfood on preview; then synthesis agent summary over 2187 disagreements; then user approval.
 **Uncommitted Work**: no
 
-### Phase G.1 status
-- **Batches recorded: 36 / 70** (B01–B36)
-- **Records in preview: 119** (not yet consolidated into `.claude/sync/label/preview/*.jsonl`)
-- **Checkpoint**: `.claude/state/label-backfill-checkpoint.jsonl` (append-only; orchestrate.js resume-safe)
-- **Per-batch state**: `.claude/state/batch-tmp/B<NN>/` contains {primary.md, secondary.md, batch.json, primary-out.json, secondary-out.json, crosschecked.json}
-- **Driver script**: `.claude/state/batch-tmp/run-batch.js` (gitignored; gets rebuilt if lost)
-- **Remaining: 34 batches** × ~2 min each ≈ 70 min to finish G.1
+### Phase G status (G.1 + G.1.5 DONE)
+- **All 70 batches recorded** — 461 preview records total
+- **Preview written**: `.claude/sync/label/preview/shared.jsonl` (157 records — universal + user scope) + `preview/local.jsonl` (304 records — project + machine + ephemeral scope)
+- **Per-batch artifacts preserved**: `.claude/state/batch-tmp/B<NN>/` has primary-out + secondary-out + crosschecked per batch
+- **Checkpoint history**: `.claude/state/label-backfill-checkpoint.pre-truncation.jsonl` (B01–B68 archived after 2MB size-guard hit) + new `label-backfill-checkpoint.jsonl` (B68+ post-rotation)
+- **Driver script**: `.claude/state/batch-tmp/run-batch.js` (gitignored)
 
-### Session 16 commits (3 mid-run corrections)
+### Scale metrics
+- 461 records × ~4.7 disagreements/record = 2,187 total disagreements
+- 100% records have ≥1 needs_review field (expected — purpose/notes wording variance inevitable)
+- 31 records with null `type` from Case C cross-check disagreements — need G.2 arbitration
+- Type breakdown: 238 research-session, 37 doc, 24 planning-artifact, 21 script-lib, 16 skill, 13 test, 13 canonical-memory, 12 hook, 11 config, 9 script, 8 tool-file, 8 ci-workflow, 7 agent, 5 plan, 5 hook-lib, 2 git-hook, 1 team, 31 null/unknown
+
+### Session 16 commits so far
 | SHA | Fix |
 |---|---|
-| `c84cfbd` | scan.js `git ls-files` enumeration + statusline exe exclude — honors committable-is-in-scope (D1.2 was being violated by PRUNE_DIRS) |
-| `ec3fdc0` | `agent-instructions-shared.md` confidence-on-every-field coverage rule — D6.5 mid-run correction after B01 pilot showed 22/27 false-positive needs_review |
-| `b1a5a9c` | `cross-check.js` Case F honors confidence when both agents agree on null — post-coverage-rule fix, eliminates Case F noise on native-file fields (lineage, superseded_by, etc.) |
+| `c84cfbd` | scan.js `git ls-files` enumeration + statusline exe exclude — committable-is-in-scope (D1.2 violation fix) |
+| `ec3fdc0` | `agent-instructions-shared.md` confidence-on-every-field coverage rule — D6.5 mid-run correction |
+| `b1a5a9c` | `cross-check.js` Case F honors confidence when both agents agree on null |
+| `60cf491` | docs(session-context) — B36 pause checkpoint |
 
-### Resume contract
-1. Read this file + tasks (G.0 complete, G.0.5 complete, G.0.6 complete, G.1 in_progress paused at B36).
-2. Continue loop: `node run-batch.js prepare N` → 2 parallel Agent calls (primary/secondary with prompts at `batch-tmp/BNN/{primary,secondary}.md`) → `node run-batch.js record N`. See `.claude/sync/label/backfill/README.md` for the Claude-driven orchestrate contract.
-3. Post-B70: G.2 Enhanced+ promotion gate (verify.js hard-gate → /label-audit dogfood → synthesis agent → user approval).
-4. G.3 atomic promote + settings.json hook wiring + .husky/pre-commit validator activation + commit 8/8.
-5. Phase I: parallel code-reviewer α/β/γ/δ + smoke tests.
+### Resume contract (G.2 start)
+1. Read this file + tasks (G.0/G.0.5/G.0.6/G.1/G.1.5 complete, G.2 in_progress ready-to-start).
+2. verify.js is per-file: `node .claude/sync/label/backfill/verify.js <path.jsonl>`. Run on shared + local preview jsonls. If either exits non-zero, abort G.2 per D7.6 and surface conversationally.
+3. If both pass: /label-audit dogfood on preview. Any drift/low-confidence/disagreement findings → abort per D7.6.
+4. Synthesis agent produces summary (agreement rate + coverage gaps + type-arbitration list + portability ambiguities). User reviews and approves.
+5. On approve: G.3 atomic promote via `promotePreview()` + settings.json hook wiring + .husky/pre-commit validator + commit 8/8. Phase I parallel code-reviewer audit + smoke tests.
+
+### G.2 watchlist (issues that G.2 must resolve)
+- **Type arbitration**: 31 null-type records (Case C research-session vs doc pattern on `.research/.../findings/*`). Needs user call on the house convention.
+- **Portability disagreements**: several files flagged portability conflicts (statusline go-stuff, research findings portable vs not-portable variance in one batch, skills sanitize-then-portable vs portable).
+- **Research-session per-type extensions**: `depth` / `session_type` / `claim_count` / `source_count` enums have schema ambiguity — agents emitted plausible-but-different values. Likely acceptable as-is; would need a schema enum tighten-up to resolve structurally.
+- **`purpose` / `notes` wording variance**: inevitable; synthesis agent should auto-merge.
 
 ---
 

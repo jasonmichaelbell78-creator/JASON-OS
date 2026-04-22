@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://jason-os.local/sync/schema/schema-v1.json",
   "title": "JASON-OS Sync-Mechanism Registry Schema",
-  "description": "Validation spec for sync-mechanism registry records (files.jsonl + composites.jsonl). Schema v1.2 — 26 universal file-level columns + 5 Piece 3 machinery fields (pending_agent_fill, manual_override, needs_review, last_hook_fire, schema_version) + 41 per-type extension fields, section records, migration-metadata, and composite records. Authoritative source: .claude/sync/schema/SCHEMA.md (§3-§9). Decision record: .planning/piece-2-schema-design/DECISIONS.md (D1-D32); Piece 3 DECISIONS.md for machinery fields. Version info lives in enums.json (`schema_version`) and EVOLUTION.md; removed from this file so Ajv strict mode accepts draft-07 compliance.",
+  "description": "Validation spec for sync-mechanism registry records (files.jsonl + composites.jsonl). Schema v1.3 (additive; v1.2 records validate under v1.3) — 26 universal file-level columns + 5 Piece 3 machinery fields (pending_agent_fill, manual_override, needs_review, last_hook_fire, schema_version) + per-type extension fields (now including git-hook + test types per D3.1), optional top-level confidence object (D2.2), section records, migration-metadata, and composite records. Authoritative source: .claude/sync/schema/SCHEMA.md (§3-§9). Decision record: .planning/piece-2-schema-design/DECISIONS.md (D1-D32); Piece 3 DECISIONS.md for machinery fields; Piece 3 structural-fix DECISIONS.md (D1.1-D8.7) for v1.3 changes. Version info lives in enums.json (`schema_version`) and EVOLUTION.md; removed from this file so Ajv strict mode accepts draft-07 compliance.",
   "definitions": {
     "enum_type": {
       "type": "string",
@@ -31,6 +31,8 @@
         "shared-doc-lib",
         "database",
         "composite",
+        "git-hook",
+        "test",
         "other"
       ]
     },
@@ -80,6 +82,29 @@
         "Notification",
         "PreCompact",
         "UserPromptSubmit"
+      ]
+    },
+    "enum_git_hook_event": {
+      "type": "string",
+      "enum": [
+        "applypatch-msg",
+        "pre-applypatch",
+        "post-applypatch",
+        "commit-msg",
+        "pre-commit",
+        "pre-merge-commit",
+        "pre-rebase",
+        "post-commit",
+        "post-checkout",
+        "post-merge",
+        "pre-push",
+        "pre-receive",
+        "update",
+        "post-receive",
+        "post-update",
+        "push-to-checkout",
+        "pre-auto-gc",
+        "post-rewrite"
       ]
     },
     "enum_dependency_hardness": {
@@ -450,6 +475,7 @@
         },
         "runtime_lifecycle": { "$ref": "#/definitions/enum_agent_runtime_lifecycle" },
         "event": { "$ref": "#/definitions/enum_hook_event" },
+        "git_hook_event": { "$ref": "#/definitions/enum_git_hook_event" },
         "matcher": {
           "type": ["string", "null"]
         },
@@ -496,6 +522,11 @@
           "items": { "$ref": "#/definitions/action_pin_entry" }
         },
         "secret_bearing": { "type": "boolean" },
+        "confidence": {
+          "$comment": "D2.2 — optional top-level confidence map. Keys are free-form (e.g., 'overall', 'type_classification', 'purpose'); values are numbers in [0,1]. Agent outputs stamp this directly; verify.js + cross-check.js validate it without stripping.",
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
         "pending_agent_fill": {
           "$ref": "#/definitions/piece3_machinery_fields/properties/pending_agent_fill"
         },
@@ -547,8 +578,9 @@
           }
         },
         {
+          "$comment": "D2.5 — type:hook requires the 7 Claude-Code-hook fields; type:hook-lib requires none of them (shared code for hooks, no event of its own).",
           "if": {
-            "properties": { "type": { "enum": ["hook", "hook-lib"] } },
+            "properties": { "type": { "const": "hook" } },
             "required": ["type"]
           },
           "then": {
@@ -561,6 +593,16 @@
               "async_spawn",
               "kill_switch_env"
             ]
+          }
+        },
+        {
+          "$comment": "D3.3 — type:git-hook requires git_hook_event (distinct semantic namespace from Claude-Code hook events).",
+          "if": {
+            "properties": { "type": { "const": "git-hook" } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["git_hook_event"]
           }
         },
         {
@@ -697,6 +739,11 @@
         "required_secrets": {
           "type": "array",
           "items": { "$ref": "#/definitions/external_dep_entry" }
+        },
+        "confidence": {
+          "$comment": "D2.2 — optional top-level confidence map, parallel to file_record.confidence.",
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
         },
         "pending_agent_fill": {
           "$ref": "#/definitions/piece3_machinery_fields/properties/pending_agent_fill"

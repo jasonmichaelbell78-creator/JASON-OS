@@ -1,5 +1,6 @@
 {
-  "schema_version": "1.2",
+  "schema_version": "1.3",
+  "$comment": "AUTO-GENERATED from schema-v1.json by build-enums.js. Do not edit by hand — run `node .claude/sync/schema/build-enums.js` after any schema enum change.",
   "enums": {
     "type": {
       "values": [
@@ -26,10 +27,13 @@
         "keybindings",
         "shared-doc-lib",
         "database",
+        "composite",
+        "git-hook",
+        "test",
         "other"
       ],
       "description": "File-kind classification for every record in the sync registry.",
-      "decision_ref": "D15"
+      "decision_ref": "D15; Piece 3 structural-fix D3.1 (git-hook, test)"
     },
     "source_scope": {
       "values": [
@@ -93,6 +97,30 @@
       ],
       "description": "Claude Code event that fires a hook.",
       "decision_ref": "Group P3"
+    },
+    "git_hook_event": {
+      "values": [
+        "applypatch-msg",
+        "pre-applypatch",
+        "post-applypatch",
+        "commit-msg",
+        "pre-commit",
+        "pre-merge-commit",
+        "pre-rebase",
+        "post-commit",
+        "post-checkout",
+        "post-merge",
+        "pre-push",
+        "pre-receive",
+        "update",
+        "post-receive",
+        "post-update",
+        "push-to-checkout",
+        "pre-auto-gc",
+        "post-rewrite"
+      ],
+      "description": "Git-native hook trigger (distinct namespace from Claude Code hook events). Paired with type=git-hook per Piece 3 structural-fix D3.3.",
+      "decision_ref": "Piece 3 structural-fix D3.3"
     },
     "dependency_hardness": {
       "values": [

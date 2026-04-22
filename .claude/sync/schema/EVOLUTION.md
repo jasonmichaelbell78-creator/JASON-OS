@@ -1,10 +1,12 @@
 # Sync-Mechanism Registry Schema — Evolution Rules
 
 **Version:** 1.0
-**Last Updated:** 2026-04-20
+**Last Updated:** 2026-04-22
 **Status:** ACTIVE
-**Applies to schema version:** v1.2 (governance rules unchanged since v1.0;
-see SCHEMA.md §11 for the bumps v1.0 → v1.1 → v1.2 driven by Piece 3)
+**Applies to schema version:** v1.3 (governance rules unchanged since v1.0;
+see SCHEMA.md §11 for the bumps v1.0 → v1.1 → v1.2 → v1.3; §11 of THIS
+document holds the detailed v1.3 changelog driven by the Piece 3
+structural fix)
 **Cross-references:**
 - Schema contract: `./SCHEMA.md`
 - Authoritative decisions: `../../../.planning/piece-2-schema-design/DECISIONS.md`
@@ -341,6 +343,97 @@ migration plan:
 ```markdown
 | 2.0 | 2026-08-01 | Renamed `external_services` to `external_apis`. Migration: `.planning/piece-2-schema-design/MIGRATION-v2.0.md`. |
 ```
+
+---
+
+## §11 Version 1.3 — Piece 3 Structural Fix (2026-04-22)
+
+**Version:** 1.3 (minor, additive)
+**Drivers:**
+- Piece 3 S10 back-fill run surfaced 5 structural issues (see
+  `.planning/piece-3-labeling-mechanism/S10_HANDOFF.md` +
+  `.planning/piece-3-labeling-mechanism/structural-fix/DIAGNOSIS.md`).
+- Resolved via `/deep-plan` Session 13 (58 decisions — see
+  `.planning/piece-3-labeling-mechanism/structural-fix/DECISIONS.md`).
+
+### Additive changes
+
+Per §2 + §4 rules, all v1.3 changes are additive (enum values + optional
+fields + new per-type conditional). Records stamped `schema_version: "1.2"`
+validate cleanly under v1.3; new records stamp `"1.3"`.
+
+1. **`enum_type`** — appended `"git-hook"` and `"test"` (D3.1). Git-hook
+   records are previously-classified-as-`other`; tests were excluded
+   under the old `scope.json`.
+2. **New enum `enum_git_hook_event`** (18 values, D3.3) — distinct
+   semantic namespace from Claude-Code `enum_hook_event`. Paired with
+   `type: git-hook` via a new `allOf` conditional: a git-hook record
+   must carry `git_hook_event`.
+3. **Optional top-level `confidence` object** (D2.2) — added to both
+   `file_record` and `composite_record`. Shape:
+   `{type: object, additionalProperties: {type: number, minimum: 0, maximum: 1}}`.
+   Replaces the strip-before-validate band-aid in `verify.js` +
+   `cross-check.js` (D5.6, D5.7). Consumers that want confidence read
+   it; validators pass it through untouched.
+4. **§9.3 split** (D2.5) — old conditional required the 7 hook fields
+   for both `type: hook` and `type: hook-lib`. Now split: `type: hook`
+   requires the 7 fields; `type: hook-lib` requires none of them
+   (hook-libs are shared code for hooks, not hooks themselves).
+5. **New `git_hook_event` property on `file_record`** — references the
+   new enum. Only required when `type: git-hook` (via §3's allOf
+   conditional).
+6. **`enums.json` auto-generation** (D3.5) — new build script
+   `.claude/sync/schema/build-enums.js` reads `schema-v1.json` and
+   emits `enums.json`. Human-facing descriptions + decision refs live
+   inside the build script's `METADATA` map. Drift impossible by
+   construction. Pre-existing drift caught on first run:
+   `"composite"` was in schema's `enum_type` but missing from
+   `enums.json`; auto-generation corrected it.
+
+### Backward-compat posture (D3.7 — gradual)
+
+- Every v1.2 record validates under v1.3 without modification. No
+  migration step required; no dual-schema read window needed.
+- New records stamp `schema_version: "1.3"`. Old records keep `"1.2"`
+  until re-derived.
+- `validate-catalog.js` treats `schema_version` as informational only
+  (D5.8) — mixed-stamp catalogs are valid.
+
+### SoNash mirror obligation (§8)
+
+All v1.3 schema files cross to SoNash per §8 of this document. Staging
+artifact: `.planning/piece-3-labeling-mechanism/structural-fix/SONASH_MIRROR_DELTA.md`
+(produced in Phase H of the structural fix).
+
+Universal artifacts that cross:
+- `schema-v1.json`, `enums.json`, `SCHEMA.md`, `EVOLUTION.md`, `EXAMPLES.md`
+- `build-enums.js`, `.validate-test.cjs` (renamed to `validate.test.cjs`)
+
+Project-scoped artifacts that do NOT cross:
+- `scope.json`, `.claude/settings.json` hook wiring, `.husky/pre-commit`
+
+Piece 5.5 is the native home of the mirror write.
+
+### Migration notes
+
+- **Catalog:** structural-fix Phase G re-derives all 429 in-scope files
+  against v1.3. The Session 12 S10 preview (169 files) is renamed to
+  `s10-run-1-attempt/` and discarded per D6.1.
+- **Templates:** v1.3 cheat-sheet JSON block added to both agent
+  templates (D5.5) + a new shared partial `agent-instructions-shared.md`
+  (D5.2) contains the 6 schema/field-shape sections both primary and
+  secondary agents consume.
+- **Validation tooling:** `verify.js`, `cross-check.js` drop
+  strip-before-validate; `validate-catalog.js` moves to single-path
+  v1.3 validation + adds name-uniqueness enforcement (D4.3).
+
+### Commit boundaries (per D8.1)
+
+The v1.3 changes land in logical-group commits on the `fixes-42226`
+branch (Session 15+). Commit 1 = schema foundation (schema-v1.json,
+enums.json, build-enums.js, EVOLUTION.md, EXAMPLES.md, SCHEMA.md). See
+`.planning/piece-3-labeling-mechanism/structural-fix/PLAN.md` for the
+full 8-commit plan.
 
 ---
 

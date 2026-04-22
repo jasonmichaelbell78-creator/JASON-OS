@@ -4,7 +4,7 @@
 16
 
 ## Uncommitted Work
-No (working tree clean after pause commits)
+2 files in this commit (SESSION_CONTEXT.md update + .research/sync-mechanism/FIRST_PASS_ASSESSMENT.md new). Pushed immediately after.
 
 ## Last Updated
 2026-04-22
@@ -38,6 +38,7 @@ No (working tree clean after pause commits)
 | `ec3fdc0` | `agent-instructions-shared.md` confidence-on-every-field coverage rule — D6.5 mid-run correction |
 | `b1a5a9c` | `cross-check.js` Case F honors confidence when both agents agree on null |
 | `60cf491` | docs(session-context) — B36 pause checkpoint |
+| `ce96048` | docs(migration-skill) — /brainstorm re-entry v2, 9 new decisions D30–D38 + 3 todos T33–T35 (SECONDARY instance Thread A) |
 
 ### Resume contract (G.2 start)
 1. Read this file + tasks (G.0/G.0.5/G.0.6/G.1/G.1.5 complete, G.2 in_progress ready-to-start).
@@ -51,6 +52,96 @@ No (working tree clean after pause commits)
 - **Portability disagreements**: several files flagged portability conflicts (statusline go-stuff, research findings portable vs not-portable variance in one batch, skills sanitize-then-portable vs portable).
 - **Research-session per-type extensions**: `depth` / `session_type` / `claim_count` / `source_count` enums have schema ambiguity — agents emitted plausible-but-different values. Likely acceptable as-is; would need a schema enum tighten-up to resolve structurally.
 - **`purpose` / `notes` wording variance**: inevitable; synthesis agent should auto-merge.
+
+### Secondary instance — Thread A + Thread B (2026-04-22)
+
+A second Claude Code instance ran in parallel while primary executed
+G.1+G.1.5, working on non-conflicting artifacts in `.research/`. Same
+branch (`fixes-42226`); zero file overlap with primary's Piece 3 work.
+
+**Thread A — `/brainstorm migration-skill` re-entry (COMPLETE).**
+
+Re-entry on `.research/migration-skill/BRAINSTORM.md` per D28, addressing
+4 premise-shifters from the completed `/deep-research` output:
+
+- CAS-port-as-first-job axiomatic → D19' (CAS and /migration are peer
+  tools, not nested)
+- Codemod-library architectural alternative → D32 (two-layer architecture:
+  understanding layer primary, recipes as mechanical arm)
+- D1 missing family/project unit-type → resolved (family added as 4th
+  unit-type)
+- D23 missing greenfield-clone verdict → resolved (verdict added;
+  /migration owns execution; /skill-creator invoked as internal tool, not
+  handoff destination)
+
+**Output:** `.research/migration-skill/BRAINSTORM_v2.md` supersedes v1.
+Nine new decisions (D30–D38), three revised (D1, D19, D23). Committed
+`ce96048`.
+
+**Four JASON-OS-wide tenets landed (all now in auto-memory):**
+
+- **D33** conversational-explanatory — every user-facing surface (Claude
+  + every skill) must be conversational, plain-language, explanatory;
+  prose default, rationale with every option
+- **D34** in-house-over-handoff — skills absorb patterns from other
+  skills rather than routing out; external routing only for genuinely
+  distinct domains
+- **D37** filesystem verification — research-sourced claims about
+  codebase state must be filesystem-verified before decisions lock;
+  /deep-research retrofit + claim-tagging
+- **D38** scope definition process — every skill declares SCOPE
+  manifest + criteria checklist + skill-audit enforcement
+
+**Three todos added (`.planning/todos.jsonl` T33–T35):**
+- T33 build `/recipe-audit` skill (D36 consequence)
+- T34 retrofit `/deep-research` for filesystem verification + claim
+  tagging (D37 consequence, JASON-OS-wide)
+- T35 retrofit SCOPE sections across all 14 existing skills +
+  skill-audit rubric update (D38 consequence, JASON-OS-wide)
+
+**Thread A routing:** `/deep-plan migration-skill` when ready (migration
+execution still gated by /sync Piece 5, but planning can proceed
+independently).
+
+**Thread B — sync-mechanism SoNash-side scope concern (DECISION IN FLIGHT).**
+
+User raised stomach anxiety about SoNash-side back-fill magnitude given
+current scope. Scope comparison grounded in existing Piece 1b research
+(52 D-agents, HIGH confidence, no new research dispatched per D34):
+
+- SoNash ~2.7× JASON-OS on node count (519 vs 190)
+- ~4.3× on edges (884 vs 204)
+- ~24× on scripts (312 vs 13)
+- Anxiety is proportionate, not overblown
+
+Five paths surveyed; user selected **Path 2 — narrow initial SoNash
+scope**. First-pass back-fills a portable subset; everything else defers
+to on-demand labeling inline at pull time.
+
+**Assessment artifact:** `.research/sync-mechanism/FIRST_PASS_ASSESSMENT.md`
+(committed with this SESSION_CONTEXT update) — 13 Menu A categories with
+granular inventory, per-category labeling load counts, recommended
+verdicts, dependencies, and pertinent caveats. Synthesized from Piece 1b
+findings; no new research.
+
+Recommended first-pass scope under my picks: ~125–140 labels total
+(baseline counterparts ~60–75 + beyond-counterpart picks ~65) — roughly
+30% of JASON-OS Piece 3 labeling load.
+
+**Decision log (assessment doc §8) awaiting user picks** on Menu A
+(A1–A13), plus Menus B–E (never-sync, on-demand mechanism, back-port
+direction, sequencing).
+
+**Thread B resume contract (home pickup):**
+1. Read `.research/sync-mechanism/FIRST_PASS_ASSESSMENT.md` in full
+   (all 13 categories + menus B–E + caveats).
+2. Make picks per category (or confirm my recommendations).
+3. Capture picks in the assessment doc §8 decision log.
+4. Proceed to /deep-plan for Piece 5.5 scope once decisions lock.
+
+**Note:** Thread B does NOT block Phase G.2/G.3/I completion on the
+primary instance. It feeds into Piece 5.5 scope which comes after
+sync-engine Piece 5.
 
 ---
 

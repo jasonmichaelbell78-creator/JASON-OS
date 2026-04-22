@@ -1,13 +1,46 @@
 # Session Context — JASON-OS
 
 ## Current Session Counter
-15
+16
 
 ## Uncommitted Work
-No
+No (working tree clean after pause commits)
 
 ## Last Updated
 2026-04-22
+
+## Quick Recovery
+
+**Last Checkpoint**: 2026-04-22 (Session 16 pause at B36/70)
+**Branch**: `fixes-42226`
+**Working On**: Phase G.1 — Sequential back-fill dispatch, PAUSED mid-loop
+**Files Modified**: none (all in-flight state under gitignored `.claude/state/`)
+**Next Step**: Resume from B37 via `node .claude/state/batch-tmp/run-batch.js prepare 36` → dispatch primary+secondary agents → `record 36`. Loop through B37–B70.
+**Uncommitted Work**: no
+
+### Phase G.1 status
+- **Batches recorded: 36 / 70** (B01–B36)
+- **Records in preview: 119** (not yet consolidated into `.claude/sync/label/preview/*.jsonl`)
+- **Checkpoint**: `.claude/state/label-backfill-checkpoint.jsonl` (append-only; orchestrate.js resume-safe)
+- **Per-batch state**: `.claude/state/batch-tmp/B<NN>/` contains {primary.md, secondary.md, batch.json, primary-out.json, secondary-out.json, crosschecked.json}
+- **Driver script**: `.claude/state/batch-tmp/run-batch.js` (gitignored; gets rebuilt if lost)
+- **Remaining: 34 batches** × ~2 min each ≈ 70 min to finish G.1
+
+### Session 16 commits (3 mid-run corrections)
+| SHA | Fix |
+|---|---|
+| `c84cfbd` | scan.js `git ls-files` enumeration + statusline exe exclude — honors committable-is-in-scope (D1.2 was being violated by PRUNE_DIRS) |
+| `ec3fdc0` | `agent-instructions-shared.md` confidence-on-every-field coverage rule — D6.5 mid-run correction after B01 pilot showed 22/27 false-positive needs_review |
+| `b1a5a9c` | `cross-check.js` Case F honors confidence when both agents agree on null — post-coverage-rule fix, eliminates Case F noise on native-file fields (lineage, superseded_by, etc.) |
+
+### Resume contract
+1. Read this file + tasks (G.0 complete, G.0.5 complete, G.0.6 complete, G.1 in_progress paused at B36).
+2. Continue loop: `node run-batch.js prepare N` → 2 parallel Agent calls (primary/secondary with prompts at `batch-tmp/BNN/{primary,secondary}.md`) → `node run-batch.js record N`. See `.claude/sync/label/backfill/README.md` for the Claude-driven orchestrate contract.
+3. Post-B70: G.2 Enhanced+ promotion gate (verify.js hard-gate → /label-audit dogfood → synthesis agent → user approval).
+4. G.3 atomic promote + settings.json hook wiring + .husky/pre-commit validator activation + commit 8/8.
+5. Phase I: parallel code-reviewer α/β/γ/δ + smoke tests.
+
+---
 
 ## Quick Status
 

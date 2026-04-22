@@ -17,6 +17,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { execFileSync } = require("node:child_process");
 
 const REPO_ROOT_SENTINEL = path.join(__dirname, "..", "..", "..", "..");
 const DEFAULT_SCOPE_PATH = path.join(
@@ -59,18 +60,20 @@ const DEFAULT_LARGE_THRESHOLD_KB = 50;
 // short configs) don't exceed the stall ceiling even when bytes fit.
 const DEFAULT_MAX_FILES_PER_BATCH = 15;
 
-// Directories pruned at walk time. Matches scope.json excludes for the
-// common-hot paths — pre-stat pruning saves ~99% of stat calls on a repo
-// with node_modules or .git. Scope.json excludes still apply after the walk
-// as the source-of-truth filter.
+// Directories pruned at walk time — fallback enumerator only. The production
+// path uses `git ls-files -co --exclude-standard` (see enumerateCommittable)
+// which enforces scope.json v2's "committable-is-in-scope" philosophy
+// directly. PRUNE_DIRS applies only when git enumeration is unavailable
+// (e.g. non-git tmpdir fixtures in scan.test.js). `.research/` is NOT pruned
+// here — D1.2 includes it in scope, and the git enumerator respects that.
 const PRUNE_DIRS = new Set([
   "node_modules",
   ".git",
-  ".research",
 ]);
 
 // `.claude/state` is pruned via a path-prefix check, not a basename set, so
 // `.claude/state-foo` (if it ever existed) wouldn't be swept up with it.
+// Fallback-only; git enumerator handles this via .gitignore.
 const PRUNE_PATH_PREFIXES = [".claude/state"];
 
 /**
@@ -93,9 +96,50 @@ function readJsonSafe(filePath) {
 }
 
 /**
+ * Enumerate committable files via `git ls-files -co --exclude-standard`.
+ *
+ * This is the production path — implements scope.json v2's "committable-is-in-
+ * scope" philosophy directly: git tracks what's committable, so ask git. The
+ * `-c` flag lists cached (tracked) files; `-o` lists others (untracked but not
+ * ignored); `--exclude-standard` honors .gitignore + .git/info/exclude +
+ * core.excludesFile. Together: "what `git add .` would pick up right now" —
+ * i.e. the committable set.
+ *
+ * Returns null if the rootDir is not a git repo or git is unavailable, in
+ * which case the caller falls back to `walk()`. Tests use tmpdir fixtures
+ * that aren't git repos, so the fallback preserves the existing test contract.
+ *
+ * `-z` uses NUL-delimited output so paths with spaces/newlines/quotes are
+ * parsed correctly. execFileSync with argv-array input eliminates shell
+ * interpolation — no injection surface even though rootDir is internal-only.
+ * PATH search for `git` is accepted per scripts/lib/security-helpers.js
+ * §safeGitAdd rationale (operator shell env, not attacker-controlled).
+ *
+ * @param {string} rootDir - Absolute repo root
+ * @returns {string[] | null} forward-slash relative paths, or null on failure
+ */
+function enumerateCommittable(rootDir) {
+  try {
+    const output = execFileSync(
+      "git",
+      ["-C", rootDir, "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+      { encoding: "buffer", maxBuffer: 32 * 1024 * 1024 }
+    );
+    return output.toString("utf8").split("\0").filter(Boolean);
+  } catch (err) {
+    logger.warn(
+      `scan: git ls-files unavailable, falling back to walk: ${sanitize(err)}`
+    );
+    return null;
+  }
+}
+
+/**
  * Recursively walk `rootDir`, pushing forward-slash relative paths of every
- * regular file into `out`. Prunes well-known noise directories (node_modules,
- * .git, .research, .claude/state) before recursing to avoid wasted stats.
+ * regular file into `out`. Fallback path for non-git roots (tests, ad-hoc
+ * tmpdirs). Prunes well-known noise directories (node_modules, .git,
+ * .claude/state) before recursing to avoid wasted stats. Does NOT implement
+ * .gitignore — non-git roots have no gitignore to implement.
  *
  * Does not follow symlinks — Dirent.isFile() returns false for symlinks, so
  * they're skipped automatically, which matches the conservative stance in
@@ -154,8 +198,14 @@ function scan(opts = {}) {
   const scope = readJsonSafe(scopePath);
   const matcher = compileScope(scope);
 
-  const relPaths = [];
-  walk(rootDir, "", relPaths);
+  // Production path: git ls-files honors .gitignore, matching scope.json v2
+  // "committable-is-in-scope" philosophy. Fallback path: fs walk for non-git
+  // roots (tests use tmpdir fixtures).
+  let relPaths = enumerateCommittable(rootDir);
+  if (relPaths === null) {
+    relPaths = [];
+    walk(rootDir, "", relPaths);
+  }
 
   const files = [];
   for (const rel of relPaths) {

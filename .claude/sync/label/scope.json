@@ -12,13 +12,16 @@
     ".claude/hooks/.session-agents.json",
     ".claude/sync/label/*.jsonl",
     ".claude/sync/label/preview/**",
-    ".claude/sync/schema/*.jsonl"
+    ".claude/sync/schema/*.jsonl",
+    "tools/statusline/jason-statusline-v*"
   ],
   "comments": {
     "rule": "Include rule: committable = in scope. Excludes cover only gitignored-like paths + session-state + catalog data files (which are themselves records, not records-about-records).",
-    "research_included": ".research/** is fully IN scope as of v2 (D1.2). All 241 files land in the catalog via the structural-fix re-run.",
+    "enumeration_source": "scan.js enumerates via `git ls-files -co --exclude-standard` — what `git add .` would pick up. This honors .gitignore automatically, so any file that *is* gitignored is already out of scope at enumeration time (e.g. tools/statusline/jason-statusline-v*.exe). The excludes below layer on top for files that are committable but intentionally not cataloged (e.g. the catalog jsonls themselves).",
+    "research_included": ".research/** is fully IN scope as of v2 (D1.2). ~262 tracked files land in the catalog via the structural-fix re-run.",
     "tests_included": "**/__tests__/** and **/*.{test,spec}.* are fully IN scope as of v2 (D1.3). Tests are first-class code; their type:test classification is a Piece 3 D3.1 + D4.6 addition.",
     "generated_included": "Generated artifacts (17 .husky/_/ shims, package-lock.json, .research/research-index.jsonl, .planning/TODOS.md) are IN scope per D1.5 — stamped status:generated + portability:{not-portable | portable-with-deps} per D3.2.",
+    "statusline_exe_excluded": "tools/statusline/jason-statusline-v* is gitignored (machine-specific Go binary per CLAUDE.md §1). The explicit exclude here is belt-and-suspenders on top of the git-ls-files gitignore respect.",
     "scope_json_self": "This scope.json file itself is in-scope via **/* (it is project-scoped per D8.5 — does not cross to SoNash via the mirror)."
   }
 }

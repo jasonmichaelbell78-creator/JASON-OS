@@ -1,11 +1,12 @@
 # CATALOG_SHAPE.md — Records Piece 3 Writes
 
 **Piece:** 3 — Labeling Mechanism
-**Status:** ACTIVE (S1 scaffolding)
-**Last Updated:** 2026-04-20 (Session #10)
+**Status:** ACTIVE (S1 scaffolding + structural-fix v1.3 overlay)
+**Last Updated:** 2026-04-22 (Session #15 — structural-fix Phase B)
 **Plan:** `.planning/piece-3-labeling-mechanism/PLAN.md` §S1
-**Decisions:** `.planning/piece-3-labeling-mechanism/DECISIONS.md`
-**Upstream schema:** `.claude/sync/schema/SCHEMA.md` (Piece 2)
+**Decisions:** `.planning/piece-3-labeling-mechanism/DECISIONS.md` (parent) +
+`.planning/piece-3-labeling-mechanism/structural-fix/DECISIONS.md` (v1.3)
+**Upstream schema:** `.claude/sync/schema/SCHEMA.md` (Piece 2, now at v1.3)
 
 ---
 
@@ -68,13 +69,16 @@ Every record Piece 3 writes carries:
    `type`:
    - `skill` → §9.1
    - `agent | team` → §9.2
-   - `hook | hook-lib` → §9.3
+   - `hook` → §9.3a (7 required hook-wiring fields — v1.3 split per D2.5)
+   - `hook-lib` → §9.3b (no required per-type fields — v1.3 split per D2.5)
    - `memory | canonical-memory` → §9.4
    - `script | script-lib` → §9.5
    - `tool | tool-file` → §9.6
    - `research-session` → §9.7
    - `plan | planning-artifact` → §9.8
    - `ci-workflow` → §9.9
+   - `git-hook` → §9.11 (v1.3 addition — requires `git_hook_event`)
+   - `test` → §9.12 (v1.3 addition — no required per-type fields)
    - Composite records → §9.10 (in the composites catalogs, not file
      catalogs)
 
@@ -104,20 +108,25 @@ the ~milliseconds-to-seconds window before the async agent returns.
 
 `stub` is already in the Piece 2 enum — no action needed for that value.
 
-**Schema-bump status (2026-04-20):** ✓ **LANDED.** Schema v1.0 → v1.1 →
-v1.2. v1.1 added the `partial` status enum; v1.2 added the 5 Piece 3
-machinery fields (`pending_agent_fill`, `manual_override`, `needs_review`,
-`last_hook_fire`, `schema_version`) as typed optional columns on both
-`file_record` and `composite_record`, replacing the earlier
-`relaxFileRecordAdditionalProperties` patch. Every record Piece 3 writes
-should stamp `schema_version: "1.2"`. The in-memory `extendStatusEnum`
-fallback in `validate-catalog.js` is retained as belt-and-suspenders so
-older schema files still validate cleanly during cross-repo sync windows.
+**Schema-bump status (2026-04-22):** ✓ **LANDED through v1.3.** Schema
+v1.0 → v1.1 → v1.2 → v1.3. v1.1 added `partial` status; v1.2 added the 5
+Piece 3 machinery fields (`pending_agent_fill`, `manual_override`,
+`needs_review`, `last_hook_fire`, `schema_version`) as typed optional
+columns. v1.3 (Piece 3 structural fix) adds `git-hook` and `test` types,
+a new `enum_git_hook_event`, the optional top-level `confidence` object,
+and splits the hook/hook-lib per-type conditional (D2.5). Every record
+Piece 3 writes should stamp `schema_version: "1.3"` per structural-fix
+D3.4; older `"1.2"` stamps still validate (additive only).
 
-Per Piece 2 `EVOLUTION.md` §8 (mirror rule): SoNash must receive both the
-v1.1 (status:partial) and v1.2 (machinery fields) bumps when Piece 2 is
-ported there (Piece 5.5 and onward). Tracked in `/todo` backlog (T26 +
-T27 mirror).
+The in-memory `extendStatusEnum` fallback in `validate-catalog.js` will
+be removed in Phase C per D5.8 — v1.3 is now the sole validation target;
+v1.2 records pass by additive compatibility.
+
+Per Piece 2 `EVOLUTION.md` §8 (mirror rule): SoNash must receive the
+full v1.1 + v1.2 + v1.3 bump stack when Piece 2 + structural-fix are
+ported there (Piece 5.5). Tracked via T26 in `/todo` backlog + the
+staging artifact `SONASH_MIRROR_DELTA.md` produced in Phase H of this
+structural fix.
 
 **Invariant:** `status: partial` records are **rejected at commit time** by
 the pre-commit validator (Plan §S6, D3). They are valid in the live catalog
@@ -183,8 +192,9 @@ Format: `YYYY-MM-DDTHH:mm:ss.sssZ` (UTC, millisecond precision).
 
 ### §4.6 `schema_version` — string
 
-Semver-compatible version of the schema this record conforms to. Examples:
-`"1.0"`, `"1.1"`.
+Semver-compatible version of the schema this record conforms to. Current
+value: `"1.3"` (structural-fix D3.4). Examples of historical stamps
+that still validate under v1.3: `"1.0"`, `"1.1"`, `"1.2"`.
 
 **Why per-record:** D16 migration strategy (eager atomic schema migration)
 uses this field to determine whether a record needs an upgrade pass. When a
@@ -192,7 +202,9 @@ new schema version ships, the migration tool reads `schema_version` on each
 record, applies the delta, and writes the new value.
 
 **Writer contract:** every writer (hooks, back-fill, audit skill) stamps
-`schema_version` to the current schema version at write time. Never back-dated.
+`schema_version: "1.3"` at write time. Never back-dated. Mixed-stamp
+catalogs are valid during the structural-fix rollout window — D5.8
+treats `schema_version` as informational in `validate-catalog.js`.
 
 ---
 
@@ -291,8 +303,13 @@ all 26 universal columns plus any per-type extensions per Piece 2 §9.
   "pending_agent_fill": false,
   "manual_override": [],
   "needs_review": [],
-  "last_hook_fire": "2026-04-20T15:42:18.123Z",
-  "schema_version": "1.2"
+  "last_hook_fire": "2026-04-22T15:42:18.123Z",
+  "schema_version": "1.3",
+  "confidence": {
+    "type": 1.0,
+    "purpose": 0.92,
+    "portability": 0.85
+  }
 }
 ```
 
@@ -316,3 +333,4 @@ all 26 universal columns plus any per-type extensions per Piece 2 §9.
 | --- | --- | --- |
 | 0.1 | 2026-04-20 | Initial draft — S1. Piece 3 additions documented; schema-v1.0 → v1.1 enum bump flagged for S2 landing. |
 | 0.2 | 2026-04-20 | Schema v1.0 → v1.1 bump landed (added `status: partial`) across enums.json + schema-v1.json + SCHEMA.md. §4.1 updated to reflect landed state + SoNash mirror obligation. |
+| 0.3 | 2026-04-22 | **Schema v1.3 + Piece 3 structural fix overlay.** §3 per-type extension list expanded: §9.3 split into §9.3a (hook, 7 required) / §9.3b (hook-lib, none required) per D2.5; §9.11 git-hook + §9.12 test added per D3.1. §4.1 schema-bump status updated to reflect v1.3 landing + D5.8 removal of `extendStatusEnum` fallback (pending Phase C). §4.6 writer contract bumps stamp to `"1.3"`. §7 example record updated to v1.3 stamp + confidence object example. Structural-fix decisions: `.planning/piece-3-labeling-mechanism/structural-fix/DECISIONS.md` (D1.1–D8.7). |

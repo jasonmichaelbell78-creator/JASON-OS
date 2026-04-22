@@ -36,13 +36,14 @@ field**. Each comparison falls into one of the cases below.
 field is a simple scalar (type, status, source_scope, etc.).
 
 **Action:**
-- Preview stores `null` for the field. The schema (v1.2+) enforces
-  `additionalProperties: false` on the **record object**; scalar fields
-  like `type` are constrained separately by their enum definition. An
-  attempt to store an object shape (e.g. `{value, candidates}`) in a
-  scalar field would fail validation because the value no longer
-  matches the enum's string type — the preview therefore writes the
-  field as `null` and carries candidates on the sidecar below:
+- Preview stores `null` for the field. The schema (v1.3, additive
+  from v1.2) enforces `additionalProperties: false` on the **record
+  object**; scalar fields like `type` are constrained separately by
+  their enum definition. An attempt to store an object shape (e.g.
+  `{value, candidates}`) in a scalar field would fail validation
+  because the value no longer matches the enum's string type — the
+  preview therefore writes the field as `null` and carries candidates
+  on the sidecar below:
   ```json
   "type": null
   ```
@@ -160,13 +161,14 @@ Fields present in an existing record's `manual_override` array are
 ## Writing disagreement records to the preview
 
 Preview records **never** carry `candidates` / `type_mismatch` sub-objects —
-the v1.2 schema forbids it (`additionalProperties: false` on each record).
-Instead, the preview value is always schema-compliant (null for scalar
-disagreements, merged array for array disagreements), and all arbitration
-context lives on the `disagreements[]` array returned from `crossCheck()`
-alongside the preview. The synthesis agent reads `disagreements[]` to
-present candidates to the user; arbitration writes the chosen value back
-to the preview record via conversational override:
+the v1.3 schema forbids it (`additionalProperties: false` on each record;
+confidence-in-record is now the ONLY exception via D2.2's explicit top-level
+`confidence` object). Instead, the preview value is always schema-compliant
+(null for scalar disagreements, merged array for array disagreements), and
+all arbitration context lives on the `disagreements[]` array returned from
+`crossCheck()` alongside the preview. The synthesis agent reads
+`disagreements[]` to present candidates to the user; arbitration writes the
+chosen value back to the preview record via conversational override:
 
 ```json
 "type": "script-lib"

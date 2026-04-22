@@ -194,16 +194,33 @@ Agents emit these unless the hook is managing them directly:
 
 ## Confidence reporting (D2.2 — schema v1.3)
 
-Each field comes with a confidence score in `[0.0, 1.0]`. Fields where
-evidence is ambiguous (multiple plausible values, frontmatter conflicts
-with heuristic, etc.) should score **below 0.80** so the cross-check
-layer flags them.
-
 Emit a top-level `confidence` object keyed by field name. Schema v1.3
 (D2.2) defines this as an optional top-level object on every file
 record and composite record — verify.js and cross-check.js accept it
 directly. Pre-v1.3 stripped this field before validation; that
 strip-before-validate is **gone** in v1.3.
+
+**Coverage rule (required):** emit a confidence entry for **every
+field you output in the record**, except:
+
+- `path` and `confidence` (reserved / self-referential)
+- The 5 machinery fields: `pending_agent_fill`, `manual_override`,
+  `needs_review`, `last_hook_fire`, `schema_version`
+  (orchestrator-owned; cross-check excludes them)
+
+If you omit a field entirely (e.g. `content_hash` when unknown per
+D2.4), also omit its confidence entry — no orphan confidence keys.
+
+**Scoring rule:** cross-check treats a missing confidence entry as
+`0.0` (triggers needs_review). Do NOT leave settled fields without
+confidence — the cross-check cannot distinguish "I forgot to report
+confidence" from "this field is uncertain". Score every emitted field:
+
+- **0.90 – 1.00** — strong evidence (path+heuristic+frontmatter agree)
+- **0.80 – 0.89** — good evidence, minor ambiguity
+- **Below 0.80** — genuine ambiguity (multiple plausible values,
+  frontmatter conflicts with heuristic, etc.) — cross-check flags
+  for review
 
 **Output shape (MUST match CATALOG_SHAPE.md §3 + SCHEMA.md §9 + the §4
 machinery fields + the confidence object):**
@@ -213,7 +230,7 @@ machinery fields + the confidence object):**
   "name": "foo",
   "path": ".claude/hooks/foo.js",
   "type": "hook",
-  "purpose": "...",
+  "purpose": "Blocks destructive Bash commands before execution.",
   "source_scope": "universal",
   "runtime_scope": "project",
   "portability": "sanitize-then-portable",
@@ -224,6 +241,17 @@ machinery fields + the confidence object):**
   "tool_deps": [{"name": "node", "hardness": "hard"}],
   "mcp_dependencies": [],
   "required_secrets": [],
+  "lineage": null,
+  "supersedes": [],
+  "superseded_by": null,
+  "sanitize_fields": [],
+  "state_files": [],
+  "data_contracts": [],
+  "component_units": [],
+  "composite_id": null,
+  "is_copy_of": null,
+  "has_copies_at": [],
+  "sections": [],
   "event": "PreToolUse",
   "matcher": "^Bash$",
   "if_condition": null,
@@ -237,12 +265,44 @@ machinery fields + the confidence object):**
   "last_hook_fire": "2026-04-22T12:00:00Z",
   "schema_version": "1.3",
   "confidence": {
+    "name": 1.0,
     "type": 0.98,
-    "source_scope": 0.92,
-    "portability": 0.65
+    "purpose": 0.90,
+    "source_scope": 0.95,
+    "runtime_scope": 0.95,
+    "portability": 0.65,
+    "status": 0.95,
+    "notes": 1.0,
+    "dependencies": 0.95,
+    "external_services": 0.95,
+    "tool_deps": 0.95,
+    "mcp_dependencies": 0.95,
+    "required_secrets": 0.95,
+    "lineage": 0.95,
+    "supersedes": 0.95,
+    "superseded_by": 0.95,
+    "sanitize_fields": 0.95,
+    "state_files": 0.95,
+    "data_contracts": 0.95,
+    "component_units": 0.95,
+    "composite_id": 0.95,
+    "is_copy_of": 0.95,
+    "has_copies_at": 0.95,
+    "sections": 0.95,
+    "event": 0.98,
+    "matcher": 0.95,
+    "if_condition": 0.95,
+    "continue_on_error": 0.95,
+    "exit_code_action": 0.95,
+    "async_spawn": 0.95,
+    "kill_switch_env": 0.95
   }
 }
 ```
+
+Every non-reserved / non-machinery field has a confidence entry. Empty
+arrays and null values still get confidence — "I'm confident this is
+empty/null" is meaningful.
 
 Nested `{value, confidence}` shapes are NOT accepted — the flat record
 + separate top-level `confidence` object is the one on-disk contract.
@@ -269,7 +329,8 @@ Read this when in doubt about field shape. All shapes validate against
     "hardness": "soft",
     "kind": "reference"
   },
-  "confidence_shape": {
+  "confidence_shape": "{field_name: score_0..1} for EVERY emitted field except path / confidence / 5 machinery fields — see Confidence reporting §. Missing entry = 0.0 = needs_review. Abbreviated here:",
+  "confidence_shape_partial": {
     "type": 1.0,
     "source_scope": 0.95,
     "portability": 0.70

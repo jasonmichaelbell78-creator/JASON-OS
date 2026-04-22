@@ -308,6 +308,48 @@ test("derive: parseExistingFrontmatter yaml + lineage body", () => {
   assert.equal(nested.metadata.owner, "claude");
 });
 
+// --- scope-matcher.js (v2 negative-space model, D1.1–D1.3) ---
+
+test("scope-matcher: v2 negative-space + dotfiles", () => {
+  const { compileScope, loadScope } = require(path.join(LIB, "scope-matcher"));
+
+  // D1.1 negative-space: include=**/* + explicit excludes
+  const c = compileScope({
+    include: ["**/*"],
+    exclude: [
+      "**/node_modules/**",
+      ".git/**",
+      ".claude/state/**",
+      ".claude/sync/label/*.jsonl",
+    ],
+  });
+
+  // In-scope: ordinary + dotfiles + nested + test files + research
+  assert.equal(c.matches("README.md"), true);
+  assert.equal(c.matches(".nvmrc"), true);
+  assert.equal(c.matches(".github/CODEOWNERS"), true);
+  assert.equal(c.matches(".husky/pre-commit"), true);
+  assert.equal(c.matches(".husky/_/pre-commit"), true);
+  assert.equal(c.matches(".research/migration-skill/RESEARCH_OUTPUT.md"), true,
+    "D1.2 — .research/ fully in scope");
+  assert.equal(c.matches("foo/__tests__/bar.test.js"), true,
+    "D1.3 — __tests__ fully in scope");
+  assert.equal(c.matches("scripts/lib/safe-fs.js"), true);
+
+  // Excluded
+  assert.equal(c.matches(".git/HEAD"), false);
+  assert.equal(c.matches("node_modules/ajv/package.json"), false);
+  assert.equal(c.matches(".claude/state/handoff.json"), false);
+  assert.equal(c.matches(".claude/sync/label/shared.jsonl"), false);
+
+  // loadScope (caches; reads the committed scope.json) — v2 philosophy field
+  // is present and matcher still correct for committed files.
+  const live = loadScope();
+  assert.equal(typeof live.matches, "function");
+  assert.equal(live.matches("CLAUDE.md"), true);
+  assert.equal(live.matches(".git/HEAD"), false);
+});
+
 // --- validate-catalog.js ---
 test("validate-catalog: rule layer rejects partial + pending + needs_review", () => {
   const { applyRuleLayer } = require(path.join(LIB, "validate-catalog"));

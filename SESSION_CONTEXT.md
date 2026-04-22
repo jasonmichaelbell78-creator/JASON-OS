@@ -1,24 +1,46 @@
 # Session Context — JASON-OS
 
 ## Current Session Counter
-13
+15
 
 ## Uncommitted Work
 No
 
 ## Last Updated
-2026-04-21
+2026-04-22
 
 ## Quick Status
 
-**Session 13 — `/deep-plan` Piece 3 structural-fix APPROVED (58 decisions).**
+**Session 15 — structural-fix Phases A–F.2 + H landed (7 of 8 commits).**
 
-Completed full exhaustive-mode `/deep-plan` on the "Piece 3 — structural
-fix + scope expansion + re-run + mirror prep" topic. 52 questions across
-13 discovery categories → 58 locked decisions → PLAN.md + DECISIONS.md +
-DIAGNOSIS.md artifacts under `.planning/piece-3-labeling-mechanism/structural-fix/`.
-User approved as-is. Execution is pending — no code in `.claude/sync/**`
-was touched this session.
+PR #10 (merged 2026-04-21) landed Sessions 11–13 planning + research.
+Session 14 handled PR #10 review rounds (unbookkept — counter skipped
+13→15 per §2.2 reconciliation). Session 15 executed seven of the
+structural-fix phases on `fixes-42226` branched off `main @ ab2b0bf`:
+
+| Commit | SHA | Phase | Summary |
+|---|---|---|---|
+| 1/8 | 648a200 | A | Schema v1.3 foundation (schema-v1.json, enums.json, build-enums.js, ajv-formats dep, EVOLUTION/EXAMPLES/SCHEMA.md, validate.test.cjs +6 v1.3 cases) |
+| 2/8 | d15b55a | B | Templates + doc reconciliation — new agent-instructions-shared.md (D5.2, single source of truth); primary+secondary templates reduced to {{INCLUDE}} marker + role preamble; CATALOG_SHAPE §3/§4.1/§4.6/§7/§9 refreshed; DERIVATION_RULES.md rewritten as pointer; DISAGREEMENT_RESOLUTION v1.2→v1.3 |
+| 3/8 | 050c42a | C | derive.js D4.1+D4.5+D4.6; verify.js strip removed (D5.6); validate-catalog single-path v1.3 + name uniqueness (D5.8+D4.3); prompts.js 5 runtime guards + {{INCLUDE}} substitution + SCHEMA_VERSION="1.3" (D6.8); .husky/pre-commit enums drift check (C.6) |
+| 4/8 | a60eb61 | D | scope.json v2 negative-space (`include: ["**/*"]` + 7 excludes); 3 hook delegators under .claude/hooks/ (HOOKS_DIR bridge to .claude/sync/label/hooks/); settings.json wiring deferred to commit 8 per D.3 |
+| 5/8 | b5e3a02 | E | 6 README drift patches; OVERRIDE_CONVERSATION_EXAMPLES.md clean (no schema drift) |
+| 6/8 | 1c5034f | F.1 | `.validate-test.cjs` → `validate.test.cjs` rename (D4.7); package.json + validate-catalog comment updated |
+| — | — | F.2 | Gitignored state moved to `.claude/sync/label/preview/s10-run-1-attempt/` + `.claude/state/s10-run-1-attempt/s10-{results,prompts}/` |
+| 7/8 | 3d747de | H | Parent PLAN §S11/§S12/§S13 addenda (D8.2); new `SONASH_MIRROR_DELTA.md` (D8.5 + D8.6) under `.planning/piece-3-labeling-mechanism/structural-fix/` |
+
+**Corpus count corrected:** 459 tracked files in scope under v2 (not 429
+as original DIAGNOSIS assumed). PR #10 added ~30 files between Session
+13 and structural-fix execution.
+
+**Tests clean:** 122/122 labeling (smoke + backfill + hooks) + 14/14
+schema harness + enums.json in sync with schema-v1.json.
+
+**Only remaining phase:** Phase G (operator-interactive, ~100 min
+wall-clock) — 459-file sequential re-run → Enhanced+ promotion gate
+(`verify.js` → `/label-audit` dogfood → user approval) → atomic
+promote + `.claude/settings.json` hook wiring → commit 8/8. Phase I
+closeout audit folds into commit 8.
 
 **Execution route:** manual phase-by-phase, next-session Claude reads
 state + PLAN.md and runs Phases A → I in order. Subagent dispatch is NOT
@@ -61,9 +83,51 @@ reflect structural-fix APPROVED state.
 ## Next Session Goals
 
 ### Step 1 — `/session-begin`
-Counter 13 → 14. Branch: `piece-3-labeling-mechanism` continuing.
+Counter 13 → 15 (bump of 2 to acknowledge unbookkept Session 14). Branch:
+`fixes-42226` (new; off `main` after `piece-3-labeling-mechanism` deletion).
 
-### Step 2 — PRIMARY WORK: Execute structural-fix PLAN Phases A → I
+### Step 2 — PRIMARY WORK: Execute structural-fix PLAN Phase G (+ closeout I)
+
+**Phases A, B, C, D, E, F.1, F.2, H — COMPLETE (Session 15).** Only
+the operator-interactive Phase G + closeout Phase I remain.
+
+**Pickup order for next session:**
+1. `/session-begin` (counter 15 → 16). Branch: `fixes-42226`.
+2. Confirm Phase G readiness: 459 in-scope files, scope.json v2 live,
+   preview state already renamed to s10-run-1-attempt/, 3 hook
+   delegators committed, settings.json wiring pending.
+3. Dispatch Phase G.1 — sequential 50KB byte-weighted batches per
+   D6.4/D6.5. Estimated ~45–50 batches, ~100 min wall-clock.
+   Operator (Claude) inspects cross-check output between batches for
+   systematic drift per D6.5 — this is the mid-run-correction window.
+4. Phase G.2 Enhanced+ promotion gate (D6.3): verify.js hard-gate →
+   `/label-audit` dogfood on preview → synthesis summary → user
+   approval.
+5. Phase G.3 atomic promote + settings.json hook wiring (commit 7
+   per D8.1 / 8/8 on this branch; 4 label hook entries in
+   PostToolUse / UserPromptSubmit / Notification wiring).
+6. Phase I — parallel code-reviewer α/β/γ/δ (D8.2 addendum) +
+   post-promotion smoke tests (hook fires on Edit, pre-commit blocks
+   a bad record, `/label-audit --recent` returns clean/flagged).
+
+**Authoritative artifacts for next session (read in this order):**
+
+1. `SESSION_CONTEXT.md` (this file, Quick Status table)
+2. `.planning/piece-3-labeling-mechanism/structural-fix/PLAN.md`
+   Phase G + Phase I sections
+3. `.planning/piece-3-labeling-mechanism/structural-fix/DECISIONS.md`
+   Category 6 (re-run), 7 (hook wiring), 12 (orchestration)
+4. `.planning/piece-3-labeling-mechanism/structural-fix/SONASH_MIRROR_DELTA.md`
+   (cross-reference; nothing to port in this session — Piece 5.5)
+5. Any drift in `.claude/sync/label/backfill/` test output
+
+**Key invariants preserved across all 7 commits:**
+- Schema-first authority on drift
+- No band-aids (strip-before-validate gone)
+- Sequential re-run (operator-in-the-loop)
+- 3-layer architecture (hook primary, pre-commit gate, audit supplementary)
+- `source_scope` dictates cross-repo mirror eligibility
+- All 122 labeling tests + 14 schema harness tests green
 
 **Authoritative artifacts (read in this order):**
 
@@ -204,7 +268,9 @@ focus time; user decides session allocation.
 
 **Branch state:**
 
-- JASON-OS: `piece-3-labeling-mechanism` — Session 13 artifacts committed
+- JASON-OS: `fixes-42226` — fresh branch off `main @ ab2b0bf` for
+  structural-fix execution. `piece-3-labeling-mechanism` deleted
+  (local + remote) after PR #10 merge.
 - SoNash: `CAS-41826` unchanged since Session 8
 
 **Active todos:** `.planning/todos.jsonl` (32 entries; T32 appended 2026-04-21).

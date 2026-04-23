@@ -41,6 +41,12 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { sanitize } = require("../lib/sanitize");
+const { safeWriteFileSync } = require(
+  path.join(__dirname, "..", "..", "..", "..", "scripts", "lib", "safe-fs.js")
+);
+const { validatePathInDir } = require(
+  path.join(__dirname, "..", "..", "..", "..", "scripts", "lib", "security-helpers.js")
+);
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
 const DEFAULT_BATCH_DIR = path.join(REPO_ROOT, ".claude", "state", "batch-tmp");
@@ -117,8 +123,18 @@ function aggregate(batches) {
           (r) => Array.isArray(r.needs_review) && r.needs_review.length === 0
         ).length / previewRecords.length;
 
+  // cross-check emits two shapes:
+  //   unreachable:  { unreachable: true, path: "...", reason }
+  //   successful:   { preview: { path, ... }, disagreements: [...] }
+  // `r.path` exists only on the unreachable shape; successful records
+  // carry the path inside r.preview.path. Without the fallback, every
+  // disagreement on a successful record ships with `path: undefined`,
+  // breaking downstream synthesis (which groups + arbitrates by path).
   const disagreements = allCrossChecked.flatMap((r) =>
-    (r?.disagreements || []).map((d) => ({ path: r.path, ...d }))
+    (r?.disagreements || []).map((d) => ({
+      path: r.path || r.preview?.path,
+      ...d,
+    }))
   );
 
   return {
@@ -181,7 +197,16 @@ function cli() {
 
   if (args.out) {
     try {
-      fs.writeFileSync(args.out, json + "\n", "utf8");
+      // Confine --out + --batch-dir to REPO_ROOT so the CLI cannot spray
+      // artifacts outside the repo, and route the write through
+      // safeWriteFileSync (symlink-safe). Matches the hardening added to
+      // synthesize-findings.js in the same review round.
+      validatePathInDir(REPO_ROOT, path.relative(REPO_ROOT, path.resolve(args.out)));
+      validatePathInDir(
+        REPO_ROOT,
+        path.relative(REPO_ROOT, path.resolve(args.batchDir))
+      );
+      safeWriteFileSync(args.out, json + "\n", "utf8");
     } catch (err) {
       process.stderr.write(`aggregate-findings: write failed: ${sanitize(err)}\n`);
       process.exit(2);

@@ -40,6 +40,12 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { sanitize } = require("../lib/sanitize");
+const { safeWriteFileSync, readTextWithSizeGuard } = require(
+  path.join(__dirname, "..", "..", "..", "..", "scripts", "lib", "safe-fs.js")
+);
+const { validatePathInDir } = require(
+  path.join(__dirname, "..", "..", "..", "..", "scripts", "lib", "security-helpers.js")
+);
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
 const DEFAULT_FINDINGS = path.join(REPO_ROOT, ".claude", "state", "g1-findings.json");
@@ -57,14 +63,17 @@ const SAMPLE_PER_FIELD_LIMIT = 5;
 const BULK_DEFAULT_DOMINANCE_THRESHOLD = 0.6;
 
 /**
- * Treat as "value missing for verify": null, undefined, empty string,
- * or empty array. These are the shapes verify.js's purpose / rule layer
- * reject as a non-empty needs_review entry.
+ * Treat as "value missing for verify": null, undefined, or empty/whitespace
+ * string. Empty arrays are NOT missing — schema v1.3 lets required array
+ * fields like `dependencies`, `tool_deps`, and `external_services` be `[]`
+ * legitimately (no minItems), so conflating `[]` with null would
+ * misclassify agreed-empty-array records as Case F coverage gaps instead of
+ * Case B auto-confirms and block mechanical merge proposals that should
+ * sail through.
  */
 function isMissingValue(v) {
   if (v === null || v === undefined) return true;
   if (typeof v === "string" && v.trim().length === 0) return true;
-  if (Array.isArray(v) && v.length === 0) return true;
   return false;
 }
 
@@ -82,14 +91,29 @@ function pickHigherConfidence(disagreement) {
 }
 
 /**
- * Set-union for arrays of objects or scalars. For object arrays, dedupe
- * by JSON serialization (good enough for catalog-style records).
+ * Stable JSON stringify: sorts object keys recursively before serialising.
+ * LLM-emitted objects don't share a canonical key order between primary and
+ * secondary agents, so `JSON.stringify(v)` produces different strings for
+ * the same semantic value and leaks duplicates into the merged array.
+ * Arrays keep their index order (meaningful); only object keys are sorted.
+ */
+function stableStringify(v) {
+  if (v === null || typeof v !== "object") return JSON.stringify(v);
+  if (Array.isArray(v)) return `[${v.map(stableStringify).join(",")}]`;
+  const keys = Object.keys(v).sort();
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(v[k])}`).join(",")}}`;
+}
+
+/**
+ * Set-union for arrays of objects or scalars. Object dedupe uses
+ * stableStringify so primary/secondary agents with different key orders
+ * don't produce phantom "different" entries for the same semantic value.
  */
 function setUnion(a, b) {
   const seen = new Set();
   const out = [];
   for (const v of [...(a || []), ...(b || [])]) {
-    const key = typeof v === "object" ? JSON.stringify(v) : String(v);
+    const key = typeof v === "object" && v !== null ? stableStringify(v) : String(v);
     if (!seen.has(key)) {
       seen.add(key);
       out.push(v);
@@ -275,15 +299,23 @@ function detectNovelComposites(findings, compositesDir) {
       if (err && err.code === "ENOENT") continue;
       throw err;
     }
-    for (const line of raw.split("\n")) {
+    // Malformed lines are skipped but NEVER silently — a corrupted
+    // composite catalog would cause detectNovelComposites to miss known
+    // ids and promote real duplicates as "novel", so the operator needs
+    // to see parse failures land on stderr with file + line context.
+    const lines = raw.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
       if (!line.trim()) continue;
       try {
         const obj = JSON.parse(line);
         if (obj && typeof obj.composite_id === "string") {
           knownIds.add(obj.composite_id);
         }
-      } catch {
-        // skip malformed lines
+      } catch (err) {
+        process.stderr.write(
+          `synthesize-findings: composites parse failed at ${fname}:${i + 1}: ${sanitize(err)}\n`
+        );
       }
     }
   }
@@ -352,10 +384,15 @@ function renderSummary(findings, proposal) {
       `**Agreement rate (records with no fields needing review):** ${pct(findings.agreement_rate)}.`
   );
   lines.push("");
-  lines.push(
-    "Agreement rate is 0% because every record has at least one field flagged for review — purpose and notes are null on every record (the agents could not derive free-text fields without reading file contents at the depth needed). Structural fields (type, source_scope, portability) have much higher agent agreement."
-  );
-  lines.push("");
+  // Only print the 0%-rationale paragraph when the stat actually IS 0%.
+  // Earlier runs hardcoded this below the stats and produced contradictory
+  // output (stats say 42%, paragraph says "agreement rate is 0%…").
+  if (findings.agreement_rate === 0) {
+    lines.push(
+      "Agreement rate is 0% because every record has at least one field flagged for review — purpose and notes are null on every record (the agents could not derive free-text fields without reading file contents at the depth needed). Structural fields (type, source_scope, portability) have much higher agent agreement."
+    );
+    lines.push("");
+  }
 
   lines.push("## At a glance");
   lines.push("");
@@ -617,9 +654,28 @@ function cli() {
     process.exit(2);
   }
 
+  // Confine all three CLI paths to REPO_ROOT. validatePathInDir rejects
+  // absolute paths and `..` traversal; a user who fat-fingers
+  // `--out-dir ../../../tmp` shouldn't be able to spray artifacts across
+  // the filesystem via this tool. Rejections surface as a usage error.
+  try {
+    validatePathInDir(REPO_ROOT, path.relative(REPO_ROOT, path.resolve(args.findings)));
+    validatePathInDir(REPO_ROOT, path.relative(REPO_ROOT, path.resolve(args.compositesDir)));
+    validatePathInDir(REPO_ROOT, path.relative(REPO_ROOT, path.resolve(args.outDir)));
+  } catch (err) {
+    process.stderr.write(
+      `synthesize-findings: path must be within repo: ${sanitize(err)}\n`
+    );
+    process.exit(2);
+  }
+
   let findings;
   try {
-    findings = JSON.parse(fs.readFileSync(args.findings, "utf8"));
+    // readTextWithSizeGuard caps the read at 2 MiB; findings catalogs are
+    // a few dozen KiB in practice, so the ceiling is a sanity check not a
+    // real limit. If a real catalog ever exceeds it, bump the guard —
+    // don't remove it.
+    findings = JSON.parse(readTextWithSizeGuard(args.findings));
   } catch (err) {
     process.stderr.write(`synthesize-findings: findings read failed: ${sanitize(err)}\n`);
     process.exit(2);
@@ -639,10 +695,12 @@ function cli() {
   const gapsPath = path.join(args.outDir, "g1-coverage-gaps.jsonl");
 
   try {
-    fs.writeFileSync(summaryPath, renderSummary(findings, proposal), "utf8");
-    fs.writeFileSync(detailPath, renderDetail(proposal), "utf8");
-    fs.writeFileSync(proposalPath, JSON.stringify(proposal, null, 2) + "\n", "utf8");
-    fs.writeFileSync(
+    // safeWriteFileSync refuses to follow symlinks in the destination path
+    // or any parent directory — defense-in-depth over raw fs.writeFileSync.
+    safeWriteFileSync(summaryPath, renderSummary(findings, proposal), "utf8");
+    safeWriteFileSync(detailPath, renderDetail(proposal), "utf8");
+    safeWriteFileSync(proposalPath, JSON.stringify(proposal, null, 2) + "\n", "utf8");
+    safeWriteFileSync(
       gapsPath,
       proposal.coverage_gaps.map((g) => JSON.stringify(g)).join("\n") + "\n",
       "utf8"
@@ -676,5 +734,6 @@ module.exports = {
   detectSections,
   isMissingValue,
   setUnion,
+  stableStringify,
   pickHigherConfidence,
 };

@@ -395,6 +395,21 @@ function applyArbitration(pkg, opts = {}) {
     if (rec && typeof rec.path === "string") index.set(rec.path, { rec, bucket: "local" });
   }
 
+  // Build the unresolved-gap keyset so we can refuse any decision that
+  // contradicts the synthesis agent's "intentionally-left-open" list.
+  // Synthesis emits unresolved_coverage_gaps to keep verify.js failing on
+  // fields that the user must address — an arbitration package that tries
+  // to resolve them anyway is either malformed or adversarial; either way
+  // we skip + log rather than mutate.
+  const unresolvedKeys = new Set();
+  if (Array.isArray(pkg.unresolved_coverage_gaps)) {
+    for (const gap of pkg.unresolved_coverage_gaps) {
+      if (gap && typeof gap.path === "string" && typeof gap.field === "string") {
+        unresolvedKeys.add(`${gap.path}|${gap.field}`);
+      }
+    }
+  }
+
   const summary = {
     decisionsApplied: 0,
     decisionsSkipped: 0,
@@ -406,6 +421,12 @@ function applyArbitration(pkg, opts = {}) {
     errors: [],
   };
   const modifiedPaths = new Set();
+
+  // Field names that would corrupt JS object internals if assigned via
+  // `rec[field] = value`. Rejected unconditionally before any record
+  // mutation, ahead of the needs_review allowlist so the error message
+  // names the security concern specifically.
+  const FORBIDDEN_FIELDS = new Set(["__proto__", "constructor", "prototype"]);
 
   for (const decision of pkg.decisions) {
     if (!decision || typeof decision !== "object") {
@@ -421,23 +442,61 @@ function applyArbitration(pkg, opts = {}) {
       );
       continue;
     }
+    if (FORBIDDEN_FIELDS.has(field)) {
+      summary.decisionsSkipped++;
+      summary.errors.push(
+        `decision rejected: field "${field}" would corrupt object internals (path "${recPath}")`
+      );
+      continue;
+    }
+    if (unresolvedKeys.has(`${recPath}|${field}`)) {
+      // Honors the synthesis agent's contract: fields listed in
+      // unresolved_coverage_gaps MUST remain in needs_review so verify.js
+      // keeps failing until the user addresses them in a follow-up run.
+      summary.decisionsSkipped++;
+      summary.errors.push(
+        `decision ignored: (${recPath}, ${field}) is in unresolved_coverage_gaps`
+      );
+      continue;
+    }
     const hit = index.get(recPath);
     if (!hit) {
       summary.decisionsSkipped++;
       summary.errors.push(`no preview record for path "${recPath}"`);
       continue;
     }
+    // needs_review acts as an allowlist: arbitration can only resolve
+    // fields that synthesis explicitly flagged. This blocks prototype
+    // pollution via non-reserved names and catches malformed packages
+    // that target fields the record never needed a decision on.
+    if (!Array.isArray(hit.rec.needs_review) || !hit.rec.needs_review.includes(field)) {
+      summary.decisionsSkipped++;
+      summary.errors.push(
+        `decision field "${field}" not present in needs_review for path "${recPath}"`
+      );
+      continue;
+    }
 
     // Apply the resolved value. `null` is intentionally allowed — it
     // means the user confirmed null is the correct value for that field.
-    hit.rec[field] = decision.resolved_value === undefined ? null : decision.resolved_value;
-
-    // Bookkeeping: clear the needs_review entry for this field if present.
-    if (Array.isArray(hit.rec.needs_review)) {
-      const before = hit.rec.needs_review.length;
-      hit.rec.needs_review = hit.rec.needs_review.filter((f) => f !== field);
-      if (hit.rec.needs_review.length < before) summary.needsReviewCleared++;
+    // `undefined` is treated as malformed: silently coercing to null would
+    // clear needs_review and stamp high confidence on data that never
+    // arrived, so we skip + log instead.
+    if (!("resolved_value" in decision)) {
+      summary.decisionsSkipped++;
+      summary.errors.push(
+        `decision missing resolved_value: ${JSON.stringify({ path: recPath, field })}`
+      );
+      continue;
     }
+    hit.rec[field] = decision.resolved_value;
+
+    // Bookkeeping: clear the needs_review entry for this field. The
+    // allowlist guard above guarantees needs_review is an array
+    // containing `field`, so this filter always decrements by exactly 1.
+    const before = hit.rec.needs_review.length;
+    hit.rec.needs_review = hit.rec.needs_review.filter((f) => f !== field);
+    if (hit.rec.needs_review.length < before) summary.needsReviewCleared++;
 
     // Update per-field confidence — user input gets high confidence by
     // default since the source of truth is now the user, not an agent.

@@ -1,5 +1,19 @@
 # PR Review Learnings
 
+#### Review #18: Sessions 15-18 structural-fix + back-fill machinery (PR #11) — Round 1 (2026-04-23)
+
+**Source:** Mixed (Qodo + Gemini)
+**PR/Branch:** PR #11 / `fixes-42226` → `main`
+**Items:** 13 unique (Critical: 2, Major: 5, Minor: 4, Trivial: 0, + 1 Architectural, + 1 Rejected)
+
+**Patterns Identified:** _(filled post-fix)_
+
+**Resolution:** _(filled post-fix)_
+
+**Key Learnings:** _(filled post-fix)_
+
+---
+
 #### Review #17: Piece 3 structural-fix + migration-skill deep-research (PR #10) — Round 2 (2026-04-21)
 
 **Source:** Qodo (Gemini did not post on R2)

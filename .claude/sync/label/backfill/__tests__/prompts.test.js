@@ -302,3 +302,42 @@ test("applyRuntimeGuards: null/undefined input returned unchanged", () => {
   assert.equal(applyRuntimeGuards(undefined), undefined);
   assert.equal(applyRuntimeGuards("not an object"), "not an object");
 });
+
+// PR #11 R1 item 1 (Qodo): path-shaped hard deps that escape the repo root
+// must not probe the host filesystem. validatePathInDir rejects absolute
+// paths and `..` traversal; the guard must then treat the dep as
+// non-existent (downgrade hard→soft) instead of calling existsSync on an
+// attacker-controlled path.
+test("applyRuntimeGuards: absolute dep path is confined (hard→soft, no host probe)", () => {
+  const abs = process.platform === "win32" ? "C:\\Windows\\System32\\cmd.exe" : "/etc/passwd";
+  const record = {
+    name: "x",
+    path: "x.md",
+    type: "doc",
+    dependencies: [{ name: abs, hardness: "hard", kind: "reference" }],
+  };
+  const out = applyRuntimeGuards(record);
+  assert.equal(
+    out.dependencies[0].hardness,
+    "soft",
+    "absolute paths must be downgraded without probing"
+  );
+  assert.ok(
+    typeof out.notes === "string" && out.notes.includes("out-of-repo or invalid path"),
+    "note must flag out-of-repo reason, not a bogus 'not found at <abs>'"
+  );
+});
+
+test("applyRuntimeGuards: parent-traversal dep path is confined (hard→soft, no host probe)", () => {
+  const record = {
+    name: "x",
+    path: "x.md",
+    type: "doc",
+    dependencies: [
+      { name: "../../../etc/passwd", hardness: "hard", kind: "reference" },
+    ],
+  };
+  const out = applyRuntimeGuards(record);
+  assert.equal(out.dependencies[0].hardness, "soft");
+  assert.ok(out.notes.includes("out-of-repo or invalid path"));
+});

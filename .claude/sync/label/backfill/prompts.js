@@ -23,6 +23,10 @@ const { sanitizeError } = require(
   path.join(__dirname, "..", "..", "..", "..", "scripts", "lib", "sanitize-error.cjs")
 );
 
+const { validatePathInDir } = require(
+  path.join(__dirname, "..", "..", "..", "..", "scripts", "lib", "security-helpers.js")
+);
+
 let readTextWithSizeGuard;
 try {
   ({ readTextWithSizeGuard } = require(
@@ -287,6 +291,12 @@ function applyRuntimeGuards(record, opts = {}) {
   // Guard 1: hard-dep exists-check. Only apply to path-shaped names
   // (contain a slash or start with a dot) — registry-name references
   // (e.g. "convergence-loop") would be resolved at a higher layer.
+  //
+  // Agent-emitted `dep.name` is untrusted input. Confine it to repoRoot
+  // via validatePathInDir before probing the filesystem — absolute paths
+  // or `..` traversal fail confinement and are treated as non-existent,
+  // which triggers the existing hard→soft downgrade. Matches the pattern
+  // used in verify.js and derive.toRepoRelative for the same reason.
   if (Array.isArray(out.dependencies)) {
     out.dependencies = out.dependencies.map((dep) => {
       if (
@@ -297,19 +307,31 @@ function applyRuntimeGuards(record, opts = {}) {
       ) {
         return dep;
       }
-      const isPathShaped = dep.name.includes("/") || dep.name.startsWith(".");
+      // "Path-shaped" = anything the confinement guard should look at.
+      // Forward slash, leading dot, backslash, or an absolute form (POSIX
+      // root or Windows drive letter) all qualify. Registry names like
+      // "convergence-loop" fall through to the higher-layer resolver.
+      const isPathShaped =
+        dep.name.includes("/") ||
+        dep.name.includes("\\") ||
+        dep.name.startsWith(".") ||
+        path.isAbsolute(dep.name);
       if (!isPathShaped) return dep;
       let exists = false;
+      let confined = false;
       try {
+        validatePathInDir(repoRoot, dep.name);
+        confined = true;
         const abs = path.resolve(repoRoot, dep.name);
         exists = fs.existsSync(abs);
       } catch {
         exists = false;
       }
       if (!exists) {
-        guardNotes.push(
-          `dep ${dep.name} not found at ${dep.name}; downgraded hard→soft on dispatch`
-        );
+        const reason = confined
+          ? `not found at ${dep.name}`
+          : "out-of-repo or invalid path";
+        guardNotes.push(`dep ${dep.name} ${reason}; downgraded hard→soft on dispatch`);
         return { ...dep, hardness: "soft" };
       }
       return dep;

@@ -447,6 +447,126 @@ test("applyArbitration: empty decisions list is a clean no-op (writes both files
   assert.deepEqual(localAfter, localBefore);
 });
 
+// PR #11 R1 item 2 (Qodo): decisions whose (path,field) is in
+// unresolved_coverage_gaps must be ignored. The synthesis agent emits this
+// list specifically to keep verify.js failing on fields the user must
+// address in a follow-up run — an arbitration package that tries to resolve
+// them anyway is malformed or adversarial.
+test("applyArbitration: decisions targeting unresolved_coverage_gaps are skipped (not applied)", () => {
+  const { writePreview, applyArbitration } = require(MOD);
+  const { readCatalog } = require(path.join(LIB, "catalog-io"));
+  const { previewDir } = mkWorkspace();
+  writePreview(arbitrationFixture(), { previewDir });
+
+  const result = applyArbitration(
+    {
+      decisions: [
+        { path: "a.md", field: "purpose", resolved_value: "should be ignored" },
+        { path: "a.md", field: "notes", resolved_value: "this one applies" },
+      ],
+      unresolved_coverage_gaps: [{ path: "a.md", field: "purpose" }],
+    },
+    { previewDir },
+  );
+
+  assert.equal(result.decisionsApplied, 1);
+  assert.equal(result.decisionsSkipped, 1);
+  assert.equal(result.unresolvedCoverageGaps, 1);
+  assert.equal(result.errors.length, 1);
+  assert.match(result.errors[0], /unresolved_coverage_gaps/);
+
+  const shared = readCatalog(path.join(previewDir, "shared.jsonl"));
+  const a = shared.find((r) => r.path === "a.md");
+  // purpose stays null + still in needs_review; notes was applied.
+  assert.equal(a.purpose, null);
+  assert.ok(a.needs_review.includes("purpose"), "purpose must stay in needs_review");
+  assert.equal(a.notes, "this one applies");
+});
+
+// PR #11 R1 item 2 (Qodo compliance): forbidden field names would corrupt
+// object internals if assigned via rec[field]=value.
+test("applyArbitration: __proto__/constructor/prototype decisions are rejected", () => {
+  const { writePreview, applyArbitration } = require(MOD);
+  const { previewDir } = mkWorkspace();
+  writePreview(arbitrationFixture(), { previewDir });
+
+  const result = applyArbitration(
+    {
+      decisions: [
+        { path: "a.md", field: "__proto__", resolved_value: { polluted: true } },
+        { path: "a.md", field: "constructor", resolved_value: "bad" },
+        { path: "a.md", field: "prototype", resolved_value: "bad" },
+      ],
+    },
+    { previewDir },
+  );
+
+  assert.equal(result.decisionsApplied, 0);
+  assert.equal(result.decisionsSkipped, 3);
+  for (const err of result.errors) {
+    assert.match(err, /corrupt object internals/);
+  }
+  // Base Object.prototype must remain unpolluted — property access reaches
+  // through to the base prototype for any plain object, not just the one
+  // we tried to mutate.
+  assert.equal({}.polluted, undefined);
+});
+
+// PR #11 R1 suggestion #13: arbitration may only resolve fields the record
+// actually flagged for review. Catches both adversarial packages and
+// honest typos (wrong field name) without mutating records.
+test("applyArbitration: decisions for fields not in needs_review are skipped", () => {
+  const { writePreview, applyArbitration } = require(MOD);
+  const { readCatalog } = require(path.join(LIB, "catalog-io"));
+  const { previewDir } = mkWorkspace();
+  writePreview(arbitrationFixture(), { previewDir });
+
+  const result = applyArbitration(
+    {
+      decisions: [
+        { path: "a.md", field: "source_scope", resolved_value: "user" }, // not in needs_review
+      ],
+    },
+    { previewDir },
+  );
+
+  assert.equal(result.decisionsApplied, 0);
+  assert.equal(result.decisionsSkipped, 1);
+  assert.match(result.errors[0], /not present in needs_review/);
+
+  const shared = readCatalog(path.join(previewDir, "shared.jsonl"));
+  const a = shared.find((r) => r.path === "a.md");
+  assert.equal(a.source_scope, "universal", "source_scope must not change");
+});
+
+// PR #11 R1 suggestion #12: missing resolved_value was silently coerced to
+// null + needs_review cleared + 0.95 confidence stamped. Now treated as
+// malformed.
+test("applyArbitration: decision missing resolved_value is rejected (no silent null coercion)", () => {
+  const { writePreview, applyArbitration } = require(MOD);
+  const { readCatalog } = require(path.join(LIB, "catalog-io"));
+  const { previewDir } = mkWorkspace();
+  writePreview(arbitrationFixture(), { previewDir });
+
+  const result = applyArbitration(
+    {
+      decisions: [
+        { path: "a.md", field: "purpose" }, // no resolved_value key at all
+      ],
+    },
+    { previewDir },
+  );
+
+  assert.equal(result.decisionsApplied, 0);
+  assert.equal(result.decisionsSkipped, 1);
+  assert.match(result.errors[0], /missing resolved_value/);
+
+  const shared = readCatalog(path.join(previewDir, "shared.jsonl"));
+  const a = shared.find((r) => r.path === "a.md");
+  assert.equal(a.purpose, null, "field untouched");
+  assert.ok(a.needs_review.includes("purpose"), "needs_review entry preserved");
+});
+
 test("applyArbitration: malformed decisions are skipped + reported, well-formed siblings still apply", () => {
   const { writePreview, applyArbitration } = require(MOD);
   const { readCatalog } = require(path.join(LIB, "catalog-io"));

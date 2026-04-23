@@ -13,6 +13,9 @@
     "husky": "^9",
     "node-notifier": "^10.0.1"
   },
+  "overrides": {
+    "uuid": "^14.0.0"
+  },
   "engines": {
     "node": ">=22"
   }

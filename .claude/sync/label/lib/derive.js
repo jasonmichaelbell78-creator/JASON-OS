@@ -161,9 +161,24 @@ function detectType(filePath, content = "") {
   // `*.test.js` file anywhere (including inside .claude/hooks/ or
   // scripts/) should classify as `test`, not as its directory-type.
 
-  // Tests (D4.6) — both suffix form and __tests__ dir form
-  if (/\.(test|spec)\.(js|cjs|mjs|ts)$/i.test(rel)) return "test";
-  if (/(?:^|\/)__tests__\/[^/]+\.(js|cjs|mjs|ts)$/i.test(rel)) return "test";
+  // Tests (D4.6) — JASON-OS is multi-language by design (the OS itself is
+  // Node-only but downstream consumer repos can be any stack), so test
+  // detection covers the common conventions across languages:
+  //   JS/TS:  *.test.{js,cjs,mjs,ts,tsx,jsx}, *.spec.*, __tests__/* dir
+  //   Go:     *_test.go
+  //   Python: test_*.py, *_test.py, tests/test_*.py
+  //   Java:   *Test.java, *Tests.java
+  //   Rust:   tests/*.rs (separate crate convention)
+  //   Ruby:   *_spec.rb, *_test.rb, spec/*.rb
+  if (/\.(test|spec)\.(js|cjs|mjs|ts|tsx|jsx)$/i.test(rel)) return "test";
+  if (/(?:^|\/)__tests__\/[^/]+\.(js|cjs|mjs|ts|tsx|jsx)$/i.test(rel)) return "test";
+  if (/_test\.go$/i.test(rel)) return "test";
+  if (/(?:^|\/)test_[^/]+\.py$/i.test(rel)) return "test";
+  if (/_test\.py$/i.test(rel)) return "test";
+  if (/Tests?\.java$/.test(rel)) return "test";
+  if (/(?:^|\/)tests\/[^/]+\.rs$/i.test(rel)) return "test";
+  if (/_spec\.rb$/i.test(rel)) return "test";
+  if (/_test\.rb$/i.test(rel)) return "test";
 
   // .husky/_/ shims → git-hook (D4.5e). Caller stamps status:generated.
   if (/^\.husky\/_\//i.test(rel)) return "git-hook";

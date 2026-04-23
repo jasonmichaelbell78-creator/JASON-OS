@@ -209,8 +209,21 @@ test("derive: detectType v1.3 rules (D4.5 + D4.6)", () => {
   // D4.6 — tests via suffix form
   assert.equal(detectType("scripts/foo.test.js"), "test");
   assert.equal(detectType("scripts/foo.spec.mjs"), "test");
-  assert.equal(detectType("tools/statusline/statusline_test.go"), "tool-file",
-    "Go _test.go does not match the JS test suffix pattern; keeps tool-file classification since it's under tools/");
+
+  // PR #11 R1 (Gemini): multi-language test detection. JASON-OS itself is
+  // Node-only but consumer repos may be any stack — tests in those repos
+  // should still classify correctly when the OS runs over them.
+  assert.equal(detectType("tools/statusline/statusline_test.go"), "test",
+    "Go _test.go must classify as test (was previously misclassified as tool-file)");
+  assert.equal(detectType("scripts/test_things.py"), "test", "Python test_*.py");
+  assert.equal(detectType("scripts/things_test.py"), "test", "Python *_test.py");
+  assert.equal(detectType("src/MyClassTest.java"), "test", "Java *Test.java");
+  assert.equal(detectType("src/MyClassTests.java"), "test", "Java *Tests.java");
+  assert.equal(detectType("tests/integration.rs"), "test", "Rust tests/*.rs");
+  assert.equal(detectType("spec/widget_spec.rb"), "test", "Ruby *_spec.rb");
+  assert.equal(detectType("spec/widget_test.rb"), "test", "Ruby *_test.rb");
+  assert.equal(detectType("scripts/component.test.tsx"), "test", "TypeScript JSX");
+  assert.equal(detectType("scripts/component.test.jsx"), "test", "JS JSX");
 
   // D4.5c — .husky/_shared.sh + .husky/husky.sh → hook-lib
   assert.equal(detectType(".husky/_shared.sh"), "hook-lib");

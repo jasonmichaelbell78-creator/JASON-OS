@@ -1,9 +1,12 @@
 # Sync-Mechanism Registry Schema
 
-**Version:** 1.0
-**Last Updated:** 2026-04-19
+**Version:** 1.3
+**Last Updated:** 2026-04-22
 **Status:** ACTIVE
-**Source of decisions:** `.planning/piece-2-schema-design/DECISIONS.md` (D1–D32)
+**Source of decisions:**
+- `.planning/piece-2-schema-design/DECISIONS.md` (D1–D32) — v1.0 foundation
+- `.planning/piece-3-labeling-mechanism/DECISIONS.md` (D1–D19 + machinery) — v1.1/v1.2 Piece 3 additions
+- `.planning/piece-3-labeling-mechanism/structural-fix/DECISIONS.md` (D1.1–D8.7) — v1.3 structural additions
 
 ---
 
@@ -69,7 +72,7 @@ in §3.10 below (details in `.claude/sync/label/docs/CATALOG_SHAPE.md` §4).
 |---|---|---|---|
 | `name` | string | Canonical identifier used when referencing this file from elsewhere. Matches filename slug or `name:` frontmatter line where available. | D1 |
 | `path` | string | Repo-root-relative path to the file. Disambiguates same-name files in different directories. | D2 |
-| `type` | enum (24 values) | File-kind classification. See §8.1 for values. | D15 |
+| `type` | enum (26 values) | File-kind classification. See §8.1 for values. `git-hook` and `test` added in v1.3 per structural-fix D3.1. | D15; structural-fix D3.1 |
 | `purpose` | string | One-sentence human-readable description of what the file does. | D16 |
 
 ### §3.2 Scope and sync-action (required)
@@ -107,7 +110,7 @@ configure MCP, set env var). A lumped column loses the remediation signal.
 
 | Column | Type | Description | Rationale |
 |---|---|---|---|
-| `lineage` | object or null | Where the file came from. See §4. `null` for native files. | D25 |
+| `lineage` | object or null | Where the file came from. See §3.11 for the 4-field object shape. `null` for native files. | D25 |
 | `supersedes` | array of names | Files this one replaces (array supports merger cases). | D26 |
 | `superseded_by` | string or null | Name of the file that replaced this one. | D26 |
 
@@ -173,6 +176,48 @@ Details — invariants, consumers, audit trail — live in
 `.claude/sync/label/docs/CATALOG_SHAPE.md` §4.1 through §4.5. These fields
 are mirrored on composite records so the same labeling machinery applies to
 composites.
+
+### §3.11 Lineage Records
+
+The `lineage` column (§3.4) is either `null` for native files or a 4-field
+object for ported files. Locked as the canonical shape in structural-fix
+D2.1 (schema wins over prior template drift).
+
+| Field | Type | Description |
+|---|---|---|
+| `source_project` | string | Originating repo (e.g. `"sonash"`, `"jason-os"`). |
+| `source_path` | string | Repo-relative path in the source repo at port time. |
+| `source_version` | string | Version identifier of the source file at port (e.g. `"v1.4"`, `"v2.0"`). Free-form — prior D25 expected semver-like strings but doesn't enforce. |
+| `ported_date` | string | ISO-8601 date (`YYYY-MM-DD`) of the port. |
+
+`additionalProperties: false` — lineage objects do not accept extra keys.
+Native files set `lineage: null`; there is no "partial lineage" shape.
+
+The adjacent `migration_metadata` object (§6) carries port-process
+details (what was dropped, what was sanitized) — `lineage` is the
+"where from + when" stamp only.
+
+### §3.12 Confidence (optional, added in v1.3)
+
+Optional top-level `confidence` object on every file record and composite
+record. Added in structural-fix D2.2 to replace the pre-v1.3
+strip-before-validate band-aid in `verify.js` + `cross-check.js`.
+
+| Field | Type | Description |
+|---|---|---|
+| `confidence` | object or absent | Optional. Map of free-form axis names → numbers in `[0, 1]`. Schema enforces value range; axis keys are agent-defined. |
+
+**Why this exists:** agent-primary / agent-secondary derivation emits
+confidence alongside the record. Prior schema rejected the field via
+`additionalProperties: false`, forcing verify.js to strip it before
+validation — losing the signal and creating a divergence between "what
+the agent said" and "what was stored." v1.3 makes the field explicit.
+
+**Consumers:** `validate-catalog.js` passes confidence through
+unchanged (treated as informational; `pending_agent_fill` +
+`needs_review` remain the commit-time gates). Downstream readers (audit
+skill, needs-review filter) can consult confidence to prioritize
+review targets.
 
 ---
 
@@ -277,7 +322,7 @@ supersedes, superseded_by, notes, data_contracts, component_units) AND adds
 All enum values live in `enums.json` (machine-readable) — this section is the
 human-readable mirror.
 
-### §8.1 `type` — 24 values
+### §8.1 `type` — 26 values
 
 | Value | Description |
 |---|---|
@@ -304,6 +349,9 @@ human-readable mirror.
 | `keybindings` | Custom keyboard shortcut mapping (~/.claude/keybindings.json) |
 | `shared-doc-lib` | Shared prose-library files used by multiple skills |
 | `database` | Data files like SQLite databases |
+| `composite` | Composite-record marker in `composites.jsonl` (not a file-record type). |
+| `git-hook` | **v1.3** — Git-native hook (`.husky/<name>`, shims under `.husky/_/`, or `.git/hooks/<name>`). Distinct namespace from Claude-Code `type: hook`. Paired with `git_hook_event` (§9.11). Driven by structural-fix D3.1 + D4.5. |
+| `test` | **v1.3** — Test files under `**/__tests__/**` or matching `*.{test,spec}.{js,cjs,mjs,ts}` per structural-fix D4.6. |
 | `other` | Escape-valve for unclassified files (temporary; ~3-file threshold triggers real-type addition) |
 
 **Evolution:** adding a new type value = schema minor version bump (non-breaking).
@@ -343,9 +391,33 @@ See EVOLUTION.md. Files in `other` auto-upgrade when a matching type lands.
 | `generated` | Auto-generated by tooling (never hand-edited). |
 | `partial` | **v1.1 — Piece 3.** Transient: async understanding-field fill is still in flight. Valid in the live catalog, rejected at commit time by the pre-commit validator (Piece 3 D3 + D11). |
 
+#### §8.4a `status: generated` portability pairing (D3.2)
+
+`status: generated` is a classification signal, not a portability signal.
+Each generated record MUST also carry one of:
+
+- `portability: not-portable` — artifact is regenerated per repo and never
+  crosses (e.g. `.husky/_/*` shims, `.research/research-index.jsonl`,
+  `.planning/TODOS.md`).
+- `portability: portable-with-deps` — generated content crosses but needs
+  the generator present on the target side (e.g. `package-lock.json`).
+
+Structural-fix D3.2 makes this pairing explicit — avoids adding a
+`generated` value to `enum_portability` (which would have duplicated the
+meaning across two enums).
+
 ### §8.5 `hook_event` — 9 values
 
+Claude-Code hook events. Paired with `type: hook` (not `type: git-hook`).
+
 `PreToolUse | PostToolUse | PostToolUseFailure | SessionStart | Stop | SubagentStop | Notification | PreCompact | UserPromptSubmit`
+
+### §8.5a `git_hook_event` — 18 values (v1.3)
+
+Git-native hook trigger. Paired with `type: git-hook` (§9.11). Distinct
+semantic namespace from §8.5 per structural-fix D3.3.
+
+`applypatch-msg | pre-applypatch | post-applypatch | commit-msg | pre-commit | pre-merge-commit | pre-rebase | post-commit | post-checkout | post-merge | pre-push | pre-receive | update | post-receive | post-update | push-to-checkout | pre-auto-gc | post-rewrite`
 
 ### §8.6 `dependency_hardness` — 2 values
 
@@ -441,17 +513,36 @@ has a specific set of extension fields.
 Teams use prettier-ignore + bold + table metadata (parser is a Piece 3
 concern; schema fields identical to agents).
 
-### §9.3 Hooks (`type: hook | hook-lib`)
+### §9.3 Hooks — split into `type: hook` vs `type: hook-lib` (v1.3, D2.5)
+
+Pre-v1.3 both types required the 7 hook-wiring fields. v1.3 splits the
+conditional: Claude-Code-wired hooks require them; library helpers used
+BY hooks require none of them (a hook-lib is shared code, not a wired
+hook of its own).
+
+#### §9.3a `type: hook` — 7 required fields
 
 | Field | Type | Description |
 |---|---|---|
-| `event` | enum | See §8.5 (9 values). |
+| `event` | enum | See §8.5 (9 Claude-Code event values). |
 | `matcher` | string or null | Tool-name regex filter. Null = fires on all. |
 | `if_condition` | string or null | Additional filter beyond matcher. |
 | `continue_on_error` | boolean | Fail-open (true) vs fail-closed (false). |
 | `exit_code_action` | enum | `block \| warn \| allow`. Semantics distinct from continue_on_error. |
 | `async_spawn` | boolean | Fire-and-forget subprocess pattern. |
 | `kill_switch_env` | string or null | Env var that disables this hook (e.g. `SKIP_GATES=1`). |
+
+#### §9.3b `type: hook-lib` — none required
+
+Hook-libs are shared helper code consumed by hooks (e.g.
+`.claude/hooks/lib/symlink-guard.js`, `.husky/_shared.sh`,
+`.husky/husky.sh`). They do not wire into any event themselves; the
+7 fields above do not apply. Base `file_record` columns + dependency
+graph carry the load.
+
+Pre-v1.3 records that stamped these 7 fields as `null` on hook-libs
+remain valid under v1.3 (schema is additive only) — but new hook-lib
+records SHOULD omit them per this split.
 
 ### §9.4 Memories (`type: memory | canonical-memory`)
 
@@ -515,6 +606,30 @@ concern; schema fields identical to agents).
 | `gsd_phase` | string or null | For GSD composites. |
 | `port_strategy` | enum | `atomic \| partial-ok`. |
 
+### §9.11 Git Hooks (`type: git-hook`) — v1.3
+
+| Field | Type | Description |
+|---|---|---|
+| `git_hook_event` | enum | See §8.5a (18 values). Required — the schema's `allOf` conditional enforces presence when `type: git-hook`. |
+
+Applies to `.husky/<name>` files, the shims under `.husky/_/*`, and any
+direct `.git/hooks/<name>` entries (though the latter are project-local
+and typically gitignored). Distinct from `type: hook` (Claude Code hook
+events) — different invocation surface, different event namespace.
+
+### §9.12 Tests (`type: test`) — v1.3
+
+No per-type extensions. Base `file_record` fields carry the classification.
+Applies to files matched by either convention:
+
+- Directory form: `**/__tests__/**/*.{js,cjs,mjs,ts}`
+- Suffix form:    `**/*.{test,spec}.{js,cjs,mjs,ts}`
+
+Both conventions map to the single `test` type per structural-fix D4.6.
+Runner information + dependency graph are captured via `tool_deps` +
+`dependencies` (e.g. `{name: "node", hardness: "hard"}` for `node --test`
+runners; `{name: "jest", hardness: "hard"}` for Jest projects).
+
 ---
 
 ## §10 Schema Evolution
@@ -543,6 +658,7 @@ repo before the next sync cycle.
 | 1.0 | 2026-04-19 | Initial release. 26 universal columns + 41 per-type fields + sections + migration-metadata + composites catalog. Decisions D1–D32 in `.planning/piece-2-schema-design/DECISIONS.md`. |
 | 1.1 | 2026-04-20 | Added `status` value: `partial` (transient async-fill state, rejected at commit time). Driven by Piece 3 labeling mechanism — decisions D2, D3, D11 in `.planning/piece-3-labeling-mechanism/DECISIONS.md`; shape detail in `.claude/sync/label/docs/CATALOG_SHAPE.md` §4.1. |
 | 1.2 | 2026-04-20 | Added 5 Piece 3 machinery fields as optional typed columns on both `file_record` and `composite_record`: `pending_agent_fill` (boolean), `manual_override` (string[]), `needs_review` (string[]), `last_hook_fire` (string\|null), `schema_version` (string). Replaces the `relaxFileRecordAdditionalProperties` patch in `validate-catalog.js` — schema now strictly enforces field shape. Minor bump per EVOLUTION.md §3 (optional with defaults); T27 in `.planning/todos.jsonl`. |
+| 1.3 | 2026-04-22 | **Piece 3 structural fix.** Added `enum_type` values `git-hook` + `test` (D3.1, §8.1). Added new `enum_git_hook_event` (D3.3, §8.5a) + paired `allOf` conditional requiring `git_hook_event` on `type: git-hook`. Split old §9.3 `hook\|hook-lib` conditional: `type: hook` still requires the 7 hook-wiring fields; `type: hook-lib` now requires none (D2.5). Added optional top-level `confidence` object to both `file_record` and `composite_record` (D2.2, §3.12) — replaces the strip-before-validate pattern in `verify.js`/`cross-check.js`. Documented `status: generated` + `portability` pairing (D3.2, §8.4a) and the canonical 4-field `lineage` shape (D2.1, §3.11). Decisions D1.1–D8.7 in `.planning/piece-3-labeling-mechanism/structural-fix/DECISIONS.md`; EVOLUTION.md §11 carries the detailed changelog. Minor/additive — v1.2 records validate cleanly under v1.3. |
 
 ---
 

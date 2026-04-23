@@ -638,6 +638,45 @@ explicitly filed per severity policy.
 **Depends on:** S0–S10.
 **Size:** S (~30–60 min).
 
+### S11 addendum — Structural-fix Phase I expansion (2026-04-22, D8.2)
+
+Phase I of `.planning/piece-3-labeling-mechanism/structural-fix/PLAN.md`
+supersedes the execution of this S11 step. Audit scope expands to cover
+every file touched by the structural-fix commits 1–7 in addition to the
+original S0–S10 scope.
+
+**Expanded scope** (D8.2):
+
+- `.claude/sync/schema/**/*` — v1.3 additions (`schema-v1.json`,
+  `enums.json`, `build-enums.js`, `EVOLUTION.md`, `EXAMPLES.md`,
+  `SCHEMA.md`, `validate.test.cjs`)
+- `.claude/sync/label/**/*` — D5.2 shared partial, D6.8 runtime guards,
+  D5.6/D5.8 validation-tooling changes, scope.json v2
+- `.claude/hooks/label-*.js` — 3 delegators added in Phase D
+- `.husky/pre-commit` — Check 2 (enums drift) added in Phase C
+- `.claude/skills/label-audit/reference/*` — DERIVATION_RULES.md
+  rewritten as pointer; DISAGREEMENT_RESOLUTION.md v1.2→v1.3 touch-ups
+- `package.json` + `package-lock.json` — `ajv-formats` dev dep added
+- The 459-file re-run output catalogs produced by Phase G
+
+**Parallel strategy** (per `feedback_parallel_agents_for_impl` + D8.1):
+can dispatch 4 code-reviewer agents in parallel:
+
+- **α** — schema + enums + EVOLUTION + EXAMPLES + SCHEMA.md
+- **β** — templates + shared partial + CATALOG_SHAPE + reference docs
+- **γ** — derive.js + validation tooling + build-enums + prompts.js
+  runtime guards
+- **δ** — scope.json + scope-matcher + hook delegators + pre-commit
+
+**New scale note:** re-run output covers 459 files (up from the 429 the
+original S11 scope assumed — PR #10 added ~30 files between Session 13
+DIAGNOSIS and structural-fix execution). Review strategy stays per-file
+coverage, not exhaustive record-by-record — review targets the logic
++ fixtures, not the 459 catalog lines.
+
+**Depends on:** S0–S10 original scope + structural-fix commits 1–7.
+**Size:** M (~45–60 min with parallel agents).
+
 ---
 
 ## Step S12 — JASON-OS end-to-end tests
@@ -700,6 +739,65 @@ Validate the mechanism works in practice. Test fixtures live in
 **Depends on:** S0–S11.
 **Size:** M (~2–3h).
 
+### S12 addendum — v1.3 fixture rewrite + new test coverage (2026-04-22, D8.2 + D8.3)
+
+All test fixtures in T1–T9 rewrite against schema v1.3 shapes per D8.3.
+Concretely:
+
+- **Lineage** (D2.1): fixtures that carry lineage use
+  `{source_project, source_path, source_version, ported_date}` — 4
+  keys, `additionalProperties: false`. The legacy
+  `{source_repo, source_path, source_version, notes}` shape is dropped.
+- **External-dep entries** (D2.3): `tool_deps`, `external_services`,
+  `mcp_dependencies`, `required_secrets` all use `{name, hardness}`
+  object form. String-only entries (legacy) fail validation.
+- **Confidence** (D2.2): agent-output fixtures include an optional
+  top-level `confidence: {field: 0..1}` object. Fixtures exercise both
+  presence and absence (schema treats confidence as optional).
+- **Name-canon compliance** (D4.1): skill fixtures use the directory
+  slug for `.name` (e.g. `.claude/skills/sample/SKILL.md` →
+  `"name": "sample"`, NOT `"SKILL"`).
+- **schema_version stamp** (D3.4): fixtures stamp `"1.3"`. A v1.2-
+  stamped fixture is retained to prove additive compatibility.
+
+**New tests added to the T1–T9 matrix** (supersede / extend the original
+9):
+
+- **T1a — new git-hook file** (D3.1 + D3.3 + D4.5d): creating
+  `.husky/post-checkout` triggers a hook record with
+  `type: git-hook` + `git_hook_event: post-checkout`. Missing
+  `git_hook_event` fails validation with the specific allOf-conditional
+  error. The old-style `type: other` classification of git hooks is
+  rejected.
+- **T2a — new test file** (D3.1 + D4.6): creating
+  `test-fixtures/new.test.js` OR `test-fixtures/__tests__/new.js`
+  yields a record with `type: test`. Suffix + dir-form both map to
+  the single type.
+- **T3a — hook-lib without event fields** (D2.5): creating a hook-lib
+  under `.claude/hooks/lib/` records no event/matcher/etc. fields.
+  A record that emits null event fields on a hook-lib is still
+  valid by backward-compat (additive) but should not be produced by
+  the updated prompts.
+- **T4a — naming collision fallback** (D4.3): two fixtures with the
+  same `.name` fail validate-catalog with a Duplicate-name error
+  naming both paths. Test asserts the error message contains both
+  conflicting paths verbatim.
+- **T5a — prompts.js runtime guards** (D6.8): one fixture per guard:
+  (1) hard-dep with a path that doesn't exist → downgrade + notes;
+  (2) `content_hash: null` → field deleted; (3) `portability: generated`
+  → rewritten to `not-portable` + `needs_review` includes `portability`;
+  (4) `type: git-hook` with legacy `event` field → migrated to
+  `git_hook_event`; (5) any agent output stamps
+  `schema_version: "1.3"`.
+
+**Scope note:** the original T1–T9 tests remain in scope; the `a`-
+suffixed additions are new test cases, not replacements. Fixture-
+cleanup rule (T9 existing: "test fixtures deleted; no residual state")
+extends to the new fixtures.
+
+**Depends on:** S0–S11 + structural-fix commits 1–7.
+**Size:** M (~3h total after v1.3 fixture rewrite + new coverage).
+
 ---
 
 ## Step S13 — Mirror preparation for SoNash (no cross-repo writes)
@@ -732,6 +830,52 @@ instructions for Piece 5.5 session.
 
 **Depends on:** S0–S12.
 **Size:** S (~1h).
+
+### S13 addendum — SONASH_MIRROR_DELTA.md supersedes SONASH_HANDOFF.md (2026-04-22, D8.2 + D8.4–D8.6)
+
+The structural-fix plan renames and retargets this artifact:
+
+**New canonical filename + location:**
+`.planning/piece-3-labeling-mechanism/structural-fix/SONASH_MIRROR_DELTA.md`
+(produced in Phase H.4 of the structural-fix PLAN, commit 8/8).
+
+**Scope shift per D8.5** — universal artifacts only:
+
+- **Crosses** (sanitize minimal, copy 1:1):
+  - `.claude/sync/schema/schema-v1.json`
+  - `.claude/sync/schema/enums.json`
+  - `.claude/sync/schema/SCHEMA.md`
+  - `.claude/sync/schema/EVOLUTION.md`
+  - `.claude/sync/schema/EXAMPLES.md`
+  - `.claude/sync/schema/validate.test.cjs`
+  - `.claude/sync/schema/build-enums.js`
+  - `.claude/sync/label/backfill/agent-primary-template.md`
+  - `.claude/sync/label/backfill/agent-secondary-template.md`
+  - `.claude/sync/label/backfill/synthesis-agent-template.md`
+  - `.claude/sync/label/backfill/agent-instructions-shared.md` (new D5.2)
+  - `.claude/sync/label/backfill/verify.js`
+  - `.claude/sync/label/backfill/cross-check.js`
+  - `.claude/sync/label/backfill/prompts.js`
+  - `.claude/sync/label/lib/derive.js` + sibling lib files
+  - `.claude/sync/label/lib/validate-catalog.js`
+  - `.claude/sync/label/docs/CATALOG_SHAPE.md`
+  - `.claude/skills/label-audit/reference/DERIVATION_RULES.md`
+  - `.claude/skills/label-audit/reference/DISAGREEMENT_RESOLUTION.md`
+- **Does NOT cross** (project-scoped per D8.5):
+  - `.claude/sync/label/scope.json` (SoNash maintains its own committable set)
+  - `.claude/settings.json` (per-project hook wiring)
+  - `.husky/pre-commit` (per-project gate list)
+  - `.research/**` (project-specific research outputs)
+  - `.claude/state/**` (ephemeral)
+  - Catalog `.jsonl` files (SoNash regenerates via back-fill)
+
+**Piece 5.5 consumes the delta** (D8.4 — deferred to separate session).
+The SONASH_MIRROR_DELTA.md file is self-contained enough that a fresh
+Piece 5.5 session can execute the mirror without re-deriving the list.
+
+**Depends on:** S0–S12 + structural-fix commits 1–7.
+**Size:** addendum-only (~0 min; the actual delta file is produced by
+structural-fix Phase H.4).
 
 ---
 

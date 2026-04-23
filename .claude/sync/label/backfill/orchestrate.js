@@ -412,9 +412,16 @@ const PROMOTE_AUDIT_PATH = require("node:path").join(
 function appendPromoteAudit(entry, overridePath) {
   const fs = require("node:fs");
   const path = require("node:path");
+  // safeAppendFileSync refuses symlinks at the target or any ancestor.
+  // Defense-in-depth: overridePath is currently only supplied by tests,
+  // but the audit log is the forensic trail for promote events, so
+  // routing through the guard matches the rest of the pipeline.
+  const { safeAppendFileSync } = require(
+    path.join(__dirname, "..", "..", "..", "..", "scripts", "lib", "safe-fs.js")
+  );
   const abs = overridePath || PROMOTE_AUDIT_PATH;
   fs.mkdirSync(path.dirname(abs), { recursive: true });
-  fs.appendFileSync(abs, JSON.stringify(entry) + "\n", "utf8");
+  safeAppendFileSync(abs, JSON.stringify(entry) + "\n", "utf8");
 }
 
 /**

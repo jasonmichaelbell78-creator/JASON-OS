@@ -3,12 +3,17 @@
 **Piece 3 root.** Tooling for deriving, validating, and maintaining per-file
 labels across JASON-OS (and eventually SoNash via Piece 5.5).
 
-**Scaffolded:** Session #10 (S0.2)
-**Plan:** `.planning/piece-3-labeling-mechanism/PLAN.md`
-**Decisions:** `.planning/piece-3-labeling-mechanism/DECISIONS.md` (D1–D19 +
-D12a + D15a)
-**Schema contract:** `.claude/sync/schema/SCHEMA.md` + `schema-v1.json` +
-`enums.json` (Piece 2 output)
+**Scaffolded:** Session #10 (S0.2) — refreshed Session #15 for schema v1.3
+structural fix.
+**Plan (parent):** `.planning/piece-3-labeling-mechanism/PLAN.md`
+**Plan (structural fix):** `.planning/piece-3-labeling-mechanism/structural-fix/PLAN.md`
+**Decisions (parent):** `.planning/piece-3-labeling-mechanism/DECISIONS.md`
+(D1–D19 + D12a + D15a)
+**Decisions (structural fix):** `.planning/piece-3-labeling-mechanism/structural-fix/DECISIONS.md`
+(D1.1–D8.7 — scope v2, schema v1.3, naming canon, templates, orchestration)
+**Schema contract:** `.claude/sync/schema/SCHEMA.md` + `schema-v1.json`
+(v1.3) + `enums.json` (Piece 2 output, auto-generated via
+`.claude/sync/schema/build-enums.js`)
 
 ## Subdirectory map
 
@@ -29,21 +34,27 @@ Top-level files added later:
 | `composites-shared.jsonl` + `composites-local.jsonl` | Composite catalogs (per D14) | S10 |
 | `preview/` | Preview catalogs pending user approval (D9c gate) | S8 |
 
-## Hook wiring (NOT YET LIVE)
+## Hook wiring (dormant delegators in place; activation at re-run promotion)
 
-`hooks/post-tool-use-label.js` lands in S3 as a fully-tested executable,
-but **is not yet registered in `.claude/settings.json`**. Flipping the hook
-live requires explicit user approval (per memory feedback on acknowledgment
-and project-scoped config). The user will surface this at the appropriate
-checkpoint; until then the hook is dormant code + unit tests only.
+Three thin delegator files are committed under `.claude/hooks/`:
+
+- `label-post-tool-use.js` → requires `hooks/post-tool-use-label.js`
+- `label-user-prompt-submit.js` → requires `hooks/user-prompt-submit-label.js`
+- `label-notification.js` → requires `hooks/notification-label.js`
+
+The delegators exist because `run-node.sh` enforces HOOKS_DIR confinement.
+They are NOT yet registered in `.claude/settings.json` — registration
+happens atomically with the re-run catalog promotion (structural-fix
+Phase G.3 / commit 7), so a live hook never reads a catalog that
+does not yet exist. See structural-fix D7.1/D7.4.
 
 ## Note on `skill/` vs `.claude/skills/label-audit/`
 
-Plan §S0 tree lists `skill/` under this root; plan §S7 locates the invokable
-skill at `.claude/skills/label-audit/`. The two paths likely have distinct
-roles (reference material colocated with the mechanism vs. the user-invokable
-skill definition). Reconciled at S7 — if `skill/` turns out redundant, it
-gets removed with the S7 commit.
+Reconciled Session #15: the invokable skill + reference docs
+(DERIVATION_RULES.md, DISAGREEMENT_RESOLUTION.md) all live at
+`.claude/skills/label-audit/`. The `.claude/sync/label/skill/` directory
+is empty — retained as a placeholder per Plan §S0 tree; may be removed
+in a later cleanup commit.
 
 ## Security contract (CLAUDE.md §2 + §5)
 

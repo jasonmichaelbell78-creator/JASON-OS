@@ -1,10 +1,12 @@
-# Schema Examples — 20 Worked Records
+# Schema Examples — 23 Worked Records
 
-**Version:** 1.0
-**Last Updated:** 2026-04-19
+**Version:** 1.1
+**Last Updated:** 2026-04-22
 **Status:** ACTIVE
 **Purpose:** Realistic registry records showing how schema fields fill in for
-actual files across JASON-OS and SoNash.
+actual files across JASON-OS and SoNash. v1.1 of this doc adds three v1.3
+examples (git-hook, test, confidence) and cleans Example 6 per the §9.3 split
+(D2.5 — hook-lib no longer carries the 7 hook-event fields).
 
 **Prerequisite reading:**
 
@@ -463,14 +465,12 @@ content_hash:      "sha256:91c2…symlink"
 composite_id:      null
 migration_metadata: null
 
-# Per-type (hook-lib) extensions — reuses hook fields even though it isn't directly wired
-event:             null           # library, not a wired hook
-matcher:           null
-if_condition:      null
-continue_on_error: null           # N/A — not a direct settings.json hook
-exit_code_action:  null
-async_spawn:       false
-kill_switch_env:   null
+# Per-type (hook-lib) extensions — v1.3 change (D2.5): hook-lib no longer
+# carries the 7 hook-event fields. §9.3 in the schema now splits:
+#   type: hook     → requires event/matcher/if_condition/continue_on_error/
+#                    exit_code_action/async_spawn/kill_switch_env
+#   type: hook-lib → requires NONE of them (shared code for hooks, not a wired hook)
+# Record has no per-type extensions.
 ```
 
 **Notes:**
@@ -479,8 +479,9 @@ kill_switch_env:   null
   is never copied into skill-local subdirs. The cross-boundary import goes
   UP the tree from `scripts/lib/safe-fs.js` rather than having each safe-fs
   copy carry its own symlink-guard.
-- Hook-lib event fields are null because this file isn't wired into
-  settings.json — it's imported by things that are.
+- Pre-v1.3 this record carried 7 null hook-event fields; v1.3 removes them
+  per D2.5 (§9.3 split). Historical v1.2 records with those fields still
+  validate — the schema is additive/loosening only.
 
 ---
 
@@ -1602,10 +1603,189 @@ migration_metadata: null
 
 ---
 
+## Example 21 — git-hook: .husky/pre-commit (schema v1.3)
+
+**What this illustrates:** The new `type: git-hook` (D3.1) + paired
+`git_hook_event` property (D3.3). Distinct from `type: hook` (Claude Code
+events) — this is a git-native hook trigger.
+
+Real file: `.husky/pre-commit`
+
+```yaml
+name:             pre-commit
+path:             .husky/pre-commit
+type:             git-hook
+purpose:          Husky pre-commit gate — runs gitleaks + catalog validator before every commit.
+source_scope:     project            # husky wiring is project-local
+runtime_scope:    project
+portability:      not-portable       # per-project gate list
+status:           active
+
+dependencies:
+  - {name: "gitleaks",                 hardness: "hard", kind: "invoke"}
+  - {name: "validate-catalog",         hardness: "hard", kind: "invoke"}
+external_services: []
+tool_deps:
+  - {name: "bash",                     hardness: "hard"}
+  - {name: "node",                     hardness: "hard"}
+mcp_dependencies:  []
+required_secrets:  []
+
+lineage:          null
+supersedes:        []
+superseded_by:     null
+sanitize_fields:   []
+state_files:       []
+
+notes: |
+  Pre-v1.3 records for this file used `type: other`. The v1.3 enum_type
+  addition (D3.1) plus the new enum_git_hook_event (D3.3) gives git-hook
+  records a proper namespace. Paired with D7.5 — the catalog validator is
+  BLOCKING (non-zero exit blocks the commit) alongside gitleaks.
+
+data_contracts:    []
+component_units:   []
+sections:          []
+is_copy_of:        null
+has_copies_at:     []
+content_hash:      "sha256:c4d1…precommit"
+
+composite_id:      null
+migration_metadata: null
+
+# Per-type (git-hook) extensions
+git_hook_event:    pre-commit
+```
+
+**Notes:**
+
+- `git_hook_event` is the only required per-type field for git-hook (D3.3).
+- Not to be confused with Claude-Code-hook records (type: hook), which use
+  `event: <PreToolUse|PostToolUse|...>`.
+- `portability: not-portable` because the specific gate list here is
+  project-specific; cross-repo mirroring of the _shape_ is handled by
+  templating, not by porting this record directly.
+
+---
+
+## Example 22 — test: smoke.test.js (schema v1.3)
+
+**What this illustrates:** The new `type: test` (D3.1) captures tests as
+first-class records. Applies to both `**/__tests__/**` and `*.{test,spec}.*`
+file-name conventions per D4.6.
+
+Real file: `.claude/sync/label/lib/__tests__/smoke.test.js`
+
+```yaml
+name:             smoke.test.js
+path:             .claude/sync/label/lib/__tests__/smoke.test.js
+type:             test
+purpose:          Node test — smoke coverage for derive.js heuristic rules + scope-matcher basics.
+source_scope:     universal
+runtime_scope:    project
+portability:      portable
+status:           active
+
+dependencies:
+  - {name: "derive",                   hardness: "hard", kind: "import"}
+external_services: []
+tool_deps:
+  - {name: "node",                     hardness: "hard"}      # node --test runner
+mcp_dependencies:  []
+required_secrets:  []
+
+lineage:          null
+supersedes:        []
+superseded_by:     null
+sanitize_fields:   []
+state_files:       []
+
+notes: |
+  Node's built-in `node --test` runner (no Jest/Mocha runtime dep). Covers
+  derive.js type-detection for Piece 3 — git-hook detection, test detection,
+  skill naming canon, hook-lib detection under `.claude/hooks/lib/**`.
+
+data_contracts:    []
+component_units:   []
+sections:          []
+is_copy_of:        null
+has_copies_at:     []
+content_hash:      "sha256:b9a1…smoketest"
+
+composite_id:      null
+migration_metadata: null
+# No per-type extensions defined for `test` — base file_record fields carry
+# the load. Test runner + dependency graph are captured via `tool_deps` +
+# `dependencies`.
+```
+
+**Notes:**
+
+- `type: test` is a classification type, not a behavioral extension — it
+  tells downstream tooling "this file is a test, filter accordingly" without
+  adding required fields.
+- Matches either `**/__tests__/**` (this case) or `*.{test,spec}.{js,cjs,mjs,ts}`
+  per D4.6 — same type for both conventions.
+
+---
+
+## Example 23 — agent output with `confidence` (schema v1.3)
+
+**What this illustrates:** The new optional top-level `confidence` object
+(D2.2). Previously, verify.js + cross-check.js stripped this before
+validation. v1.3 makes it explicit; strip-before-validate is removed
+(D5.6, D5.7).
+
+Hypothetical record — shape an agent-primary would emit after processing a
+batch row for `.claude/hooks/block-push-to-main.js` with mixed certainty:
+
+```yaml
+name:             block-push-to-main
+path:             .claude/hooks/block-push-to-main.js
+type:             hook
+purpose:          PreToolUse Bash gate that blocks `git push` targeting main/master branches.
+source_scope:     universal
+runtime_scope:    project
+portability:      portable
+status:           active
+# … universal fields as in Example 5 …
+
+# Per-type (hook) extensions — all 7 required per D2.5 (hook, not hook-lib)
+event:             PreToolUse
+matcher:           "^[Bb]ash$"
+if_condition:      null
+continue_on_error: false
+exit_code_action:  block
+async_spawn:       false
+kill_switch_env:   null
+
+# D2.2 — optional top-level confidence map (v1.3)
+confidence:
+  overall:             0.95      # agent is confident in the classification
+  type_classification: 1.00      # definitely a hook (PreToolUse wiring found)
+  portability:         0.80      # portable in principle, minor uncertainty about the Bash matcher regex
+  purpose:             0.90      # purpose line derived from file header comment
+```
+
+**Notes:**
+
+- `confidence` keys are free-form — agents emit whichever axes they want to
+  self-report on. Schema enforces only the value range: each value must be a
+  number in `[0, 1]`.
+- `validate-catalog.js` (D5.8) treats `confidence` as pass-through data —
+  presence doesn't affect validation; `pending_agent_fill` + `needs_review`
+  are the fields that gate commit-time acceptance.
+- Pre-v1.3 behavior: verify.js stripped `confidence` before ajv validation
+  because the schema's `additionalProperties: false` rejected it. v1.3 makes
+  the field explicit → no more band-aid.
+
+---
+
 ## Cross-references
 
 - **Master schema:** `./SCHEMA.md`
-- **Decisions:** `../../piece-2-schema-design/DECISIONS.md` (D1–D32)
+- **Decisions (Piece 2):** `../../piece-2-schema-design/DECISIONS.md` (D1–D32)
+- **Decisions (Piece 3 structural-fix, v1.3 drivers):** `../../piece-3-labeling-mechanism/structural-fix/DECISIONS.md` (D1.1–D8.7)
 - **Enums (machine-readable):** `./enums.json`
 - **Validation schema:** `./schema-v1.json`
 - **Evolution rules:** `./EVOLUTION.md`

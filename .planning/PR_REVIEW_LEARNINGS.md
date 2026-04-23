@@ -1,5 +1,126 @@
 # PR Review Learnings
 
+#### Review #18: Sessions 15-18 structural-fix + back-fill machinery (PR #11) — Round 1 (2026-04-23)
+
+**Source:** Mixed (Qodo + Gemini)
+**PR/Branch:** PR #11 / `fixes-42226` → `main`
+**Items:** 13 unique (Critical: 2, Major: 5, Minor: 5, Architectural: 1).
+After triage: 11 fixed, 1 deferred (D2), 1 rejected.
+
+**Patterns Identified:**
+
+1. **Untrusted-input plumbing missing at agent → filesystem boundary.**
+   The back-fill pipeline ingests structured JSON from primary +
+   secondary derivation agents, but the layers between agent output and
+   on-disk mutation lacked confinement guards in three places: dep-name
+   `existsSync` probe in `applyRuntimeGuards` (path traversal),
+   `applyArbitration`'s `rec[field] = …` assignment (prototype pollution
+   + arbitrary field overwrite), and the synthesize/aggregate CLIs that
+   resolve user-supplied paths through raw `fs.writeFileSync`. The
+   pattern: **anywhere agent output flows into a filesystem call OR a JS
+   property accessor, the value is untrusted and needs a confinement /
+   allowlist guard.** Verify.js + derive.toRepoRelative had the
+   precedent; the synthesis-side code didn't reuse it.
+   - Root cause: piece-3 added new agent-flow paths (S8 back-fill
+     orchestrator, S10 arbitration apply) that didn't inherit the
+     verify.js confinement pattern because they live in different files
+     and were written sequentially without a security-pass dedicated to
+     "where does agent output land?"
+   - Prevention: when adding new agent-receiving code, run a one-pass
+     audit answering "where does this value flow?" — any reach into
+     `fs.*`, `path.resolve`, or `obj[varKey]` needs a guard. Could be a
+     hook (PreToolUse on Write/Edit) that flags `fs.writeFileSync(`
+     outside `scripts/lib/` and prompts for safe-fs migration.
+
+2. **`isPathShaped` heuristic used POSIX-only path detection.**
+   `dep.name.includes("/")` missed Windows-style absolute paths like
+   `C:\Windows\System32\cmd.exe`, so adding `validatePathInDir` in front
+   wasn't enough — the absolute path slipped past the heuristic and
+   never reached the guard. Extended to also check `path.isAbsolute()`
+   and backslash. Future similar heuristics should default to "if it
+   could be a path on any OS, treat it as path-shaped."
+
+3. **Empty arrays vs null is a real schema distinction the synthesis
+   layer collapsed.** Schema v1.3 lets `dependencies` / `tool_deps` /
+   `external_services` be `[]` legitimately, but `isMissingValue([])
+   → true` pushed agreed-empty fields into Case F coverage gaps. The
+   downstream effect: mechanical merge proposals that should have
+   sailed through were blocked, inflating the user-decision queue.
+   Schema-aware classification needs to treat the empty case separately
+   from the null case.
+
+4. **Property-order-sensitive dedup keys leak duplicates from LLMs.**
+   `setUnion` used `JSON.stringify(v)` as the seen-set key. LLM-emitted
+   objects don't share canonical key order between primary and
+   secondary agents, so the same semantic value produces different
+   strings and dedupe fails. Pattern: any time an LLM-produced object
+   array gets deduplicated, the key must be order-stable. Added
+   `stableStringify` helper.
+
+5. **Disagreement records dropped path on successful cross-checks.**
+   cross-check emits `{ path }` for unreachable records and
+   `{ preview: { path }, disagreements: [...] }` for successful ones.
+   `aggregate-findings` read `r.path` for both — every disagreement on
+   a successful record shipped with `path: undefined`, breaking
+   downstream synthesis which keys off path. Two-shape outputs always
+   need fallback access patterns.
+
+**Resolution:**
+
+- Fixed: 11 items
+  - Commit 1 (CRITICAL): items 4 (path confinement) + 6 (proto
+    pollution) + bundled 2 (unresolved-gap gate) + 9 (undefined coerce).
+  - Commit 2 (MAJOR + opportunistic MINOR): items 1 (safe-fs migration)
+    + 5 (empty array) + 10 (disagreement path) + propagation sweep
+    catching aggregate-findings.js + orchestrate.js writes; piggy-backed
+    items 3 (JSON parse logging), 11 (stableStringify), 12 (conditional
+    0% prose) since they touched the same files.
+  - Commit 3 (MINOR + docs): item 13 (multi-language test detection in
+    derive.js) + this learning entry + state file.
+- Deferred: 1 item — D2 (audit trail for `applyArbitration`).
+  Architectural call: defer until JASON-OS has a real audit/observability
+  subsystem so we don't ship a one-off format. User chose option B.
+- Rejected: 1 item — Qodo compliance "Unstructured log output" on
+  synthesize-findings.js stderr writes. v0 foundation-stage CLI with no
+  log consumer; structured logs would be over-engineering before the
+  observability subsystem lands. Revisit when consumer exists.
+
+**Key Learnings:**
+
+- **Security threat model in Step 0 caught the cluster.** Pre-paste
+  threat-model pass flagged the three vectors (path traversal, proto
+  pollution, helper-bypass) before triage — when the reviewers' items
+  arrived they slotted directly into the threat categories rather than
+  needing per-item severity arguments. Cheap pre-step, big triage win.
+
+- **Propagation sweep saved a follow-up review round.** Qodo flagged
+  raw `fs.writeFileSync` in synthesize-findings.js only; grep across
+  `.claude/sync/label/backfill/` found the same pattern in
+  aggregate-findings.js + orchestrate.js. Fixed all three in one
+  commit. Without the sweep, R2 would have gotten "same issue in sibling
+  CLI" items.
+
+- **Cross-batch overlap is real.** Items 8 (JSON parse log), 11
+  (setUnion dedup), 12 (conditional 0% prose) were MINOR but lived in
+  the same file as MAJOR fixes. Bundling them into the MAJOR commit
+  rather than waiting for a MINOR pass produced one logical commit
+  instead of two opening-and-closing the same file.
+
+- **Existing tests can encode wrong behavior.** The smoke test asserted
+  `tools/statusline/statusline_test.go` → `tool-file` (documenting the
+  Go test miss). Multi-language fix had to update that assertion. When
+  fixing a heuristic, audit existing assertions for the OLD behavior
+  before declaring victory.
+
+- **Pre-existing failure visibility matters.** A pre-existing
+  `buildSynthesisPrompt` test failure ("Approve or reject?" gate
+  language missing from synthesis-agent-template.md) showed up in every
+  test run. Confirmed via `git stash` that it predates this PR. Should
+  surface as a separate /todo entry rather than getting lost in the
+  noise of PR-review test cycles.
+
+---
+
 #### Review #17: Piece 3 structural-fix + migration-skill deep-research (PR #10) — Round 2 (2026-04-21)
 
 **Source:** Qodo (Gemini did not post on R2)

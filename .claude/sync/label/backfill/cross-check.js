@@ -256,10 +256,22 @@ function crossCheck({ primary, secondary } = {}) {
     const pType = classify(pVal);
     const sType = classify(sVal);
 
-    // Case F — both null/missing.
+    // Case F — both null/missing. With confidence-coverage now required
+    // (agent-instructions-shared.md §"Confidence reporting"), high
+    // confidence on both sides means "both agents confidently say null"
+    // (e.g. lineage: null on a native file) — that is agreement on null,
+    // not a gap. Score via scoreField so high-confidence both-null passes
+    // through without tripping needs_review; legacy low-confidence both-
+    // null (e.g. both agents at 0 because they omitted the field) still
+    // scores 0 and lands in needs_review via the Case F force-include
+    // loop below.
     if (pVal === null && sVal === null) {
       committed[field] = null;
-      fieldScores[field] = 0;
+      fieldScores[field] = scoreField({
+        primary: pConf,
+        secondary: sConf,
+        agree: true,
+      });
       continue;
     }
 

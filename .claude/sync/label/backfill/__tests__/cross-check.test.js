@@ -145,7 +145,7 @@ test("Case E: one side null → non-null committed, in needsReview", () => {
 });
 
 // --- Case F: both null ---
-test("Case F: both null → null committed, in needsReview", () => {
+test("Case F: both null with low confidence → null committed, in needsReview", () => {
   const { crossCheck } = require(MOD);
   const primary = {
     path: "f.js",
@@ -164,6 +164,34 @@ test("Case F: both null → null committed, in needsReview", () => {
   assert.equal(preview.purpose, null);
   assert.ok(needsReview.includes("purpose"));
   assert.deepEqual(disagreements, []); // F is a gap, not a disagreement
+});
+
+test("Case F: both null with high confidence → agreement, NOT in needsReview", () => {
+  // Post-confidence-coverage-rule: when both agents confidently say null
+  // (e.g. lineage: null on a native file), that's agreement on null, not a
+  // gap. Should score via min(pConf, sConf) and stay out of needs_review.
+  const { crossCheck } = require(MOD);
+  const primary = {
+    path: "f.js",
+    lineage: null,
+    confidence: { lineage: 0.95 },
+  };
+  const secondary = {
+    path: "f.js",
+    lineage: null,
+    confidence: { lineage: 0.9 },
+  };
+  const { preview, needsReview, disagreements } = crossCheck({
+    primary,
+    secondary,
+  });
+  assert.equal(preview.lineage, null);
+  assert.ok(
+    !needsReview.includes("lineage"),
+    `lineage should NOT be flagged when both agents confidently agree on null (got needsReview: ${JSON.stringify(needsReview)})`
+  );
+  assert.equal(preview.confidence.lineage, 0.9, "score is min(pConf, sConf)");
+  assert.deepEqual(disagreements, []);
 });
 
 // --- Case G: type mismatch ---

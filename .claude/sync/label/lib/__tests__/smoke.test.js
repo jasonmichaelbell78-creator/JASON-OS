@@ -197,6 +197,89 @@ test("derive: detectType rules", () => {
   assert.equal(detectType("unknown/file.xyz"), "other");
 });
 
+test("derive: detectType v1.3 rules (D4.5 + D4.6)", () => {
+  const { detectType } = require(path.join(LIB, "derive"));
+
+  // D4.6 — tests via __tests__ dir
+  assert.equal(
+    detectType(".claude/sync/label/lib/__tests__/smoke.test.js"),
+    "test",
+    "files under __tests__/ should classify as test"
+  );
+  // D4.6 — tests via suffix form
+  assert.equal(detectType("scripts/foo.test.js"), "test");
+  assert.equal(detectType("scripts/foo.spec.mjs"), "test");
+
+  // PR #11 R1 (Gemini): multi-language test detection. JASON-OS itself is
+  // Node-only but consumer repos may be any stack — tests in those repos
+  // should still classify correctly when the OS runs over them.
+  assert.equal(detectType("tools/statusline/statusline_test.go"), "test",
+    "Go _test.go must classify as test (was previously misclassified as tool-file)");
+  assert.equal(detectType("scripts/test_things.py"), "test", "Python test_*.py");
+  assert.equal(detectType("scripts/things_test.py"), "test", "Python *_test.py");
+  assert.equal(detectType("src/MyClassTest.java"), "test", "Java *Test.java");
+  assert.equal(detectType("src/MyClassTests.java"), "test", "Java *Tests.java");
+  assert.equal(detectType("tests/integration.rs"), "test", "Rust tests/*.rs");
+  assert.equal(detectType("spec/widget_spec.rb"), "test", "Ruby *_spec.rb");
+  assert.equal(detectType("spec/widget_test.rb"), "test", "Ruby *_test.rb");
+  assert.equal(detectType("scripts/component.test.tsx"), "test", "TypeScript JSX");
+  assert.equal(detectType("scripts/component.test.jsx"), "test", "JS JSX");
+
+  // D4.5c — .husky/_shared.sh + .husky/husky.sh → hook-lib
+  assert.equal(detectType(".husky/_shared.sh"), "hook-lib");
+  assert.equal(detectType(".husky/husky.sh"), "hook-lib");
+
+  // D4.5e — .husky/_/* shims → git-hook
+  assert.equal(detectType(".husky/_/pre-commit"), "git-hook");
+  assert.equal(detectType(".husky/_/husky.sh"), "git-hook",
+    "shim under _/ dominates — caller stamps status:generated");
+
+  // D4.5d — .husky/<name> (no ext, top-level) → git-hook
+  assert.equal(detectType(".husky/pre-commit"), "git-hook");
+  assert.equal(detectType(".husky/pre-push"), "git-hook");
+  assert.equal(detectType(".husky/commit-msg"), "git-hook");
+
+  // D4.5 a+b — .claude/hooks/**/*.sh → hook-lib
+  assert.equal(detectType(".claude/hooks/run-node.sh"), "hook-lib");
+  assert.equal(detectType(".claude/hooks/run-go.sh"), "hook-lib");
+  assert.equal(detectType(".claude/hooks/lib/_shared.sh"), "hook-lib",
+    "hooks/lib/ dir wins over .sh rule — both paths converge on hook-lib");
+
+  // Regression: test detection precedes .claude/hooks/ classification
+  assert.equal(
+    detectType(".claude/hooks/__tests__/block-push.test.js"),
+    "test",
+    "tests under .claude/hooks/__tests__ should classify as test, not hook"
+  );
+});
+
+test("derive: D4.1 naming canon (deriveName)", () => {
+  const { deriveName } = require(path.join(LIB, "derive"));
+
+  // Skill → directory slug
+  assert.equal(deriveName(".claude/skills/checkpoint/SKILL.md", "skill"), "checkpoint");
+  assert.equal(deriveName(".claude/skills/deep-research/SKILL.md", "skill"), "deep-research");
+
+  // Agent → basename without ext
+  assert.equal(deriveName(".claude/agents/deep-research-searcher.md", "agent"), "deep-research-searcher");
+
+  // Hook → basename without ext
+  assert.equal(deriveName(".claude/hooks/block-push-to-main.js", "hook"), "block-push-to-main");
+
+  // git-hook → basename (no ext for top-level, with ext for _shared)
+  assert.equal(deriveName(".husky/pre-commit", "git-hook"), "pre-commit");
+
+  // test → basename (keeps .test suffix in name since .js is the sole ext)
+  assert.equal(deriveName(".claude/sync/label/lib/__tests__/smoke.test.js", "test"), "smoke.test");
+
+  // Non-skill skill path (shouldn't happen, but defensive)
+  assert.equal(
+    deriveName(".claude/skills/foo/SKILL.md", "doc"),
+    "SKILL",
+    "deriveName applies skill rule only when type=skill; otherwise basename"
+  );
+});
+
 test("derive: detectModuleSystem cjs vs esm vs none", () => {
   const { detectModuleSystem } = require(path.join(LIB, "derive"));
   assert.equal(detectModuleSystem("x.cjs", ""), "cjs");
@@ -238,6 +321,48 @@ test("derive: parseExistingFrontmatter yaml + lineage body", () => {
   assert.equal(nested.metadata.owner, "claude");
 });
 
+// --- scope-matcher.js (v2 negative-space model, D1.1–D1.3) ---
+
+test("scope-matcher: v2 negative-space + dotfiles", () => {
+  const { compileScope, loadScope } = require(path.join(LIB, "scope-matcher"));
+
+  // D1.1 negative-space: include=**/* + explicit excludes
+  const c = compileScope({
+    include: ["**/*"],
+    exclude: [
+      "**/node_modules/**",
+      ".git/**",
+      ".claude/state/**",
+      ".claude/sync/label/*.jsonl",
+    ],
+  });
+
+  // In-scope: ordinary + dotfiles + nested + test files + research
+  assert.equal(c.matches("README.md"), true);
+  assert.equal(c.matches(".nvmrc"), true);
+  assert.equal(c.matches(".github/CODEOWNERS"), true);
+  assert.equal(c.matches(".husky/pre-commit"), true);
+  assert.equal(c.matches(".husky/_/pre-commit"), true);
+  assert.equal(c.matches(".research/migration-skill/RESEARCH_OUTPUT.md"), true,
+    "D1.2 — .research/ fully in scope");
+  assert.equal(c.matches("foo/__tests__/bar.test.js"), true,
+    "D1.3 — __tests__ fully in scope");
+  assert.equal(c.matches("scripts/lib/safe-fs.js"), true);
+
+  // Excluded
+  assert.equal(c.matches(".git/HEAD"), false);
+  assert.equal(c.matches("node_modules/ajv/package.json"), false);
+  assert.equal(c.matches(".claude/state/handoff.json"), false);
+  assert.equal(c.matches(".claude/sync/label/shared.jsonl"), false);
+
+  // loadScope (caches; reads the committed scope.json) — v2 philosophy field
+  // is present and matcher still correct for committed files.
+  const live = loadScope();
+  assert.equal(typeof live.matches, "function");
+  assert.equal(live.matches("CLAUDE.md"), true);
+  assert.equal(live.matches(".git/HEAD"), false);
+});
+
 // --- validate-catalog.js ---
 test("validate-catalog: rule layer rejects partial + pending + needs_review", () => {
   const { applyRuleLayer } = require(path.join(LIB, "validate-catalog"));
@@ -253,6 +378,46 @@ test("validate-catalog: rule layer rejects partial + pending + needs_review", ()
       e.includes("needs_review")
     )
   );
+});
+
+test("validate-catalog: D4.3 name uniqueness — duplicate names fail with both paths named", () => {
+  const { checkNameUniqueness } = require(path.join(LIB, "validate-catalog"));
+
+  // No duplicates → no errors
+  assert.deepEqual(
+    checkNameUniqueness([
+      { name: "foo", path: "a.md" },
+      { name: "bar", path: "b.md" },
+    ]),
+    []
+  );
+
+  // Duplicate → error names both paths
+  const dups = checkNameUniqueness([
+    { name: "foo", path: "a.md" },
+    { name: "foo", path: "b.md" },
+  ]);
+  assert.equal(dups.length, 1);
+  assert.equal(dups[0].path, "b.md");
+  assert.ok(dups[0].messages[0].includes("Duplicate"));
+  assert.ok(dups[0].messages[0].includes('"foo"'));
+  assert.ok(dups[0].messages[0].includes("a.md"));
+  assert.ok(dups[0].messages[0].includes("b.md"));
+
+  // Three-way collision → two errors, all referring to the first-seen path
+  const triple = checkNameUniqueness([
+    { name: "x", path: "p1.md" },
+    { name: "x", path: "p2.md" },
+    { name: "x", path: "p3.md" },
+  ]);
+  assert.equal(triple.length, 2);
+  assert.ok(triple[0].messages[0].includes("p1.md"));
+  assert.ok(triple[0].messages[0].includes("p2.md"));
+  assert.ok(triple[1].messages[0].includes("p1.md"));
+  assert.ok(triple[1].messages[0].includes("p3.md"));
+
+  // Missing name / path → silent skip (not a duplicate-name issue)
+  assert.deepEqual(checkNameUniqueness([{ path: "a.md" }, { name: "b" }]), []);
 });
 
 test("validate-catalog: clean catalog passes, dirty fails", () => {

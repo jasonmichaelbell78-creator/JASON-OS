@@ -12,10 +12,17 @@ const path = require('node:path');
 const { sanitizeError } = require('../../../scripts/lib/sanitize-error.cjs');
 
 let Ajv;
+let addFormats;
 try {
   Ajv = require('ajv');
 } catch {
   console.error('FAIL: ajv not installed. Run `npm install --save-dev ajv` in repo root.');
+  process.exit(2);
+}
+try {
+  addFormats = require('ajv-formats');
+} catch {
+  console.error('FAIL: ajv-formats not installed. Run `npm install --save-dev ajv-formats` in repo root.');
   process.exit(2);
 }
 
@@ -48,6 +55,7 @@ try {
 // intent preserved).
 // nosemgrep: javascript.ajv.security.audit.ajv-allerrors-true.ajv-allerrors-true
 const ajv = new Ajv({ allErrors: true, strict: true, strictRequired: false });
+addFormats(ajv);
 const validate = ajv.compile(schema);
 
 const results = [];
@@ -269,6 +277,142 @@ test('neg3-skill-missing-extensions', {
   mcp_dependencies: [],
   required_secrets: [],
   // no reference_layout / supports_parallel / fallback_available
+}, false);
+
+// --- v1.3 (Piece 3 structural-fix) additions ---
+
+// Positive test 6 — git-hook with required git_hook_event (D3.1 + D3.3)
+test('pos6-git-hook', {
+  name: 'pre-commit',
+  path: '.husky/pre-commit',
+  type: 'git-hook',
+  purpose: 'Husky pre-commit gate — runs gitleaks + catalog validator.',
+  source_scope: 'project',
+  runtime_scope: 'project',
+  portability: 'not-portable',
+  status: 'active',
+  notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
+  git_hook_event: 'pre-commit',
+}, true);
+
+// Positive test 7 — test type, no required extensions (D3.1 + D4.6)
+test('pos7-test', {
+  name: 'smoke.test.js',
+  path: '.claude/sync/label/lib/__tests__/smoke.test.js',
+  type: 'test',
+  purpose: 'Smoke coverage for derive.js heuristic rules.',
+  source_scope: 'universal',
+  runtime_scope: 'project',
+  portability: 'portable',
+  status: 'active',
+  notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
+}, true);
+
+// Positive test 8 — hook-lib no longer requires the 7 event fields (D2.5 split)
+test('pos8-hook-lib-no-events', {
+  name: 'symlink-guard',
+  path: '.claude/hooks/lib/symlink-guard.js',
+  type: 'hook-lib',
+  purpose: 'Symlink-safety primitive for atomic writes.',
+  source_scope: 'universal',
+  runtime_scope: 'project',
+  portability: 'portable',
+  status: 'active',
+  notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
+  // NO event/matcher/if_condition/continue_on_error/exit_code_action/async_spawn/kill_switch_env
+  // — v1.3 (D2.5) makes these NOT required for hook-lib.
+}, true);
+
+// Positive test 9 — record with optional top-level confidence object (D2.2)
+test('pos9-confidence', {
+  name: 'block-push-to-main',
+  path: '.claude/hooks/block-push-to-main.js',
+  type: 'hook',
+  purpose: 'PreToolUse Bash gate blocking git push to main.',
+  source_scope: 'universal',
+  runtime_scope: 'project',
+  portability: 'portable',
+  status: 'active',
+  notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
+  event: 'PreToolUse',
+  matcher: '^Bash$',
+  if_condition: null,
+  continue_on_error: false,
+  exit_code_action: 'block',
+  async_spawn: false,
+  kill_switch_env: null,
+  confidence: {
+    overall: 0.95,
+    type_classification: 1.0,
+    portability: 0.8,
+  },
+}, true);
+
+// Negative test 4 — git-hook missing required git_hook_event (D3.3 enforcement)
+test('neg4-git-hook-missing-event', {
+  name: 'pre-commit',
+  path: '.husky/pre-commit',
+  type: 'git-hook',
+  purpose: 'Husky pre-commit gate.',
+  source_scope: 'project',
+  runtime_scope: 'project',
+  portability: 'not-portable',
+  status: 'active',
+  notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
+  // git_hook_event missing → must fail per D3.3
+}, false);
+
+// Negative test 5 — confidence value outside [0,1] must fail (D2.2)
+test('neg5-confidence-out-of-range', {
+  name: 'bad-confidence',
+  path: '.claude/hooks/bad.js',
+  type: 'hook',
+  purpose: 'Bad confidence range.',
+  source_scope: 'universal',
+  runtime_scope: 'project',
+  portability: 'portable',
+  status: 'active',
+  notes: '',
+  dependencies: [],
+  external_services: [],
+  tool_deps: [],
+  mcp_dependencies: [],
+  required_secrets: [],
+  event: 'PreToolUse',
+  matcher: '^Bash$',
+  if_condition: null,
+  continue_on_error: false,
+  exit_code_action: 'block',
+  async_spawn: false,
+  kill_switch_env: null,
+  confidence: {
+    overall: 1.5,   // > 1 → must fail
+  },
 }, false);
 
 // Report

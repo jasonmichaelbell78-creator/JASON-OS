@@ -23,6 +23,10 @@ const { sanitizeError } = require(
   path.join(__dirname, "..", "..", "..", "..", "scripts", "lib", "sanitize-error.cjs")
 );
 
+const { validatePathInDir } = require(
+  path.join(__dirname, "..", "..", "..", "..", "scripts", "lib", "security-helpers.js")
+);
+
 let readTextWithSizeGuard;
 try {
   ({ readTextWithSizeGuard } = require(
@@ -36,27 +40,62 @@ const PRIMARY_TEMPLATE = path.join(__dirname, "agent-primary-template.md");
 const SECONDARY_TEMPLATE = path.join(__dirname, "agent-secondary-template.md");
 const SYNTHESIS_TEMPLATE = path.join(__dirname, "synthesis-agent-template.md");
 
+// Schema-ref-by-version (D6.8) — every dispatched prompt references schema
+// v1.3 shapes explicitly so re-runs do not inherit a stale in-code shape.
+// Exported for downstream consumers that want to stamp records with the
+// same version used at dispatch time.
+const SCHEMA_VERSION = "1.3";
+
+// Max depth for {{INCLUDE:...}} directives (D5.2). 3 levels is generous;
+// current design is 1 (template → shared partial). Deeper implies a cycle
+// or accidental recursion.
+const MAX_INCLUDE_DEPTH = 3;
+
 // Any {{TOKEN}} we have not substituted is a bug - error out instead of
-// shipping a half-rendered prompt to the agent.
-const PLACEHOLDER_PATTERN = /\{\{[A-Z0-9_]+\}\}/;
+// shipping a half-rendered prompt to the agent. Pattern accepts A-Z0-9_
+// plus colon+slug to cover {{INCLUDE:filename}} so a stray/typoed include
+// directive is also flagged.
+const PLACEHOLDER_PATTERN = /\{\{[A-Z0-9_]+(?::[A-Za-z0-9._-]+)?\}\}/;
 
 /**
- * Read a template file with the size-guarded helper when available; fall
- * back to readFileSync wrapped in try/catch. Errors are sanitized before
- * re-throw so no absolute filesystem paths leak through.
+ * Read a template file and recursively substitute any
+ * `{{INCLUDE:filename}}` directives with the contents of a sibling file
+ * (D5.2 shared-partial contract — agent-instructions-shared.md).
  *
- * @param {string} templatePath
+ * INCLUDE filenames are restricted to a basename with no path separators
+ * or parent-traversal — partials live beside the template, never in a
+ * subdirectory or outside the backfill/ dir.
+ *
+ * @param {string} templatePath - Absolute template path
+ * @param {number} [depth=0] - Internal recursion guard
  * @returns {string}
  */
-function readTemplate(templatePath) {
+function readTemplate(templatePath, depth = 0) {
+  if (depth > MAX_INCLUDE_DEPTH) {
+    throw new Error(`Template include depth exceeded (max ${MAX_INCLUDE_DEPTH})`);
+  }
+  let text;
   try {
     if (typeof readTextWithSizeGuard === "function") {
-      return readTextWithSizeGuard(templatePath);
+      text = readTextWithSizeGuard(templatePath);
+    } else {
+      text = fs.readFileSync(templatePath, "utf8");
     }
-    return fs.readFileSync(templatePath, "utf8");
   } catch (err) {
     throw new Error(`Failed to read prompt template: ${sanitizeError(err)}`);
   }
+  // Process {{INCLUDE:filename}} directives (D5.2).
+  text = text.replace(/\{\{INCLUDE:([^}]+)\}\}/g, (_, fname) => {
+    const name = String(fname).trim();
+    if (name.length === 0 || /[\/\\]/.test(name) || name.includes("..")) {
+      throw new Error(
+        `INCLUDE directive rejected (path traversal or empty): ${JSON.stringify(name)}`
+      );
+    }
+    const includePath = path.join(path.dirname(templatePath), name);
+    return readTemplate(includePath, depth + 1);
+  });
+  return text;
 }
 
 /**
@@ -191,10 +230,173 @@ function buildSynthesisPrompt(findings, opts) {
   return rendered;
 }
 
+/**
+ * Repo root used for filesystem guards. Points at JASON-OS root by
+ * resolving up from this file (`.claude/sync/label/backfill/`).
+ */
+const DEFAULT_REPO_ROOT = path.join(__dirname, "..", "..", "..", "..");
+
+/**
+ * Normalize a guard-collected `needs_review` list — dedupe, preserve
+ * insertion order, and tolerate absent/non-array input. Kept local
+ * so applyRuntimeGuards is self-contained.
+ *
+ * @param {string[]} prior
+ * @param {string[]} add
+ * @returns {string[]}
+ */
+function mergeNeedsReviewList(prior, add) {
+  const out = Array.isArray(prior) ? [...prior] : [];
+  for (const field of add) {
+    if (typeof field === "string" && field.length > 0 && !out.includes(field)) {
+      out.push(field);
+    }
+  }
+  return out;
+}
+
+/**
+ * Apply the D6.8 runtime guards to a single agent-emitted record BEFORE
+ * it reaches verify.js / cross-check.js. Guards implement the 5 S10
+ * mid-run dispatch fixes as permanent logic:
+ *
+ *   1. Hard-dep exists-check (path-shaped deps only) — downgrade to soft
+ *      + append to `notes` if referenced file is missing on disk.
+ *   2. `content_hash` omit-if-unknown (D2.4) — delete the field if the
+ *      agent emitted null/undefined. Never emit `null`.
+ *   3. Legacy `portability: "generated"` rewrite (D3.2) — convert to
+ *      `not-portable` and add `portability` to needs_review for human
+ *      disambiguation.
+ *   4. Git-hook event disambiguation (D3.3) — if `type: git-hook` carries
+ *      `event` instead of `git_hook_event`, migrate the value.
+ *   5. Schema-version stamp — ensure `schema_version: "1.3"` lands on
+ *      every record the dispatcher forwards (D6.8 schema-ref-by-version).
+ *
+ * Returns a NEW record; does not mutate the input. Guards that do not
+ * trigger leave the field untouched.
+ *
+ * @param {object} record - Agent-emitted record (post-JSON.parse)
+ * @param {object} [opts]
+ * @param {string} [opts.repoRoot=DEFAULT_REPO_ROOT]
+ * @returns {object}
+ */
+function applyRuntimeGuards(record, opts = {}) {
+  if (!record || typeof record !== "object") return record;
+  const repoRoot = opts.repoRoot || DEFAULT_REPO_ROOT;
+
+  const out = { ...record };
+  const guardNotes = [];
+  let needsReviewAdditions = [];
+
+  // Guard 1: hard-dep exists-check. Only apply to path-shaped names
+  // (contain a slash or start with a dot) — registry-name references
+  // (e.g. "convergence-loop") would be resolved at a higher layer.
+  //
+  // Agent-emitted `dep.name` is untrusted input. Confine it to repoRoot
+  // via validatePathInDir before probing the filesystem — absolute paths
+  // or `..` traversal fail confinement and are treated as non-existent,
+  // which triggers the existing hard→soft downgrade. Matches the pattern
+  // used in verify.js and derive.toRepoRelative for the same reason.
+  if (Array.isArray(out.dependencies)) {
+    out.dependencies = out.dependencies.map((dep) => {
+      if (
+        !dep ||
+        typeof dep !== "object" ||
+        dep.hardness !== "hard" ||
+        typeof dep.name !== "string"
+      ) {
+        return dep;
+      }
+      // "Path-shaped" = anything the confinement guard should look at.
+      // Forward slash, leading dot, backslash, or an absolute form (POSIX
+      // root or Windows drive letter) all qualify. Registry names like
+      // "convergence-loop" fall through to the higher-layer resolver.
+      const isPathShaped =
+        dep.name.includes("/") ||
+        dep.name.includes("\\") ||
+        dep.name.startsWith(".") ||
+        path.isAbsolute(dep.name);
+      if (!isPathShaped) return dep;
+      let exists = false;
+      let confined = false;
+      try {
+        validatePathInDir(repoRoot, dep.name);
+        confined = true;
+        const abs = path.resolve(repoRoot, dep.name);
+        exists = fs.existsSync(abs);
+      } catch {
+        exists = false;
+      }
+      if (!exists) {
+        const reason = confined
+          ? `not found at ${dep.name}`
+          : "out-of-repo or invalid path";
+        guardNotes.push(`dep ${dep.name} ${reason}; downgraded hard→soft on dispatch`);
+        return { ...dep, hardness: "soft" };
+      }
+      return dep;
+    });
+  }
+
+  // Guard 2: content_hash omit-if-unknown (D2.4).
+  if ("content_hash" in out && (out.content_hash === null || out.content_hash === undefined)) {
+    delete out.content_hash;
+  }
+
+  // Guard 3: legacy portability:generated → not-portable (D3.2).
+  // The `enum_portability` schema never included `generated`; if the
+  // agent-runner emits it, rewrite and flag for human review.
+  if (out.portability === "generated") {
+    out.portability = "not-portable";
+    guardNotes.push(
+      "legacy portability:generated rewritten to not-portable (D3.2); needs_review"
+    );
+    needsReviewAdditions.push("portability");
+  }
+
+  // Guard 4: git-hook event disambiguation (D3.3).
+  // Legacy agents may have emitted `event` for `type: git-hook`; v1.3
+  // uses `git_hook_event` for that namespace.
+  if (
+    out.type === "git-hook" &&
+    typeof out.event === "string" &&
+    out.event.length > 0 &&
+    !out.git_hook_event
+  ) {
+    out.git_hook_event = out.event;
+    delete out.event;
+    guardNotes.push(
+      "legacy `event` field rewritten to `git_hook_event` on type:git-hook (D3.3)"
+    );
+  }
+
+  // Guard 5: schema-version stamp (D6.8 schema-ref-by-version).
+  // Always stamp the current SCHEMA_VERSION on dispatch output unless the
+  // agent explicitly set an older compatible value (additive upgrade path
+  // per D3.7). Stamping "1.3" is the dispatcher's contract.
+  out.schema_version = SCHEMA_VERSION;
+
+  // Merge guard notes into the record's `notes` field.
+  if (guardNotes.length > 0) {
+    const base = typeof out.notes === "string" ? out.notes : "";
+    const stamped = `[runtime-guard] ${guardNotes.join("; ")}`;
+    out.notes = base.length > 0 ? `${base}\n${stamped}` : stamped;
+  }
+
+  // Merge needs_review additions. Guard 3 forces a portability review.
+  if (needsReviewAdditions.length > 0) {
+    out.needs_review = mergeNeedsReviewList(out.needs_review, needsReviewAdditions);
+  }
+
+  return out;
+}
+
 module.exports = {
   buildPrimaryPrompt,
   buildSecondaryPrompt,
   buildSynthesisPrompt,
+  applyRuntimeGuards,
+  SCHEMA_VERSION,
   PRIMARY_TEMPLATE,
   SECONDARY_TEMPLATE,
   SYNTHESIS_TEMPLATE,

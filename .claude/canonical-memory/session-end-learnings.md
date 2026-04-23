@@ -113,3 +113,46 @@ type: project
   Rephrased to "repeated-match iteration loops" and Write passed. Worth
   tracking: plugin hooks can pattern-match inside documentation that
   cites anti-patterns. Not a bug in the hook, but a polishing target.
+
+## Session 16 close (2026-04-22, post-Phase-G.1+G.1.5)
+
+- **D6.5 sequential-with-inspection earned its ROI twice.** The B01 pilot
+  surfaced two systematic bugs that would have silently corrupted all 70
+  batches: (1) `agent-instructions-shared.md` confidence-coverage rule
+  was sparse-interpretable, causing 22 of 27 fields to land in
+  needs_review from missing-confidence → 0 scoring; (2) `cross-check.js`
+  Case F treated both-null as fieldScore=0 regardless of confidence,
+  flagging every settled-null field across native files. Both committed
+  mid-run (`ec3fdc0`, `b1a5a9c`). Post-fix: needs_review tracked real
+  disagreements 1:1. Without D6.5's inspection window between batches,
+  these would have compounded into 460+ records of unusable noise.
+- **Checkpoint 2MB safe-fs ceiling hit at B69.** Append-only cross-check-
+  result entries accumulated to ~2.1MB after 68 batches (~30KB/batch x
+  70 batches = projected ~2.1MB). SoNash will be ~5x scale → ~10MB.
+  Future fix: either rotate checkpoint every N batches automatically,
+  or split the cross-check results into per-batch files keyed in a slim
+  index. Currently resolved by manual archive to `.pre-truncation.jsonl`
+  with explicit user approval at the permission gate.
+- **Agent timeouts were rare but real.** 2 timeouts across ~140 dispatches
+  (B51 primary stream idle, B66 secondary socket close). Both recovered
+  via single retry (no narrower split needed). 5-min D6.7 timeout is
+  tight but viable. SoNash run should budget for 2-3% retry rate.
+- **Null-type records are a systemic pattern, not a one-off.** 31 of 461
+  records (~6.7%) have null type from Case C agent disagreement. The
+  dominant split is research-session (derive.js heuristic) vs doc
+  (JSONL-is-data semantic). Rather than per-file arbitration at G.2, the
+  right fix is schema-level: either tighten derive.js rules for
+  `.research/**/findings/*` or acknowledge that dir-as-session container
+  + per-file type differs from container type (SCHEMA.md §8.1 semantic
+  ambiguity).
+- **Cross-instance coordination worked cleanly.** Secondary instance ran
+  /brainstorm and /deep-research in parallel on `.research/**` artifacts
+  while primary ran Phase G in `.claude/sync/label/**`. Zero file overlap
+  by design. Two commits landed between mine (`ce96048`, `dc6c08d`);
+  pre-push and post-pull-rebase both clean. Informed the push-coordination
+  decision: each instance can push when ready, no merging required.
+- **run-batch.js driver pattern was worth building.** ~140 tool calls
+  across 70 batches would have been ~280+ with inline prepare/record
+  blocks. The gitignored driver at `.claude/state/batch-tmp/run-batch.js`
+  reduced boilerplate ~2x and kept batch dispatch consistent. Reusable
+  for SoNash Piece 5.5 back-fill when that lands.

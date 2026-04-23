@@ -15,9 +15,17 @@ understanding-field fill, and in-the-moment failure surfacing.
 
 ## Registration
 
-All three will be wired in `.claude/settings.json` as part of their respective
-build steps. `UserPromptSubmit` and `Notification` are new event types for
-JASON-OS.
+All three are invoked via thin delegators committed under `.claude/hooks/`:
+
+- `.claude/hooks/label-post-tool-use.js` → `hooks/post-tool-use-label.js`
+- `.claude/hooks/label-user-prompt-submit.js` → `hooks/user-prompt-submit-label.js`
+- `.claude/hooks/label-notification.js` → `hooks/notification-label.js`
+
+The delegator pattern bridges `run-node.sh`'s HOOKS_DIR confinement to
+the sync/label tree (structural-fix D7.1/D7.4). Registration in
+`.claude/settings.json` is pending re-run catalog promotion
+(structural-fix Phase G.3 / commit 7). `UserPromptSubmit` and
+`Notification` are new event types for JASON-OS.
 
 ## Must-haves
 

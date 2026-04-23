@@ -98,6 +98,17 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/run-node.sh plain-language-reminder.js",
+            "continueOnError": true
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "^[Bb]ash$",

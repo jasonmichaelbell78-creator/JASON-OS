@@ -315,6 +315,177 @@ function promotePreview(opts = {}) {
 }
 
 /**
+ * Apply a user arbitration package to the on-disk preview catalogs.
+ *
+ * The synthesis agent emits an arbitration package alongside its markdown
+ * report (see `synthesis-agent-template.md`). Each decision names a record
+ * by `path`, the field to update, and the resolved value. This function
+ * is the missing piece between "user makes arbitration decisions" and
+ * "preview catalog has resolved values" — without it, verify.js can never
+ * pass on a preview that contains needs_review entries by design.
+ *
+ * For each decision:
+ *   - finds the matching record in shared.jsonl OR local.jsonl by `path`
+ *   - sets `record[field] = decision.resolved_value` (null is allowed —
+ *     means "user confirms null is correct here")
+ *   - removes `field` from `record.needs_review` (if present)
+ *   - sets `record.confidence[field] = decision.confidence` (default 0.95
+ *     — high because the source of truth is now the user, not an agent)
+ *
+ * Records named in `unresolved_coverage_gaps` are intentionally NOT
+ * touched. Their needs_review entries survive, which means verify.js
+ * will keep failing on them. That is the point: the next gate makes the
+ * unresolved set explicit so the user (or a follow-up arbitration round)
+ * has to address them before promotion.
+ *
+ * Atomic semantics mirror promotePreview(): both files are read up-front,
+ * the existing on-disk versions are snapshotted, shared is written first,
+ * and a local-write failure rolls shared back to its pre-arbitration state.
+ *
+ * @param {{ decisions: Array<{path: string, field: string, resolved_value: any, confidence?: number, reason?: string, source?: string}>, unresolved_coverage_gaps?: Array<{path: string, field: string}>, schema_version?: string }} pkg
+ * @param {object} [opts]
+ * @param {string} [opts.previewDir]
+ * @returns {{ decisionsApplied: number, decisionsSkipped: number, recordsModified: number, needsReviewCleared: number, unresolvedCoverageGaps: number, errors: string[] }}
+ */
+function applyArbitration(pkg, opts = {}) {
+  if (!pkg || typeof pkg !== "object") {
+    throw new TypeError("preview.applyArbitration: pkg must be an object");
+  }
+  if (!Array.isArray(pkg.decisions)) {
+    throw new TypeError("preview.applyArbitration: pkg.decisions must be an array");
+  }
+
+  const previewDir = opts.previewDir ?? PREVIEW_DIR;
+  if (!previewExists({ previewDir })) {
+    throw new Error(
+      "preview.applyArbitration: preview not found — run writePreview() before applyArbitration()"
+    );
+  }
+
+  const sharedPath = path.join(previewDir, SHARED_BASENAME);
+  const localPath = path.join(previewDir, LOCAL_BASENAME);
+
+  let sharedRecords;
+  let localRecords;
+  try {
+    sharedRecords = readCatalog(sharedPath);
+  } catch (err) {
+    throw new Error(`preview.applyArbitration: shared read failed: ${sanitize(err)}`);
+  }
+  try {
+    localRecords = readCatalog(localPath);
+  } catch (err) {
+    throw new Error(`preview.applyArbitration: local read failed: ${sanitize(err)}`);
+  }
+
+  // Snapshot pre-modification state for rollback if the write phase tears.
+  // We can't reuse snapshotReal because that's keyed off the real-catalog
+  // path semantics (ENOENT → null). Here both files MUST exist or
+  // previewExists would have returned false above.
+  const sharedSnapshot = JSON.parse(JSON.stringify(sharedRecords));
+  void sharedSnapshot; // surfaced via restoreSnapshot below
+
+  // Index by path across both buckets. A path lives in exactly one file
+  // (split by source_scope at writePreview time), so single map is fine.
+  const index = new Map();
+  for (const rec of sharedRecords) {
+    if (rec && typeof rec.path === "string") index.set(rec.path, { rec, bucket: "shared" });
+  }
+  for (const rec of localRecords) {
+    if (rec && typeof rec.path === "string") index.set(rec.path, { rec, bucket: "local" });
+  }
+
+  const summary = {
+    decisionsApplied: 0,
+    decisionsSkipped: 0,
+    recordsModified: 0,
+    needsReviewCleared: 0,
+    unresolvedCoverageGaps: Array.isArray(pkg.unresolved_coverage_gaps)
+      ? pkg.unresolved_coverage_gaps.length
+      : 0,
+    errors: [],
+  };
+  const modifiedPaths = new Set();
+
+  for (const decision of pkg.decisions) {
+    if (!decision || typeof decision !== "object") {
+      summary.decisionsSkipped++;
+      summary.errors.push("decision is not an object");
+      continue;
+    }
+    const { path: recPath, field } = decision;
+    if (typeof recPath !== "string" || typeof field !== "string") {
+      summary.decisionsSkipped++;
+      summary.errors.push(
+        `decision missing path or field: ${JSON.stringify({ path: recPath, field })}`
+      );
+      continue;
+    }
+    const hit = index.get(recPath);
+    if (!hit) {
+      summary.decisionsSkipped++;
+      summary.errors.push(`no preview record for path "${recPath}"`);
+      continue;
+    }
+
+    // Apply the resolved value. `null` is intentionally allowed — it
+    // means the user confirmed null is the correct value for that field.
+    hit.rec[field] = decision.resolved_value === undefined ? null : decision.resolved_value;
+
+    // Bookkeeping: clear the needs_review entry for this field if present.
+    if (Array.isArray(hit.rec.needs_review)) {
+      const before = hit.rec.needs_review.length;
+      hit.rec.needs_review = hit.rec.needs_review.filter((f) => f !== field);
+      if (hit.rec.needs_review.length < before) summary.needsReviewCleared++;
+    }
+
+    // Update per-field confidence — user input gets high confidence by
+    // default since the source of truth is now the user, not an agent.
+    if (!hit.rec.confidence || typeof hit.rec.confidence !== "object") {
+      hit.rec.confidence = {};
+    }
+    const conf =
+      typeof decision.confidence === "number" &&
+      decision.confidence >= 0 &&
+      decision.confidence <= 1
+        ? decision.confidence
+        : 0.95;
+    hit.rec.confidence[field] = conf;
+
+    summary.decisionsApplied++;
+    modifiedPaths.add(recPath);
+  }
+  summary.recordsModified = modifiedPaths.size;
+
+  // Write phase. Shared first, then local. If local fails, restore the
+  // shared snapshot so the preview is not left in a torn (half-arbitrated)
+  // state. previewExists is guaranteed true above, so a write here is a
+  // pure overwrite — no mkdir needed.
+  try {
+    writeCatalog(sharedPath, sharedRecords);
+  } catch (err) {
+    throw new Error(`preview.applyArbitration: shared write failed: ${sanitize(err)}`);
+  }
+  try {
+    writeCatalog(localPath, localRecords);
+  } catch (err) {
+    let restoreErr = null;
+    try {
+      writeCatalog(sharedPath, sharedSnapshot);
+    } catch (rollbackErr) {
+      restoreErr = sanitize(rollbackErr);
+    }
+    const primary = `preview.applyArbitration: local write failed: ${sanitize(err)}`;
+    if (restoreErr !== null) {
+      throw new Error(`${primary}; rollback of shared ALSO failed: ${restoreErr}`);
+    }
+    throw new Error(`${primary}; rolled shared back to pre-arbitration state`);
+  }
+
+  return summary;
+}
+
+/**
  * Remove the preview directory entirely. Idempotent.
  * @param {object} [opts]
  * @param {string} [opts.previewDir]
@@ -336,6 +507,7 @@ module.exports = {
   splitBySourceScope,
   writePreview,
   promotePreview,
+  applyArbitration,
   clearPreview,
   previewExists,
 };

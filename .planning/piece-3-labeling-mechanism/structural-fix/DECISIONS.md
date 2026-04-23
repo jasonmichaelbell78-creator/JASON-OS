@@ -96,7 +96,7 @@
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | D6.1 | **Full re-run.** All ~429 files fresh derivation. Existing 169 preview discarded.                                                                                                   | Purity over speed; partial contamination defeats the structural fix.           |
 | D6.2 | **Existing preview + per-batch state renamed** to `.claude/sync/label/preview/s10-run-1-attempt/` + `.claude/state/s10-run-1-attempt/` (still gitignored).                         | Historical reference for debugging; no state pollution on re-run.              |
-| D6.3 | **Enhanced+ promotion gate:** `verify.js` pass → `/label-audit` dogfooded on preview → audit report included in synthesis → user approves → atomic promote via rename.             | Convergence loop proves foundation; audit-green = safe to promote.             |
+| D6.3 | **Enhanced+ promotion gate:** `verify.js` pass → `/label-audit` dogfooded on preview → audit report included in synthesis → user approves → atomic promote via rename. **REVISED Session 17 — see Category 14 (D14.1–D14.4) for the corrected ordering.** | Convergence loop proves foundation; audit-green = safe to promote. |
 
 ---
 
@@ -171,6 +171,32 @@
 
 ---
 
+## Category 14 — Session 17 G.2 architecture revision
+
+Added Session 17 (2026-04-23) when verify.js failed every record in the
+G.1 preview — by design, not by bug. The two mid-G.1 patches landed
+under D6.5 (`ec3fdc0` confidence-on-every-field; `b1a5a9c` Case F
+honors-confidence-on-null) normalized the practice of agents emitting
+`null` for fields they couldn't derive, with low confidence and a
+`needs_review` entry. That is now the expected post-G.1 shape: 100% of
+records carry at least one `needs_review` entry. But D6.3 staged
+`verify.js` BEFORE the synthesis arbitration step, and `validate-catalog`
+commit-time rule 2 rejects any record with non-empty `needs_review`. So
+the gate could never clear without an arbitration-application stage that
+D6.3 didn't define. The synthesis-agent template was summary-only and
+never wrote resolved values back into the preview. This category is the
+fix — the pivot is significant enough to warrant its own category rather
+than a rationale-column footnote.
+
+| ID    | Decision                                                                                                                                                                                                                                                          | Rationale                                                                                                                                                                                |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D14.1 | **Synthesis is an arbitration stage, not a summary stage.** It produces a structured arbitration proposal (auto-merge proposals + open questions + coverage gaps) alongside the markdown report. The user's response turns the proposal into a final arbitration package.           | The original D6.3 design assumed `verify.js` could pass on raw G.1 output. After the D6.5 mid-run patches, that's no longer true — `null` + `needs_review` is the expected shape. Synthesis closes the loop. |
+| D14.2 | **`verify.js` runs AFTER `applyArbitration()`, not before.** The corrected G.2 sub-step order is: synthesis → user arbitrates conversationally → `applyArbitration()` rewrites preview → `verify.js` hard gate (now passes) → `/label-audit` dogfood → final user approval → promote. | `verify.js` is the post-arbitration hard gate. Running it before arbitration tested a precondition the system was designed never to satisfy. The reordered flow makes the gate meaningful. |
+| D14.3 | **Coverage gaps are explicit, not silent.** A record whose `needs_review` entries are NOT covered by the final arbitration package survives into the post-arbitration preview unchanged. `verify.js` will then fail on those records — and that's the gate working as intended. The user resolves each gap (assign a value / accept null / trigger narrower re-run) or accepts the post-promotion commit-block consequence per `validate-catalog` rule 2. | Without this, a permissive arbitration could promote a partially-derived catalog and freeze every future commit until the gap is fixed. Explicit gaps give the user a chance to address them before promote, when context is fresh. |
+| D14.4 | **Synthesis output honors the JASON-OS conversational-explanatory tenet.** Plain English in markdown sections; rationale per option in arbitration questions; structured JSON for machine consumption is separate from the human-readable text. No D-codes or case-letter shorthand front-loaded into user-facing prose.                                                                                  | `tenet_conversational_explanatory` + `feedback_plain_english_over_research_labels` apply to every user-facing surface. The synthesis report IS user-facing. Failing the tenet here cascades into every promotion gate the user has to read. |
+
+---
+
 ## Cross-cutting invariants
 
 1. **Schema-first authority.** When template and schema disagree, schema wins (D2.1, D2.3).
@@ -184,8 +210,10 @@
 
 ## Summary totals
 
-- **13 discovery categories** × **52 questions asked** = **58 locked decisions**
-- 7 commits in logical groupings per D8.1 (+ 1 re-run promotion commit)
+- **13 discovery categories** × **52 questions asked** = **58 locked decisions** (Session 13 — original)
+- **+1 revision category** × **4 decisions** = **62 total decisions** (Session 17 — G.2 architecture revision)
+- 7 commits in logical groupings per D8.1 (+ 1 re-run promotion commit + 1 G.2 architecture-fix commit added Session 17)
 - ~45 back-fill batches × ~90 agents on the re-run
 - Schema stays v1.3 (minor, additive); `scope.json` v1 → v2 (philosophy)
-- Artifacts produced this session: DIAGNOSIS, DECISIONS, PLAN, SONASH_MIRROR_DELTA
+- Artifacts produced Session 13: DIAGNOSIS, DECISIONS, PLAN, SONASH_MIRROR_DELTA
+- Artifacts touched Session 17: DECISIONS (this Cat 14), PLAN (Step G.2 rewrite), `preview.js` (`applyArbitration` added), `synthesis-agent-template.md` (output contract revised), SESSION_CONTEXT (resume contract)

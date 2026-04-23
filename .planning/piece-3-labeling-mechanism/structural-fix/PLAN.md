@@ -489,18 +489,121 @@ Target: ~90 min wall-clock for 45 sequential batches at ~2 min each.
 **Depends on:** Phase A–E complete, Step F.2 done
 **Done when:** all batches returned; verify.js passes on consolidated preview; cross-check agreement rate reported
 
-### Step G.2 — Enhanced+ promotion gate per D6.3
+### Step G.2 — Promotion gate (D6.3 + Category 14 / Session 17 revision)
 
-Three-step gate before atomic promote:
+The original D6.3 gate ran `verify.js` first and three steps total. After
+the D6.5 mid-run patches normalized null-emission for low-confidence
+fields, that ordering became impossible to clear: 100% of post-G.1
+records carry `needs_review` entries by design, and `validate-catalog`
+rule 2 rejects any non-empty `needs_review`. Category 14 (D14.1–D14.4)
+documents the architectural pivot: synthesis is an arbitration stage,
+not a summary-only step, and `verify.js` runs AFTER user decisions are
+applied to records, not before. Seven sub-steps now sit between G.1 and
+G.3.
 
-1. **verify.js hard-gate** — `node .claude/sync/label/backfill/verify.js --preview` must exit 0
-2. **`/label-audit` dogfood on preview** — invoke the audit skill pointed at `.claude/sync/label/preview/{shared,local}.jsonl`. If any drift / low-confidence / disagreement findings, abort per D7.6; surface conversationally.
-3. **Synthesis agent produces summary** including audit result + agreement rate + coverage gaps. User reads, approves.
+#### G.2.1 — Synthesis agent runs over G.1 output
 
-On rejection: D7.6 path — conversational resolution + narrower re-run offered.
+Spawn one synthesis agent against the consolidated cross-check output
+per `synthesis-agent-template.md`. The agent emits two artifacts in one
+response: a markdown report (agreement rate, auto-merge proposals,
+open arbitration questions, coverage gaps, novel composites) and a
+fenced JSON block tagged `arbitration-proposal` carrying the same
+content in machine-readable shape. The markdown report is what the
+user reads; the JSON proposal is what becomes the input to the next
+sub-step.
+
+**Done when:** synthesis report reads cleanly in plain English (per the
+JASON-OS conversational-explanatory tenet) and the JSON proposal block
+parses.
+
+#### G.2.2 — User arbitrates conversationally
+
+Present the markdown report. The user replies in three parts:
+
+- **Auto-merges** — approve the batch, or call out specific overrides.
+- **Open arbitration questions** — answer in bulk per field where the
+  same convention applies across many records (e.g., "for type
+  conflicts on `.research/.../findings/*.md`, use `research-session`")
+  or per record where the call is record-specific.
+- **Coverage gaps** — for each, choose: assign a value, defer (with the
+  consequence that subsequent commits touching that record will be
+  blocked by `validate-catalog` rule 2 until resolved), or trigger a
+  narrower agent re-run with sharpened prompts.
+
+**Done when:** every auto-merge, question, and gap from the synthesis
+proposal has an explicit user response.
+
+#### G.2.3 — Assemble final arbitration package
+
+Translate the user's replies into the runtime arbitration package shape
+(see `synthesis-agent-template.md` Part 3 — final package shape). Each
+user decision becomes a `decisions[]` entry; coverage gaps the user
+explicitly defers go into `unresolved_coverage_gaps[]`. Save the
+package to `.claude/state/g2-arbitration.<UTC-timestamp>.json` for
+audit trail (gitignored).
+
+**Done when:** the saved JSON file parses and counts match what was
+promised to the user in step G.2.2.
+
+#### G.2.4 — Apply arbitration to preview
+
+```sh
+node .claude/sync/label/backfill/apply-arbitration.js \
+  .claude/state/g2-arbitration.<timestamp>.json
+```
+
+Rewrites both preview jsonls in place: clears named `needs_review`
+entries, sets resolved values, stamps `confidence[field]` per
+decision. Prints a JSON summary — surface it to the user.
+
+**Done when:** CLI exits 0 (or exits 1 with `errors[]` that the user
+explicitly accepts as expected — e.g., a path renamed between G.1 and
+G.2). Records named in `unresolved_coverage_gaps[]` are intentionally
+left with their `needs_review` entries intact.
+
+#### G.2.5 — verify.js hard-gate (now reachable)
+
+```sh
+node .claude/sync/label/backfill/verify.js .claude/sync/label/preview/shared.jsonl
+node .claude/sync/label/backfill/verify.js .claude/sync/label/preview/local.jsonl
+```
+
+Both must exit 0. If either fails:
+
+- If the failure points only at records named in
+  `unresolved_coverage_gaps[]`, surface and confirm the user accepts
+  the post-promotion commit-block consequence per D14.3. If accepted,
+  proceed; if not, route back to G.2.2.
+- If the failure points at records the user thought were resolved,
+  abort per D7.6 and diagnose conversationally — applyArbitration may
+  have hit an edge case the test corpus didn't cover.
+
+**Done when:** both verify runs exit 0, OR remaining failures are an
+explicitly-accepted subset confined to deferred coverage gaps.
+
+#### G.2.6 — `/label-audit` dogfood on preview
+
+Invoke the audit skill against `.claude/sync/label/preview/{shared,local}.jsonl`.
+Any drift, low-confidence, or disagreement finding aborts per D7.6 and
+routes back to conversational resolution.
+
+**Done when:** audit reports clean, OR the user explicitly accepts the
+flagged findings (rare).
+
+#### G.2.7 — Final user approval
+
+Present a one-page summary: verify counts, audit summary, arbitration
+package size, list of deferred coverage gaps with their
+post-promotion consequence. The user types final approval. Then
+proceed to Step G.3.
+
+**Done when:** explicit user approval is captured.
 
 **Depends on:** Step G.1
-**Done when:** all three gates green; user types approval
+**Audit trail:** the arbitration package JSON lives in `.claude/state/`
+(gitignored), and the synthesis markdown report is included verbatim
+in the Step G.3 promotion commit body so future sessions can
+reconstruct the decisions without the gitignored state file.
 
 ### Step G.3 — Atomic promote (commit 7)
 

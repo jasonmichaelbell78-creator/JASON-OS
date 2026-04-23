@@ -1,22 +1,22 @@
 # Session Context — JASON-OS
 
 ## Current Session Counter
-16
+17
 
 ## Uncommitted Work
-No (session-end closure complete; all 7 Session 16 commits pushed to origin/fixes-42226)
+Yes (Session 17 G.2 architecture-fix in flight — preview.js + apply-arbitration.js + synthesis-agent-template.md + DECISIONS.md Cat 14 + PLAN.md Step G.2 rewrite + plain-language-reminder hook + this file)
 
 ## Last Updated
-2026-04-22
+2026-04-23
 
 ## Quick Recovery
 
-**Last Checkpoint**: 2026-04-22 (Session 16 pause — G.1 + G.1.5 complete, G.2 next)
+**Last Checkpoint**: 2026-04-23 (Session 17 — G.2 architecture revision in flight)
 **Branch**: `fixes-42226`
-**Working On**: Structural-fix Phase G promotion gate, G.2 next
-**Files Modified**: none on disk (preview jsonls written to gitignored path)
-**Next Step**: Start G.2 — `node .claude/sync/label/backfill/verify.js .claude/sync/label/preview/shared.jsonl`; repeat for local.jsonl; then /label-audit dogfood on preview; then synthesis agent summary over 2187 disagreements; then user approval.
-**Uncommitted Work**: no
+**Working On**: Structural-fix Phase G.2 — architecture-fix commit then execution
+**Files Modified**: `.claude/sync/label/backfill/preview.js` (+`applyArbitration`), `.claude/sync/label/backfill/apply-arbitration.js` (new CLI), `.claude/sync/label/backfill/__tests__/preview.test.js` (+8 tests), `.claude/sync/label/backfill/synthesis-agent-template.md` (rewritten), `.planning/piece-3-labeling-mechanism/structural-fix/DECISIONS.md` (+Category 14), `.planning/piece-3-labeling-mechanism/structural-fix/PLAN.md` (Step G.2 rewritten), `.claude/hooks/plain-language-reminder.js` (new), `.claude/settings.json` (UserPromptSubmit hook wired)
+**Next Step**: Commit architecture-fix changes as one logical commit, then execute the new G.2.1 (synthesis agent dispatch).
+**Uncommitted Work**: yes — see "Files Modified" above
 
 ### Phase G status (G.1 + G.1.5 DONE)
 - **All 70 batches recorded** — 461 preview records total
@@ -40,12 +40,52 @@ No (session-end closure complete; all 7 Session 16 commits pushed to origin/fixe
 | `60cf491` | docs(session-context) — B36 pause checkpoint |
 | `ce96048` | docs(migration-skill) — /brainstorm re-entry v2, 9 new decisions D30–D38 + 3 todos T33–T35 (SECONDARY instance Thread A) |
 
-### Resume contract (G.2 start)
-1. Read this file + tasks (G.0/G.0.5/G.0.6/G.1/G.1.5 complete, G.2 in_progress ready-to-start).
-2. verify.js is per-file: `node .claude/sync/label/backfill/verify.js <path.jsonl>`. Run on shared + local preview jsonls. If either exits non-zero, abort G.2 per D7.6 and surface conversationally.
-3. If both pass: /label-audit dogfood on preview. Any drift/low-confidence/disagreement findings → abort per D7.6.
-4. Synthesis agent produces summary (agreement rate + coverage gaps + type-arbitration list + portability ambiguities). User reviews and approves.
-5. On approve: G.3 atomic promote via `promotePreview()` + settings.json hook wiring + .husky/pre-commit validator + commit 8/8. Phase I parallel code-reviewer audit + smoke tests.
+### Session 17 in-flight changes (uncommitted)
+| Area | Change |
+|---|---|
+| `.claude/sync/label/backfill/preview.js` | New `applyArbitration()` function — applies user arbitration decisions to preview catalogs; rolls back on torn-write failure |
+| `.claude/sync/label/backfill/apply-arbitration.js` | New CLI shim wrapping `applyArbitration()`; matches verify.js style |
+| `.claude/sync/label/backfill/__tests__/preview.test.js` | +8 tests covering apply path, null-resolved-value, unknown path, coverage gaps, package validation, malformed decisions, idempotent no-op |
+| `.claude/sync/label/backfill/synthesis-agent-template.md` | Rewritten: emits markdown report + `arbitration-proposal` JSON; documents final arbitration package shape; honors plain-language tenet |
+| `.planning/piece-3-labeling-mechanism/structural-fix/DECISIONS.md` | Added Category 14 (D14.1–D14.4) — synthesis is arbitration stage, verify.js runs after applyArbitration, coverage gaps explicit, plain-language tenet on synthesis output. D6.3 marked REVISED. |
+| `.planning/piece-3-labeling-mechanism/structural-fix/PLAN.md` | Step G.2 rewritten with 7 sub-steps (G.2.1–G.2.7) implementing Cat 14 |
+| `.claude/hooks/plain-language-reminder.js` | New UserPromptSubmit hook — injects plain-language tenet reminder on every prompt |
+| `.claude/settings.json` | Wired UserPromptSubmit hook block |
+| `SESSION_CONTEXT.md` | This file — updated for Session 17 G.2 revision |
+
+### Resume contract (G.2 start) — Session 17 revision
+
+**The original pre-Session-17 contract had verify.js gating BEFORE
+synthesis. That ordering was unreachable on the actual G.1 output —
+every record carries `needs_review` entries by design after the D6.5
+mid-run patches normalized null-emission, and validate-catalog rule 2
+rejects non-empty `needs_review`. Session 17 added Category 14 to
+DECISIONS.md and rewrote Step G.2 in PLAN.md to fix the ordering.
+Read PLAN.md Step G.2 + DECISIONS.md Category 14 before resuming.**
+
+The new G.2 has seven sub-steps. Resume cleanly from any of them:
+
+1. Read this file + DECISIONS.md Cat 14 + PLAN.md Step G.2 + tasks
+   (G.0/G.0.5/G.0.6/G.1/G.1.5 complete; G.2 architecture-fix
+   infrastructure complete pending commit; G.2 execution next).
+2. **G.2.1** — spawn synthesis agent against the consolidated
+   cross-check output per `synthesis-agent-template.md`. Agent emits
+   markdown report + `arbitration-proposal` JSON block.
+3. **G.2.2** — present markdown to user; collect three replies
+   (auto-merges, open arbitration questions, coverage-gap dispositions).
+4. **G.2.3** — translate replies into final arbitration package shape;
+   save to `.claude/state/g2-arbitration.<timestamp>.json`.
+5. **G.2.4** — `node .claude/sync/label/backfill/apply-arbitration.js
+   <package>`; surface summary.
+6. **G.2.5** — verify.js per-file on shared + local. Both must exit 0
+   (or remaining failures are confined to user-deferred coverage gaps
+   per D14.3).
+7. **G.2.6** — /label-audit dogfood on preview. Drift / low-confidence
+   / disagreement findings abort per D7.6.
+8. **G.2.7** — final user approval, then G.3 atomic promote via
+   `promotePreview()` + settings.json hook wiring + .husky/pre-commit
+   validator + commit 8/8. Phase I parallel code-reviewer audit +
+   smoke tests.
 
 ### G.2 watchlist (issues that G.2 must resolve)
 - **Type arbitration**: 31 null-type records (Case C research-session vs doc pattern on `.research/.../findings/*`). Needs user call on the house convention.

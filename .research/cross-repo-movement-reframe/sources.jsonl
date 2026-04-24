@@ -1,0 +1,108 @@
+{"id":"S-001","url_or_path":".research/cross-repo-movement-reframe/BRAINSTORM.md","title":"cross-repo-movement-reframe BRAINSTORM","type":"codebase","trust":"HIGH","cited_by":["D1","D2","D3","D4","D5","D6","D7","D8","D9","D10","D11"]}
+{"id":"S-002","url_or_path":".research/cross-repo-movement-reframe/PHASE_0_LANDSCAPE.md","title":"Phase 0 Landscape","type":"codebase","trust":"HIGH","cited_by":["D1","D2","D3","D4","D5","D6","D7","D8","D9","D10","D11"]}
+{"id":"S-003","url_or_path":".claude/sync/schema/SCHEMA.md","title":"Sync-Mechanism Registry Schema v1.3","type":"codebase","trust":"HIGH","cited_by":["D1","D9"]}
+{"id":"S-004","url_or_path":".claude/sync/schema/enums.json","title":"enums.json v1.3","type":"codebase","trust":"HIGH","cited_by":["D1","D5","D9"]}
+{"id":"S-005","url_or_path":".claude/sync/schema/schema-v1.json","title":"schema-v1.json validation spec","type":"codebase","trust":"HIGH","cited_by":["D1"]}
+{"id":"S-006","url_or_path":".claude/sync/schema/EVOLUTION.md","title":"Schema Evolution Rules v1.0","type":"codebase","trust":"HIGH","cited_by":["D1"]}
+{"id":"S-007","url_or_path":"https://github.com/ingydotnet/git-subrepo/blob/master/lib/git-subrepo","title":"git-subrepo source (.gitrepo field set)","type":"official-docs","trust":"HIGH","cited_by":["D1","D2"]}
+{"id":"S-008","url_or_path":"https://nix.dev/manual/nix/2.18/command-ref/new-cli/nix3-derivation-show","title":"Nix Reference Manual — derivation show","type":"official-docs","trust":"HIGH","cited_by":["D1","D2"]}
+{"id":"S-009","url_or_path":"https://nx.dev/docs/reference/project-configuration","title":"Nx Project Configuration Reference","type":"official-docs","trust":"HIGH","cited_by":["D1"]}
+{"id":"S-010","url_or_path":"https://learn.microsoft.com/en-us/vcpkg/users/versioning","title":"vcpkg Versioning Reference","type":"official-docs","trust":"HIGH","cited_by":["D1"]}
+{"id":"S-011","url_or_path":"https://docs.yoctoproject.org/dev-manual/new-recipe.html","title":"Yocto Project Dev Manual — Writing a New Recipe","type":"official-docs","trust":"HIGH","cited_by":["D1"]}
+{"id":"S-012","url_or_path":"https://github.com/NixOS/nix/pull/11749","title":"Nix store path provenance tracking PR #11749","type":"official-docs","trust":"HIGH","cited_by":["D1"]}
+{"id":"S-013","url_or_path":"https://spdx.github.io/spdx-spec/v3.0.1/model/Core/Vocabularies/RelationshipType/","title":"SPDX 3.0.1 RelationshipType vocabulary","type":"official-docs","trust":"HIGH","cited_by":["D2"]}
+{"id":"S-014","url_or_path":"https://deepwiki.com/OpenLineage/OpenLineage/1.1-core-specification","title":"OpenLineage Core Specification","type":"community","trust":"MEDIUM","cited_by":["D2"]}
+{"id":"S-015","url_or_path":"https://manual.determinate.systems/store/derivation/outputs/content-address.html","title":"Nix Content-Addressed Derivation Outputs","type":"official-docs","trust":"HIGH","cited_by":["D2"]}
+{"id":"S-016","url_or_path":"https://handbook.giantswarm.io/docs/product/managed-apps/dev-experience/git-subtree/","title":"Git subtree for tracking upstream — Giant Swarm","type":"community","trust":"MEDIUM","cited_by":["D2"]}
+{"id":"S-017","url_or_path":"https://thelinuxcode.com/git-move-files-practical-renames-refactors-and-history-preservation-in-2026/","title":"Git File Rename and History Preservation 2026","type":"community","trust":"MEDIUM","cited_by":["D2"]}
+{"id":"S-018","url_or_path":"https://en.wikipedia.org/wiki/Data_lineage","title":"Data lineage — Wikipedia","type":"community","trust":"MEDIUM","cited_by":["D2"]}
+{"id":"S-019","url_or_path":"https://spdx.github.io/spdx-spec/v2.3/relationships-between-SPDX-elements/","title":"SPDX 2.3 Relationships between Elements","type":"official-docs","trust":"HIGH","cited_by":["D2"]}
+{"id":"S-020","url_or_path":"https://manpages.debian.org/testing/git-subrepo/git-subrepo.1.en.html","title":"git-subrepo man page","type":"official-docs","trust":"HIGH","cited_by":["D2"]}
+{"id":"S-021","url_or_path":"https://developers.redhat.com/articles/2026/02/17/how-contextual-sbom-pattern-improves-vulnerability-management","title":"Contextual SBOM pattern — Red Hat","type":"community","trust":"MEDIUM","cited_by":["D2"]}
+{"id":"S-022","url_or_path":"scripts/lib/safe-fs.js","title":"JASON-OS safe-fs: atomic write, locking, streaming, symlink guards","type":"codebase","trust":"HIGH","cited_by":["D3","D7","D8"]}
+{"id":"S-023","url_or_path":"scripts/lib/parse-jsonl-line.js","title":"JASON-OS parse-jsonl-line: safeParseLine, safeParseLineWithError","type":"codebase","trust":"HIGH","cited_by":["D3"]}
+{"id":"S-024","url_or_path":"scripts/lib/read-jsonl.js","title":"JASON-OS read-jsonl: readJsonl full-file JSONL reader","type":"codebase","trust":"HIGH","cited_by":["D3"]}
+{"id":"S-025","url_or_path":".claude/sync/label/backfill/preview.js","title":"preview.js: applyArbitration, promotePreview — snapshot+rollback precedent","type":"codebase","trust":"HIGH","cited_by":["D3"]}
+{"id":"S-026","url_or_path":".claude/state/commit-log.jsonl","title":"commit-log.jsonl (measured: 68 records, 39 KB — size baseline)","type":"codebase","trust":"HIGH","cited_by":["D3","D4"]}
+{"id":"S-027","url_or_path":".gitignore","title":"JASON-OS .gitignore (confirms .claude/state/ is gitignored)","type":"codebase","trust":"HIGH","cited_by":["D3","D5"]}
+{"id":"S-028","url_or_path":"https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing","title":"Event Sourcing Pattern — Azure Architecture Center","type":"official-docs","trust":"MEDIUM","cited_by":["D3"]}
+{"id":"S-029","url_or_path":"https://sqlite.org/whentouse.html","title":"SQLite appropriate uses","type":"official-docs","trust":"HIGH","cited_by":["D3"]}
+{"id":"S-030","url_or_path":"https://news.ycombinator.com/item?id=23064905","title":"HN: you don't want to use SQLite for logs","type":"community","trust":"MEDIUM","cited_by":["D3"]}
+{"id":"S-031","url_or_path":"https://github.com/sumant1122/agentlog","title":"AgentLog — append-only JSONL for multi-agent event buses","type":"community","trust":"MEDIUM","cited_by":["D3"]}
+{"id":"S-032","url_or_path":".claude/state/hook-warnings-log.jsonl","title":"hook-warnings-log.jsonl (house style reference)","type":"codebase","trust":"HIGH","cited_by":["D4"]}
+{"id":"S-033","url_or_path":".claude/state/commit-failures.jsonl","title":"commit-failures.jsonl (house style reference)","type":"codebase","trust":"HIGH","cited_by":["D4"]}
+{"id":"S-034","url_or_path":".claude/state/label-promote-audit.jsonl","title":"label-promote-audit.jsonl (house style reference)","type":"codebase","trust":"HIGH","cited_by":["D4"]}
+{"id":"S-035","url_or_path":".claude/canonical-memory/*.md","title":"JASON-OS canonical memory files (frontmatter shape, type field values)","type":"codebase","trust":"HIGH","cited_by":["D4","D9"]}
+{"id":"S-036","url_or_path":".claude/settings.local.json","title":"JASON-OS settings.local.json (machine-specific Bash allow rules with absolute Windows paths)","type":"codebase","trust":"HIGH","cited_by":["D4","D5","D9","D10"]}
+{"id":"S-037","url_or_path":".claude/settings.json","title":"JASON-OS settings.json (hook registration, permissions, env vars)","type":"codebase","trust":"HIGH","cited_by":["D4","D5","D9"]}
+{"id":"S-038","url_or_path":".husky/_/","title":"JASON-OS .husky/_/ (generated Husky v9 shims — deprecated, not user-authored)","type":"codebase","trust":"HIGH","cited_by":["D4","D5","D9"]}
+{"id":"S-039","url_or_path":"~/.claude/commands/","title":"User-level slash-command aliases directory (gsd/, sc/ subdirs confirmed)","type":"codebase","trust":"HIGH","cited_by":["D4","D8","D9"]}
+{"id":"S-040","url_or_path":"~/.claude/projects/C--Users-jason-Workspace-dev-projects-JASON-OS/memory/","title":"User project memory directory (69+ files, frontmatter shape)","type":"codebase","trust":"HIGH","cited_by":["D4","D9"]}
+{"id":"S-041","url_or_path":".github/workflows/semgrep.yml","title":"JASON-OS semgrep.yml CI workflow","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-042","url_or_path":".github/workflows/codeql.yml","title":"JASON-OS codeql.yml CI workflow","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-043","url_or_path":".github/workflows/sonarcloud.yml","title":"JASON-OS sonarcloud.yml CI workflow","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-044","url_or_path":".github/workflows/dependency-review.yml","title":"JASON-OS dependency-review.yml CI workflow","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-045","url_or_path":".github/workflows/scorecard.yml","title":"JASON-OS scorecard.yml CI workflow","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-046","url_or_path":".github/workflows/auto-merge-dependabot.yml","title":"JASON-OS auto-merge-dependabot.yml (merge convention: squash)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-047","url_or_path":".github/workflows/cleanup-branches.yml","title":"JASON-OS cleanup-branches.yml (weekly stale-branch deletion)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-048","url_or_path":".husky/pre-commit","title":"JASON-OS .husky/pre-commit (gitleaks, enums-drift, label-validator gates)","type":"codebase","trust":"HIGH","cited_by":["D5","D9"]}
+{"id":"S-049","url_or_path":".husky/pre-push","title":"JASON-OS .husky/pre-push (escalation-gate, block-to-main)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-050","url_or_path":".husky/_shared.sh","title":"JASON-OS .husky/_shared.sh (hand-authored SKIP_CHECKS infrastructure)","type":"codebase","trust":"HIGH","cited_by":["D5","D9"]}
+{"id":"S-051","url_or_path":".github/CODEOWNERS","title":"JASON-OS CODEOWNERS (all files assigned to jasonmichaelbell78-creator)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-052","url_or_path":".github/pull_request_template.md","title":"JASON-OS pull_request_template.md (PR title/type convention)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-053","url_or_path":"package.json","title":"JASON-OS package.json (Node.js version, husky scripts, devDependencies)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-054","url_or_path":".nvmrc","title":"JASON-OS .nvmrc (pinned Node.js 22)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-055","url_or_path":"sonar-project.properties","title":"JASON-OS sonar-project.properties (SonarCloud config, exclusions)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-056","url_or_path":".claude/hooks/run-node.sh","title":"JASON-OS run-node.sh (HOOKS_DIR confinement, symlink guard, no-.. enforcement)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-057","url_or_path":".claude/hooks/block-push-to-main.js","title":"JASON-OS block-push-to-main.js hook","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-058","url_or_path":".claude/hooks/large-file-gate.js","title":"JASON-OS large-file-gate.js hook (>5MB block, >500KB warn)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-059","url_or_path":".claude/hooks/settings-guardian.js","title":"JASON-OS settings-guardian.js hook (validates settings.json writes)","type":"codebase","trust":"HIGH","cited_by":["D5"]}
+{"id":"S-060","url_or_path":"CLAUDE.md","title":"JASON-OS CLAUDE.md (§2 Security Rules, §4 Behavioral Guardrails, §5 Anti-Patterns)","type":"codebase","trust":"HIGH","cited_by":["D5","D7","D10"]}
+{"id":"S-061","url_or_path":"https://developer.hashicorp.com/terraform/cli/commands/providers/schema","title":"Terraform providers schema command","type":"official-docs","trust":"HIGH","cited_by":["D6"]}
+{"id":"S-062","url_or_path":"https://docs.github.com/en/actions/reference/workflows-and-actions/metadata-syntax","title":"GitHub Actions metadata syntax","type":"official-docs","trust":"HIGH","cited_by":["D6"]}
+{"id":"S-063","url_or_path":"https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html","title":"Ansible inventory guide","type":"official-docs","trust":"HIGH","cited_by":["D6"]}
+{"id":"S-064","url_or_path":"https://bazel.build/extending/platforms","title":"Bazel platforms","type":"official-docs","trust":"HIGH","cited_by":["D6"]}
+{"id":"S-065","url_or_path":"https://git-scm.com/docs/git-show","title":"Git - git-show Documentation","type":"official-docs","trust":"HIGH","cited_by":["D7"]}
+{"id":"S-066","url_or_path":"https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/icacls","title":"icacls - Microsoft Learn","type":"official-docs","trust":"HIGH","cited_by":["D7"]}
+{"id":"S-067","url_or_path":"https://nodejs.org/api/permissions.html","title":"Permissions - Node.js v22+ Documentation (stable Stability 2, known symlink bypass)","type":"official-docs","trust":"HIGH","cited_by":["D7"]}
+{"id":"S-068","url_or_path":"https://www.datadoghq.com/blog/cache-purge-ci-cd/","title":"Patterns for safe and efficient cache purging in CI/CD — Datadog","type":"community","trust":"MEDIUM","cited_by":["D7"]}
+{"id":"S-069","url_or_path":"https://git-scm.com/docs/git-ls-tree","title":"Git - git-ls-tree Documentation","type":"official-docs","trust":"HIGH","cited_by":["D7"]}
+{"id":"S-070","url_or_path":"https://git-scm.com/docs/git-clone","title":"Git - git-clone Documentation (including --bare and --no-local flags)","type":"official-docs","trust":"HIGH","cited_by":["D7"]}
+{"id":"S-071","url_or_path":"https://graphite.com/guides/git-clone-bare-mirror","title":"Git clone bare and git clone mirror — Graphite","type":"community","trust":"MEDIUM","cited_by":["D7"]}
+{"id":"S-072","url_or_path":"scripts/lib/security-helpers.js","title":"JASON-OS security-helpers.js (validatePathInDir, slugify, sanitizeFilename, sanitizeDisplayString)","type":"codebase","trust":"HIGH","cited_by":["D7","D9","D10"]}
+{"id":"S-073","url_or_path":"https://www.chezmoi.io/developer-guide/architecture/","title":"chezmoi Architecture (SHA256 bucket design, source state processing)","type":"official-docs","trust":"HIGH","cited_by":["D8"]}
+{"id":"S-074","url_or_path":"https://deepwiki.com/twpayne/chezmoi/3.1-source-state-processing","title":"chezmoi Source State Processing — deepwiki","type":"community","trust":"MEDIUM","cited_by":["D8"]}
+{"id":"S-075","url_or_path":"https://www.chezmoi.io/reference/commands/status/","title":"chezmoi status command reference (two-column status format)","type":"official-docs","trust":"HIGH","cited_by":["D8"]}
+{"id":"S-076","url_or_path":"https://github.com/twpayne/chezmoi/discussions/3816","title":"chezmoi line endings directive bug (singular vs plural, CRLF on Windows)","type":"community","trust":"MEDIUM","cited_by":["D8"]}
+{"id":"S-077","url_or_path":"https://vorpalblade.github.io/chezmoi_modify_manager/algorithms.html","title":"chezmoi_modify_manager Algorithms (INI format false-positive avoidance)","type":"community","trust":"MEDIUM","cited_by":["D8"]}
+{"id":"S-078","url_or_path":"https://www.rfc-editor.org/rfc/rfc8785","title":"RFC 8785: JSON Canonicalization Scheme (JCS)","type":"official-docs","trust":"HIGH","cited_by":["D8"]}
+{"id":"S-079","url_or_path":"https://www.chezmoi.io/user-guide/manage-machine-to-machine-differences/","title":"chezmoi: Manage Machine-to-Machine Differences (template conditionals, .chezmoiignore)","type":"official-docs","trust":"HIGH","cited_by":["D8","D10"]}
+{"id":"S-080","url_or_path":"https://docs.syncthing.net/users/syncing.html","title":"Syncthing: Understanding Synchronization (conflict detection via version vectors)","type":"official-docs","trust":"HIGH","cited_by":["D8"]}
+{"id":"S-081","url_or_path":"~/.claude/agents/","title":"User-level GSD agents (~/.claude/agents/ — 12 agent files confirmed)","type":"codebase","trust":"HIGH","cited_by":["D9"]}
+{"id":"S-082","url_or_path":".claude/agents/","title":"Project-level JASON-OS agents (.claude/agents/ — research/workflow agents)","type":"codebase","trust":"HIGH","cited_by":["D9"]}
+{"id":"S-083","url_or_path":"~/.claude/statusline/config.toml","title":"Statusline general config (user-scoped, location/timezone/thresholds)","type":"codebase","trust":"HIGH","cited_by":["D9"]}
+{"id":"S-084","url_or_path":"~/.claude/statusline/config.local.toml","title":"Statusline machine-local config (CONFIRMED to contain weather_api_key — live secret)","type":"codebase","trust":"HIGH","cited_by":["D9"]}
+{"id":"S-085","url_or_path":"~/.gitconfig","title":"User global git config (user identity, delta pager, LFS config, safe directories)","type":"codebase","trust":"HIGH","cited_by":["D9","D10"]}
+{"id":"S-086","url_or_path":".git/config","title":"Per-repo git config (hooksPath, remote URLs, branch tracking — NOT a sync target)","type":"codebase","trust":"HIGH","cited_by":["D9"]}
+{"id":"S-087","url_or_path":"scripts/lib/sanitize-error.cjs","title":"JASON-OS sanitize-error.cjs (SENSITIVE_PATTERNS regex battery for paths and credentials)","type":"codebase","trust":"HIGH","cited_by":["D9","D10"]}
+{"id":"S-088","url_or_path":"~/.claude/settings.json","title":"User-level Claude Code settings.json (hooks, model, plugins)","type":"codebase","trust":"HIGH","cited_by":["D9"]}
+{"id":"S-089","url_or_path":"https://www.chezmoi.io/reference/templates/variables/","title":"chezmoi Template Variables reference","type":"official-docs","trust":"HIGH","cited_by":["D10"]}
+{"id":"S-090","url_or_path":"https://www.chezmoi.io/user-guide/templating/","title":"chezmoi Templating Guide","type":"official-docs","trust":"HIGH","cited_by":["D10"]}
+{"id":"S-091","url_or_path":"https://yadm.io/docs/alternates","title":"yadm Alternate Files (class labels, explicit opt-in per machine)","type":"official-docs","trust":"HIGH","cited_by":["D10"]}
+{"id":"S-092","url_or_path":"git commit 088a077","title":"PR #10 R2 CRITICAL: scrub absolute user paths (782 substitutions across 60 files)","type":"codebase","trust":"HIGH","cited_by":["D10"]}
+{"id":"S-093","url_or_path":"https://bazel.build/remote/caching","title":"Remote Caching — Bazel (two-level AC + CAS design)","type":"official-docs","trust":"HIGH","cited_by":["D11"]}
+{"id":"S-094","url_or_path":"https://turborepo.dev/docs/crafting-your-repository/caching","title":"Caching — Turborepo (global hash + task hash two-level split)","type":"official-docs","trust":"HIGH","cited_by":["D11"]}
+{"id":"S-095","url_or_path":"https://nix.dev/manual/nix/2.34/language/derivations.html","title":"Derivations — Nix Reference Manual (input-addressed hash, all-and-only relevant inputs)","type":"official-docs","trust":"HIGH","cited_by":["D11"]}
+{"id":"S-096","url_or_path":"https://ccache.dev/manual/latest.html","title":"ccache manual (direct mode manifest: content-hash-in-value, not in key)","type":"official-docs","trust":"HIGH","cited_by":["D11"]}
+{"id":"S-097","url_or_path":"https://blogsystem5.substack.com/p/bazel-remote-caching","title":"Understanding Bazel remote caching — blogsystem5","type":"community","trust":"MEDIUM","cited_by":["D11"]}
+{"id":"S-098","url_or_path":"https://caioferreira.dev/posts/introducing-cache-in-your-system/","title":"Introducing Cache in your System — engineering blog","type":"community","trust":"MEDIUM","cited_by":["D11"]}
+{"id":"S-099","url_or_path":"https://wiki.nixos.org/wiki/Low-level_derivations","title":"Low-level derivations — NixOS Wiki","type":"community","trust":"MEDIUM","cited_by":["D11"]}
+{"id":"S-100","url_or_path":".claude/canonical-memory/user_communication_preferences.md","title":"Canonical memory: user communication preferences (prose locale reference)","type":"codebase","trust":"HIGH","cited_by":["D10"]}
+
+{"id": "S-101", "url_or_path": "findings/G1-codebase-gaps.md", "title": "G1 Codebase Gap Pursuit — tenet identification, project-hash encoding, MCP config", "type": "codebase", "trust": "HIGH", "cited_by": ["G1"]}
+{"id": "S-102", "url_or_path": "https://code.claude.com/docs/en/mcp", "title": "Claude Code MCP documentation — canonical config file locations", "type": "official-docs", "trust": "HIGH", "cited_by": ["G1"]}
+{"id": "S-103", "url_or_path": "findings/G2-web-gaps.md", "title": "G2 Web Gap Pursuit — ephemeral-machine handling, settings.local.json sub-file granularity", "type": "web-research", "trust": "HIGH", "cited_by": ["G2"]}
+{"id": "S-104", "url_or_path": "https://www.chezmoi.io/user-guide/machines/containers-and-vms/", "title": "chezmoi Containers and VMs guide — ephemeral host patterns", "type": "official-docs", "trust": "HIGH", "cited_by": ["G2"]}
+{"id": "S-105", "url_or_path": "https://code.visualstudio.com/docs/configure/settings-sync", "title": "VS Code Settings Sync documentation", "type": "official-docs", "trust": "HIGH", "cited_by": ["G2"]}
+{"id": "S-106", "url_or_path": "https://github.com/microsoft/vscode/issues/89627", "title": "VS Code issue 89627 — Settings Sync: Ignore a setting locally (open since 2020)", "type": "github-issue", "trust": "HIGH", "cited_by": ["G2"]}
+{"id": "S-107", "url_or_path": "https://datatracker.ietf.org/doc/html/rfc6902", "title": "RFC 6902 — JSON Patch", "type": "official-docs", "trust": "HIGH", "cited_by": ["G2"]}

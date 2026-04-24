@@ -1,0 +1,114 @@
+{
+  "topic": "cross-repo-movement-reframe",
+  "date": "2026-04-23",
+  "session": 19,
+  "branch": "piece-3-labeling-mechanism",
+  "depth": "L1",
+  "domain": "cross-repo-automation-tooling",
+  "agent_count": 18,
+  "subquestion_count": 11,
+  "claim_count": 98,
+  "source_count": 107,
+  "synthesisVersion": "2.0",
+  "lastSynthesized": "2026-04-23T00:00:00Z",
+  "mode": "post-gap-pursuit",
+  "claimsTotal": 98,
+  "claimsVerified": 62,
+  "claimsRefuted": 2,
+  "claimsUnverifiable": 10,
+  "claimsConflicted": 5,
+  "claimsGapPursuit": 18,
+  "confidence_distribution": {
+    "HIGH": 79,
+    "MEDIUM": 10,
+    "LOW": 0,
+    "UNVERIFIED": 0,
+    "ESTIMATED": 9
+  },
+  "strands": ["ledger", "profile", "context-sync", "understanding-mechanical"],
+  "strand_claim_counts": {
+    "ledger": 23,
+    "profile": 15,
+    "context-sync": 41,
+    "understanding-mechanical": 10,
+    "cross-cutting": 9
+  },
+  "consumes": ["BRAINSTORM.md", "PHASE_0_LANDSCAPE.md"],
+  "produces_for": ["/deep-plan cross-repo-movement-reframe"],
+  "pre_plan_deliverables": {
+    "ledger_record_schema": "COMPLETE",
+    "target_process_profile_shape": "COMPLETE",
+    "context_sync_drift_record_and_mechanism": "COMPLETE",
+    "understanding_vs_mechanical_cache_key": "COMPLETE"
+  },
+  "open_questions_count": 13,
+  "cross_cutting_findings_count": 7,
+  "contradictions_found": 5,
+  "hasDebtCandidates": false,
+  "hasStackClaims": true,
+  "hasPitfallClaims": true,
+  "hasMemoryCandidates": true,
+  "findingsFilesCompleted": 15,
+  "challengeFilesCompleted": 3,
+  "pipeline_phases_complete": [
+    "Phase 1 (D-agents): 11 searcher agents D1-D11",
+    "Phase 2 (synthesis): Version 1.0",
+    "Phase 2.5 (verification): V1 (37 claims) + V2 (43 claims)",
+    "Phase 3 (challenges): Contrarian (8 challenges) + OTB (8 alternatives)",
+    "Phase 3.2 (disputes): 5 disputes resolved",
+    "Phase 3.5 (gap pursuit): G1 (codebase, 9 claims) + G2 (web, 9 claims)",
+    "Phase 3.97 (final synthesis): Version 2.0"
+  ],
+  "verification_verdicts_summary": {
+    "VERIFIED": 62,
+    "REFUTED_subclaims": 2,
+    "UNVERIFIABLE": 10,
+    "CONFLICTED_resolved": 5
+  },
+  "refuted_corrections": [
+    "C-013/C-047: 6 JSONL files corrected to 4 (.json files are not .jsonl)",
+    ".gitignore:47 corrected to :46 (off-by-one in D3 citation)",
+    "PR #10 R2 substitution count: 782 corrected to 776 (git stat verified)"
+  ],
+  "gap_pursuit_additions": [
+    "C-G001-C-G002: Tenet identification is filename prefix only (type:tenet unused)",
+    "C-G003-C-G005/C-G009: Project-directory names are reversible path-encodings not hashes",
+    "C-G006-C-G008: Canonical MCP config is ~/.claude.json not ~/.claude/mcp.json",
+    "C-G010-C-G014: No dotfiles manager has native ephemeral-host support; CI=true guard is cheapest v1",
+    "C-G015-C-G018: No ecosystem has clean per-key JSON portability; sidecar file pattern is cheapest v1"
+  ],
+  "key_cross_cutting_findings": [
+    "always-last-step rule: state records are the final write in every movement operation across all four companions",
+    "drift-record-style pattern is the JASON-OS house style for lightweight state (4 existing .claude/state/*.jsonl files confirm this)",
+    "schema versioning mirrors across all four data structures -- planner can write one shared schema-versioning policy",
+    "fast-path is a mode of the dashboard, not a bypass -- fast-path hits surface before execution across all four companions",
+    "security pattern battery (sanitize-error.cjs) is directly reusable across three strands without new design",
+    "mixed-scope splitting required at item level not category level -- memory files, settings.local.json, git config all internally mixed",
+    "no dotfiles manager has solved ephemeral-host detection natively -- JASON-OS needs ~2 lines of code for v1"
+  ],
+  "serendipitous_findings": [
+    "config.local.toml contains a confirmed live API key -- canonical example for machine_exclude at registration",
+    "PR #10 R2 (776 path substitutions) is accidental prior art for the content-time detection approach",
+    "preview.js rollback pattern maps directly to ledger-last rollback -- simpler than expected",
+    "memory type enum (enums.json) provides a natural scope-classification lookup table -- only needs the mapping defined once",
+    "No dotfile manager provides automated heuristic machine-bound detection -- Layer 2 (content-time) approach is novel",
+    "~/.claude/projects/ directory names are reversible path encodings not hashes -- enables correct multi-machine sync logic"
+  ],
+  "top_open_questions_for_planning": [
+    "unit_type and verdict enum final values (context-artifact vs memory vs config splits; observe-only for extract)",
+    "settings.local.json sub-file sync granularity (sidecar file pattern recommended by gap pursuit -- planning must ratify)",
+    "CLAUDE.md tweak block identification convention (sentinel comment or section-header naming not yet defined)",
+    "tenet identification mechanism (filename prefix recommended for v1 -- planning must confirm)",
+    "memory_type to scope-tag mapping table (natural classification mechanism, just needs the mapping defined once)",
+    "ledger.jsonl as context-sync category 19 (planning decision: should ledger travel across machines?)",
+    "ephemeral-machine guard implementation location (skill vs shared utility)"
+  ],
+  "calibration_parameters_estimated": [
+    "0.8 fast-path suppression confidence threshold (no empirical basis; implement as named constant)",
+    ">60% cache hit rate aspirational target (no empirical basis pre-implementation)",
+    "sharding threshold 2600-4000+ records (derived from measurement; ESTIMATED range not hard constant)"
+  ],
+  "cross_model": "pending-phase-5",
+  "synthesis_confidence": "HIGH",
+  "synthesis_notes": "Version 2.0: post-gap-pursuit final synthesis. Core architecture remains HIGH confidence. 4 refuted sub-claims corrected. 5 disputes resolved with explicit planning actions. 18 gap-pursuit claims added. Key concession: profile_slice_hash hashes full profile at v1 (slice optimization post-recipe-library). Ephemeral-machine guard added as v1 requirement. Sidecar file pattern recommended for settings.local.json sub-file granularity."
+}

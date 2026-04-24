@@ -1,7 +1,7 @@
 # Session Context — JASON-OS
 
 ## Current Session Counter
-20
+21
 
 ## Uncommitted Work
 No
@@ -13,31 +13,49 @@ No
 
 ## Quick Recovery
 
-**Last Checkpoint**: 2026-04-24 (Session 20 — `/deep-plan cross-repo-movement-reframe` Phase 0 CONFIRMED; authority-split tenet + `/deep-plan` SKILL v3.4 landed; T36 todo captured; DIAGNOSIS v2 applying the tenet)
-**Branch**: `fixes-42226` (local + origin synced at Session 20 start; this session's commit moves both forward together)
-**Working On**: `/deep-plan cross-repo-movement-reframe` at **Phase 1 pickup** (discovery, starting with Batch 1 on orchestrator shape)
-**Home pickup**: clean after Session 20 commit. Infrastructure added (tenet + skill v3.4); DIAGNOSIS v2 awaits Phase 1 execution. State file at `.claude/state/deep-plan.cross-repo-movement-reframe.state.json` (gitignored, machine-local) carries phase progress.
+**Last Checkpoint**: 2026-04-24 (Session 21 — `/deep-plan cross-repo-movement-reframe` Phase 1 Batches 1–3 complete; 35 decisions locked; speed-vs-depth gate resolved to Option A; two durable feedback memories saved; T37 todo captured)
+**Branch**: `fixes-42226` (local + origin synced at Session 21 start; this session's commits move both forward together)
+**Working On**: `/deep-plan cross-repo-movement-reframe` at **Phase 1 Batch 4 pickup** (discovery continues: `/extract` + profile discovery pairing)
+**Home pickup**: clean after Session 21 commits. Batches 1 (orchestrator), 2 (`/context-sync`), and 3 (`/port` + ledger) are locked. Batch 4 next. State file at `.claude/state/deep-plan.cross-repo-movement-reframe.state.json` (gitignored, machine-local) carries full decision record.
 
-### Home resume contract (Session 20 → 21 fresh pickup)
+### Home resume contract (Session 21 → 22 fresh pickup)
 
-Session 20 landed:
-- **Tenet `tenet_research_recommends_user_decides.md`** in auto-memory + MEMORY.md link (auto-memory, not in repo — loaded automatically every session).
-- **`/deep-plan` SKILL.md v3.4** — Phase 0 step 8 now mandates the four-bucket authority split in every DIAGNOSIS; Phase 1 rule 4 mandates research-recommended defaults surface as questions with research-default + weakness.
-- **Todo T36** in JASON-OS `.planning/todos.jsonl` for the deferred Option 3 work (claim-authority tagging in `/deep-research` itself).
-- **Mirror todo T52** in SoNash `.planning/todos.jsonl` (committed + pushed to SoNash main at `33a5a943`).
-- **DIAGNOSIS.md v2** at `.planning/cross-repo-movement-reframe/DIAGNOSIS.md` — restructured into 4 buckets (user-locked 11 / filesystem-fact 13 / research-recommended-defaults ~30 / research-speculations 13+). User confirmed Phase 0.
+Session 21 landed — 35 decisions across 3 batches + revised batch plan:
 
-Session 21 pickup:
-1. `/session-begin` — bump counter 20 → 21. Branch stays `fixes-42226`.
-2. Re-invoke `/deep-plan cross-repo-movement-reframe` — the skill will read the state file at `.claude/state/deep-plan.cross-repo-movement-reframe.state.json` and resume from Phase 1 Batch 1 (orchestrator shape).
-3. **First turn of Session 21 MUST resolve the open speed-vs-depth question** flagged at end of Session 20: walk each of the ~30 Bucket 3 research-recommended defaults as its own question (the discipline choice; longer but every scope-explosion vector has a gate) OR present Bucket 3 as a pre-discovery accept-or-override-any list then walk the rest one-by-one (the pragmatic choice; faster but relies on the user trusting most defaults). Don't start Batch 1 questions without resolving this. No default chosen; ASK THE USER.
-4. Phase 1 then runs ~8 batches covering orchestrator shape, `/context-sync` specifics, ledger design, profile discovery, comprehension cache + fast-path, decision register, closeout mechanics, and OTB planning-time glance. Target 55–70 questions total.
+**Batch 1 — orchestrator shape (8 decisions):** `/migration` is the orchestrator name (user choice, not in Claude's offered list). Static list routing to four companions. Dual invocation: interactive menus default visible surface + utterance anywhere. Simple top dashboard (depth lives in companions). `/migration` writes state for compaction recovery (following skill-creator + skill-audit pattern). Shared CI-guard helper in `scripts/lib/`. Ask-then-scaffold on first run. Companion names confirmed: `/port`, `/sync-back`, `/extract`, `/context-sync`.
+
+**Batch 2 — `/context-sync` specifics (14 decisions including 3 meta):** Separate drift-record file. 7 fields. 5 drift states (NEW/CLEAN/SOURCE-DRIFTED/DEST-DRIFTED/BOTH-DRIFTED). CRLF→LF normalization + JSON key sort + strip 4 volatile frontmatter fields + comment-only changes count as drift. Skill creation routes through `/skill-creator` via state-file priming (Option C hybrid with pre-flight schema validator). All 4 data structures get schema validation at write time + periodic sweep in `/context-sync` AND `/skill-audit` Phase 2.5 via shared helper. `ajv-formats` dep fix elevated to PLAN.md pre-requisite. Machine-exclude via convention + explicit list + ask-on-new. Sidecar pattern for `settings.local.json` partial-sync. Tenets identified by filename prefix primary, frontmatter optional secondary. Memory-type → scope-tag mapping in `/context-sync` source, auto-memory as primary coverage (not canonical-memory — user called out auto-memory is used far more). CLAUDE.md tweak blocks via HTML sentinel comments. Menu-driven `/context-sync` + utterance. Forward-slash paths stored everywhere; shared `toNativePath()` helper at read sites.
+
+**Batch 3 — `/port` + ledger (10 decisions):** Ledger stretches to **14 fields** at v1 (user override of Bucket 1 12-cap — explicit call to avoid a later revisit). Includes `source_status` + `source_content_hash`. Schema declares ALL 14 fields non-nullable per user's "no null fields" instruction. Storage mechanics package accepted (append-only, write-last, forward-pointer edge, `.claude/state/ledger.jsonl`, 5s lock). Ledger travels cross-machine via `/context-sync`. `unit_type` = 5 values with **`concept` renamed to `system`** (user examples: TDMS, pr-review/retro, CAS — multi-skill/script/file architectural units). `verdict` = 6 values (drop `greenfield-clone` and `blocked`); explained in-skill via SKILL.md glossary + menu tooltips + dashboard label resolution. Three-tag metric discipline (MEASURED/DERIVED/ESTIMATED) with self-audit lint. `/port` invocation: menu + utterance. Full pre-flight checks. Atomic failure semantics with rollback + explicit conflict resolution. Minimal output default with "details" trigger for full report.
+
+**Process decisions landed Session 21:**
+- **Revised batch plan** (user caught helper-skill gap): Batch 4 `/extract` + profile, Batch 5 `/sync-back`, Batch 6 cache + fast-path, Batch 7 decision register, Batch 8 closeout + OTB merged.
+- **Two durable feedback memories created** in auto-memory: `feedback_batching_judgment.md` (don't batch for sake of batching) and `feedback_recommendations_mandatory.md` (every question carries recommendation with weakness).
+- **T37 added** to `.planning/todos.jsonl` — examine and define core tenets for JASON-OS (user has ideas).
+
+Session 22 pickup:
+1. `/session-begin` — bump counter 21 → 22. Branch stays `fixes-42226`.
+2. Re-invoke `/deep-plan cross-repo-movement-reframe` — state file resumes at **Phase 1 Batch 4** (`/extract` + profile discovery pairing).
+3. Batch 4 scope: ~8-10 questions covering profile discovery shape, owned/unowned split (research: bare-clone for unowned), `companion_files` population algorithm, profile 8-field structure, 6-field gate record, 3-field shape block, unowned staleness trigger, `/extract` invocation shape, `/extract` auth for protected repos, `/extract` output format, large-unowned-repo rate limiting.
+4. Remaining batches after 4: Batch 5 `/sync-back`, Batch 6 cache + fast-path, Batch 7 decision register, Batch 8 closeout + OTB. Projected total: 55-65 questions / decisions.
 5. Phase 2 produces standalone DECISIONS.md; Phase 3 produces PLAN.md; Phase 3.5 self-audits; Phase 4 gates on user approval.
-6. Closeout of the produced plan retires the five prior plans (sync-mechanism, schema-design, labeling-mechanism parent + structural-fix, migration-skill) via DEPRECATED banners + archival.
+6. Closeout retires the five prior plans via DEPRECATED banners + archival.
 
 ---
 
 ## Quick Status
+
+**Session 21 — `/deep-plan cross-repo-movement-reframe` Phase 1 Batches 1–3 complete; 35 decisions locked; Batch 4 next.**
+
+Session 21 accomplishments:
+1. `/session-begin` bumped counter 20 → 21.
+2. Phase 1 Batch 1 (orchestrator shape) — 8 decisions locked including `/migration` as orchestrator name, static list routing, dual menu+utterance invocation, state-writes for compaction recovery, shared CI-guard helper, ask-then-scaffold first-run, companion names confirmed.
+3. Phase 1 Batch 2a + 2b (`/context-sync` specifics) — 11 decisions on record shape, normalization rules, exclusions, identification, invocation. Plus 3 meta decisions: Option C hybrid skill-creation routing (via skill-creator state-file priming), schema validation + periodic sweep across all data structures, `ajv-formats` dep fix as plan pre-requisite.
+4. Phase 1 mid-discovery check — continued full discipline per user; revised batch plan to close helper-skill gap (Batch 4 `/extract`+profile, Batch 5 `/sync-back`, Batch 6 cache, Batch 7 register, Batch 8 closeout+OTB merged).
+5. Phase 1 Batch 3 (`/port` + ledger) — 10 decisions including **ledger stretch to 14 fields** (user override of Bucket 1 12-cap; "no null fields" instruction propagates to all 4 data-structure schemas), `unit_type` rename from `concept` to `system`, six-value `verdict` enum with in-skill explanation, three-tag metric discipline, full pre-flight + atomic failure semantics for `/port`.
+6. Two durable feedback memories created in auto-memory (batching judgment + recommendations mandatory). T37 added to `.planning/todos.jsonl` for JASON-OS core tenets examination.
+
+Session 20 historical (retained as input):
 
 **Session 20 — `/deep-plan cross-repo-movement-reframe` in progress; infrastructure landed.**
 
@@ -78,47 +96,48 @@ During gap-pursuit, the D9 agent wrote your verbatim `weather_api_key` value int
 
 ---
 
-## Next Session Goals (Session 21)
+## Next Session Goals (Session 22)
 
 ### Step 1 — `/session-begin`
-Counter 20 → 21. Branch stays `fixes-42226`.
+Counter 21 → 22. Branch stays `fixes-42226`.
 
-### Step 2 — Resume `/deep-plan cross-repo-movement-reframe` at Phase 1
+### Step 2 — Resume `/deep-plan cross-repo-movement-reframe` at Phase 1 Batch 4
 
 The state file at `.claude/state/deep-plan.cross-repo-movement-reframe.state.json`
-will trigger resume. DIAGNOSIS v2 is confirmed; Phase 1 discovery starts with
-Batch 1 on orchestrator shape. **First turn must answer the open
-speed-vs-depth question** before Phase 1 Batch 1 begins — see Home resume
-contract above.
+will trigger resume. Batches 1 (orchestrator), 2 (`/context-sync`), and 3
+(`/port` + ledger) are locked with 35 decisions captured. **Batch 4 pairs
+`/extract` with profile discovery** — roughly 8–10 questions covering
+profile discovery shape + owned/unowned split (research: bare-clone for
+unowned), `companion_files` population algorithm, 8-field profile structure,
+6-field gate record, 3-field shape block, unowned-profile staleness trigger,
+`/extract` invocation shape, auth handling for protected repos, output format,
+large-unowned-repo rate limiting.
 
-### Step 3 — Walk Phase 1 discovery batches (~8 batches, 55–70 questions)
+### Step 3 — Walk remaining batches (Batches 5–8)
 
-Each Bucket 3 research-recommended default is presented as a question with
-research-default + weakness; user accepts, overrides, or asks. Each Bucket 4
-speculation is an open question. State file persists after every batch.
+Batch 5 `/sync-back` (~5–7 questions), Batch 6 comprehension cache + fast-path
+(~5–7), Batch 7 decision register (~2–3), Batch 8 closeout mechanics + OTB
+planning-time glance merged (~5–7). Projected total at Phase 1 completion:
+55–65 questions / decisions.
 
 ### Step 4 — Phase 2/3/3.5/4
 
-DECISIONS.md standalone record, PLAN.md with audit checkpoints, self-audit
-pass, user approval gate before any implementation begins.
+DECISIONS.md standalone record (35 decisions already staged in state file),
+PLAN.md with audit checkpoints per the revised batch plan, self-audit pass,
+user approval gate before any implementation begins.
 
-### Step 5 — Decision register (may fold into Phase 1 Batch 6 or be a separate short pass)
-
-One-page disposition of each material decision from the 5 prior plans —
-*survives unchanged*, *superseded with named replacement*, or *discarded
-with rationale*. Phase 1 Batch 6 in the DIAGNOSIS is currently sized for this.
-
-### Step 6 — Rotate `weather_api_key` (operator task, still pending from Session 19)
+### Step 5 — Rotate `weather_api_key` (operator task, still pending from Session 19)
 
 Edit `~/.claude/statusline/config.local.toml` to swap in a fresh key from the
 weather API provider. Keep the file gitignored. Machine-local rotation on
 each machine.
 
-### Step 7 — New plan's closeout phase (runs at end of produced plan)
+### Step 6 — New plan's closeout phase (runs at end of produced plan)
 
-Formal deprecation of the five prior plans. DEPRECATED banners at top of
-each plan doc, pointers to new plan, archival of gitignored planning state,
-cleanup of superseded preview catalogs.
+Formal deprecation of the five prior plans (sync-mechanism, schema-design,
+labeling-mechanism parent + structural-fix, migration-skill) via DEPRECATED
+banners + archival. Also: resolve T37 (examine / define core JASON-OS tenets)
+separately — user has ideas.
 
 ---
 

@@ -156,3 +156,49 @@ type: project
   blocks. The gitignored driver at `.claude/state/batch-tmp/run-batch.js`
   reduced boilerplate ~2x and kept batch dispatch consistent. Reusable
   for SoNash Piece 5.5 back-fill when that lands.
+
+## Session 21 close (2026-04-24, `/deep-plan cross-repo-movement-reframe` Phase 1 Batches 1-3)
+
+- **Plain-English tenet requires repeated vigilance even when the tenet fires
+  every turn.** Twice this session I slid into research shorthand
+  (CI-entry guard, ephemeral machines, scaffold, pure router) before the user
+  had to ask for plain explanations. The `UserPromptSubmit` hook prints the
+  tenet on every turn but that text-level reminder didn't auto-translate
+  terminology until explicit correction. Conclusion: the hook reminder is
+  necessary but not sufficient — actual translation has to be a writing-time
+  discipline, not a post-hoc correction.
+- **Recommendations-mandatory rule violated twice in one session.** Dropped
+  "My recommendation: X" from Batch 2a-v2 and from Batch 3-v1, both times
+  interpreting a user style-tightening signal ("tighten granularity,"
+  "don't batch for sake of batching") as license to drop recommendations.
+  User had to flag it both times. Captured as
+  `feedback_recommendations_mandatory.md` — should apply to every future
+  batch in every skill. Pattern failure mode: conflating process-granularity
+  signals with structural-content signals.
+- **Truncation-on-reprint pattern.** When I re-issued a batch with
+  recommendations added, I tightened prose. On the second re-issue (after
+  "inline everything" correction), I truncated further. User called out the
+  iterative-shaving pattern directly. Conclusion: re-issues should preserve
+  original depth — if the user asks for inline presentation, the change is
+  placement, not brevity.
+- **Option-letter interpretation failure ("no recommendations").** User said
+  "no recommendations" meaning "[you provided] no recommendations [which is
+  a violation]." I parsed it as "[drop] recommendations [going forward]" and
+  re-issued the batch stripped. The opposite of what was asked. Conclusion:
+  when a user correction is ambiguous between two interpretations, confirm
+  the direction before acting — even if auto-mode is on.
+- **User-caught research pattern (12-cap → 12 fields).** User noticed the
+  suspicious coincidence between the BRAINSTORM 12-field cap and the research
+  proposing exactly 12 fields. Investigation confirmed research pruned two
+  additional fields (`source_status`, `source_content_hash`) to respect the
+  pre-existing cap — the "coincidence" was back-fill, honestly documented as
+  v1.1 candidates. User opted to override the cap and include both at v1 to
+  avoid a later revisit. Conclusion: transparent pruning documentation
+  preserves user ability to re-evaluate constraints; user did in this case.
+- **Helper-skill gap in batch plan.** Initial batch plan (from DIAGNOSIS.md)
+  treated data structures as if they were skills — `/port`, `/sync-back`,
+  `/extract` had no dedicated discovery batches. User caught this directly
+  ("where are planning questions for the other helper skills?"). Revised
+  plan pairs skill + primary data structure (pattern from `/context-sync` +
+  drift record): Batch 3 `/port`+ledger, Batch 4 `/extract`+profile, Batch 5
+  `/sync-back` (standalone), Batch 6 cache, etc.

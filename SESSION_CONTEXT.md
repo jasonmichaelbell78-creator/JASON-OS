@@ -13,121 +13,124 @@ No
 
 ## Quick Recovery
 
-**Last Checkpoint**: 2026-04-23 (Session 18 — brainstorm `cross-repo-movement-reframe` COMPLETE, session-end committed + pushed)
-**Branch**: `fixes-42226`
-**Working On**: Brainstorm complete; next step is scoped `/deep-research cross-repo-movement-reframe`
-**Home pickup**: clean. All artifacts committed. No state file dependencies — `.research/cross-repo-movement-reframe/BRAINSTORM.md` is authoritative.
+**Last Checkpoint**: 2026-04-23 (Session 19 — PR #11 R1 review shipped + merged; `/deep-research cross-repo-movement-reframe` complete; Dependabot uuid fix landed)
+**Branch**: `fixes-42226` (post-merge, fast-forwarded to match origin/main tip `915220f`; both local + remote at commit `cc3d5f4`)
+**Working On**: Research complete → ready for `/deep-plan cross-repo-movement-reframe`
+**Home pickup**: clean. All artifacts committed and pushed. `/deep-research` produced `.research/cross-repo-movement-reframe/RESEARCH_OUTPUT.md` (v2.0, 71 KB) + 98 claims + 107 sources.
 
 ### Home resume contract (next session)
 
-1. `/session-begin` (counter 18 → 19). Branch stays `fixes-42226`.
-2. Read `.research/cross-repo-movement-reframe/BRAINSTORM.md` in full. This is the authoritative artifact — the state file under `.claude/state/` is gitignored and won't travel, which is fine because BRAINSTORM.md carries everything needed.
-3. Invoke `/deep-research cross-repo-movement-reframe`. The skill reads BRAINSTORM.md as Phase 0 input and researches the three highest-priority open questions listed below.
-4. After research returns, produce the four pre-/deep-plan deliverables (see BRAINSTORM.md § Pre-/deep-plan deliverables), either inside the research pass or as a short dedicated step.
-5. Run `/deep-plan cross-repo-movement-reframe`. Produces the single planning deliverable that supersedes five prior plans.
-6. New plan's closeout phase formally deprecates the five prior plans (DEPRECATED banners, archive planning state, clean gitignored state). User-specified in Session 18.
+1. `/session-begin` (counter 19 → 20). Branch stays `fixes-42226` (or cut a new `deep-plan-<slug>` branch — planner's call).
+2. Read BRAINSTORM.md (Session 18 direction) + RESEARCH_OUTPUT.md v2.0 (Session 19 synthesis). Both are authoritative. The pre-plan deliverables were folded INTO the research (ledger schema, verb analysis context, bootstrap scaffold definition) — the only outstanding pre-plan deliverable is the decision register (register itself, not its contents).
+3. Run `/deep-plan cross-repo-movement-reframe`. Consumes: BRAINSTORM + RESEARCH_OUTPUT + the 3 planning-musts the contrarian surfaced + the 3 OTB alternatives worth a planning-time glance.
+4. New plan's closeout phase formally deprecates the five prior plans (DEPRECATED banners, archive planning state, clean gitignored state).
 
 ---
 
 ## Quick Status
 
-**Session 18 — MAJOR PIVOT completed.** Brainstorm `cross-repo-movement-reframe` ran through all four phases in one session. Outcome:
+**Session 19 — three distinct pieces of work shipped.**
 
-**Direction D' chosen: orchestrator + companion skills.**
-- Main orchestrator skill (lightweight: conversation, routing, two-mode guidance)
-- Companion skills per movement verb: `/context-sync` (slice 4, ships first as bootstrap), `/port` (slice 1), `/sync-back` (slice 2 — possibly folded into `/port`), `/extract` (slice 3 — CAS-dependent, shimmed until CAS port)
-- Shared internals as libraries (not skills): ledger, target-process-profile cache, understanding-layer invocation helper, security helpers (existing), scope-tag enum (existing)
-- Companions invoke other JASON-OS skills (`/deep-research`, `/convergence-loop`, `/skill-creator`, `/skill-audit`) as internal tools per in-house-over-handoff tenet
-- Companions can invoke each other; ledger makes nested invocations safe
-- Conversational only; no hooks v1
+**Piece 1: PR #11 R1 review processed + merged.** 13 unique review items (2 Critical, 5 Major, 5 Minor, 1 Architectural) — 11 fixed across 3 commits, 1 deferred to debt log (`D2` audit trail), 1 rejected (stderr structured logs). All CRITICAL items were security hardening (path traversal in `applyRuntimeGuards`, prototype pollution in `applyArbitration`). Propagation sweep caught raw-fs writes in 2 sibling CLIs that Qodo didn't flag directly. Pushed, user merged as PR #11 (`915220f`).
 
-**User's rationale (verbatim):** "I want a one-stop-shop for the build-out of this project. I don't mind it being a wrapper/orchestrator but I want it to be my behind-the-scenes agent who guides me when I need guiding and follows my lead when I want to lead."
+**Piece 2: `/deep-research cross-repo-movement-reframe`.** Full 18-agent pipeline in one session — 11 searchers (3 waves), 1 synthesizer, 2 verifiers, contrarian + OTB challengers, dispute resolver, 2 gap-pursuers, final synthesizer. 98 claims (80 initial + 18 gap), 107 sources, 5 disputes resolved. Every strand has a concrete plan-ready answer — 12-field ledger at `.claude/state/ledger.jsonl`, separate 7-field drift record for `/context-sync`, profile discovery via bare-clone for unowned, 4-field cache key for the understanding-vs-mechanical fast path. Committed at `cc3d5f4`.
 
-**Contrarian verdict:** Direction D' survives pre-mortem. Eight challenges (4 Critical, 4 Major) — companion-skill refinement resolved four challenges structurally. Three remain as pre-plan deliverables; one (shape-expectations demotion) addressed by design constraint.
+**Piece 3: infrastructure hygiene.** Caught `fixes-42226` up to `main`'s merge-commit tip both local + remote. Dependabot alert #1 (transitive `uuid` <14 in `node-notifier`) resolved via `npm overrides`. Session counter bumped 18 → 19.
 
-**Routing locked:** scoped `/deep-research` first, then `/deep-plan`.
+**Three planning-musts the contrarian surfaced** (carry into `/deep-plan`):
+1. Resolve the field-budget conflict — 12-field ledger cap holds at v1; `source_status` + `source_content_hash` either v1 or explicitly v1.1 candidates. No ambiguity allowed.
+2. Decide whether `ledger.jsonl` itself rides along in `/context-sync`'s inventory. Either is defensible; user call.
+3. Specify `profile_slice_hash` at v1 hashes the full profile (breaks the circular dependency on a recipe library that doesn't exist yet).
 
-**Meta-principle confirmed this session:** thoroughness and completeness balanced against not-over-engineering. Carried into planning as a named design force.
+**Three OTB alternatives for planning-time look**:
+- Per-file frontmatter lineage as a ledger complement (every moved file self-describes in its own frontmatter)
+- GitHub API as an optional discovery fast-path for unowned repos when a token is available
+- `port_recipe.md` next to portable units as an understanding-layer short-circuit
 
-### What's paused / superseded
+### Security note — possibly compromised API key
 
-- **Phase G.2 of the structural-fix** — paused mid-execution (user pivot mid-session 17). Will be formally deprecated as part of the new `/deep-plan` deliverable's closeout. Architecture-fix commit `1b2afb4` survives unchanged (generic infrastructure — `applyArbitration`, `apply-arbitration.js`, `aggregate-findings.js`, `synthesize-findings.js`, plain-language-reminder hook).
-- **Five prior plans** (sync-mechanism, schema-design, labeling-mechanism parent, structural-fix, migration-skill) — formally superseded in spirit by D'; formal DEPRECATED banners land during new plan's closeout phase per user requirement.
-- **Thread B sync-mechanism FIRST_PASS_ASSESSMENT** — superseded. Content may inform the decision register (pre-plan deliverable #3).
-- **G.1 preview catalogs** (`.claude/sync/label/preview/{shared,local}.jsonl`) and aggregated findings (`.claude/state/g1-findings.json`) — candidates for deletion once decision register confirms supersession.
+During gap-pursuit, the D9 agent wrote your verbatim `weather_api_key` value into its findings markdown despite an explicit "do not expose secrets" instruction. Gitleaks caught it at pre-commit and blocked the push. I redacted the value from D9 before the successful commit; no other artifact (claims, sources, main output) carried the value. **The key's plaintext value passed through several agent return messages during the run** — if Anthropic's internal telemetry retains agent traffic, the key is plausibly compromised. **Rotation is the safe default.** The file itself (`~/.claude/statusline/config.local.toml`) stays gitignored and machine-local.
+
+### What's paused / superseded (unchanged from Session 18)
+
+- **Phase G.2 of the structural-fix** — paused; will be formally deprecated as part of the new `/deep-plan` deliverable's closeout. Architecture-fix commit `1b2afb4` survives unchanged.
+- **Five prior plans** (sync-mechanism, schema-design, labeling-mechanism parent, structural-fix, migration-skill) — formally superseded in spirit by the new plan; DEPRECATED banners land in closeout.
+- **Thread B sync-mechanism FIRST_PASS_ASSESSMENT** — superseded. May inform the decision register.
+- **G.1 preview catalogs** (`.claude/sync/label/preview/{shared,local}.jsonl`) and aggregated findings (`.claude/state/g1-findings.json`) — candidates for deletion once the decision register confirms supersession.
 
 ---
 
 ## Next Session Goals
 
 ### Step 1 — `/session-begin`
-Counter 18 → 19. Branch `fixes-42226`.
+Counter 19 → 20. Branch stays `fixes-42226` unless planner cuts a dedicated branch.
 
-### Step 2 — `/deep-research cross-repo-movement-reframe`
+### Step 2 — `/deep-plan cross-repo-movement-reframe`
 
-Scoped research on three highest-priority topics (from BRAINSTORM.md § Open questions):
+Inputs to hand the skill:
+- `.research/cross-repo-movement-reframe/BRAINSTORM.md` (Session 18, architecture locked)
+- `.research/cross-repo-movement-reframe/RESEARCH_OUTPUT.md` v2.0 (Session 19, plan-ready answers)
+- The 3 planning-musts above
+- The 3 OTB alternatives above (for the planner to consider, not mandatory to adopt)
 
-1. **Lineage ledger shape** — fields, persistence format, multi-repo edges, repo-rename / file-split / file-merge handling. HIGHEST PRIORITY — ledger-as-datastructure has broken this project before (Piece 2 schema sprawl, G.1 needs_review flood).
-2. **Target-process-profile discovery mechanism** — how to read another repo's `.github/workflows/`, `.husky/`, `.claude/settings.json`, CI config, pre-commit hooks, review gates. Gate-discovery primary, shape-discovery secondary (both named per contrarian Challenge 6 resolution).
-3. **Local-context sync mechanism specifics** — how `/context-sync` walks user-scoped and machine-scoped surfaces, detects drift, moves only what should move. Whether it needs the full ledger or a lightweight drift record.
+Produces the single plan deliverable that supersedes sync-mechanism, schema-design, labeling-mechanism (parent + structural-fix), and migration-skill plans.
 
-### Step 3 — produce pre-/deep-plan deliverables (folded into research or dedicated step)
+### Step 3 — Decision register (pre-plan deliverable #3)
 
-1. Ledger schema hard-cap (max field set enumerated, pruned to minimum; >12 fields = signal scope separation at data layer)
-2. Per-scope verb analysis (verb + understanding/mechanical role per scope)
-3. Decision register (each decision from 5 prior plans marked survives-unchanged / superseded-with-replacement / discarded-with-rationale)
-4. Named bootstrap scaffold definition (`/context-sync` ships first; self-dogfood deferred)
+The only outstanding pre-plan deliverable. A one-page document marking each material decision from the 5 prior plans as *survives unchanged*, *superseded with named replacement*, or *discarded with rationale*. Can be produced inside the `/deep-plan` pass as Phase 0 input, or as a short dedicated step first. The research already provides the structural answers the register needs.
 
-### Step 4 — `/deep-plan cross-repo-movement-reframe`
+### Step 4 — Rotate `weather_api_key` (operator task)
 
-Produces the single plan that supersedes five prior plans. Must honor three travelling design constraints:
+Edit `~/.claude/statusline/config.local.toml` to swap in a fresh key from the weather API provider. Keep the file gitignored. Machine-local rotation on each machine.
 
-- Recipe-first fast path for recognized patterns (mode of the dashboard, not bypass)
-- Shape-expectations restored as named profile component (3 fields per unit type: directory / companion files / naming scheme)
-- Implementation-level scope separation (per-companion scope manifest: uses / does not share / leakage indicators)
-
-### Step 5 — new plan's closeout
+### Step 5 — New plan's closeout phase
 
 Formal deprecation of the five prior plans. DEPRECATED banners at top of each plan doc, pointers to new plan, archival of gitignored planning state, cleanup of superseded preview catalogs.
 
 ---
 
-## Key artifact paths (for home-machine resume)
+## Key artifact paths
 
-**Brainstorm (authoritative for next steps):**
-- `.research/cross-repo-movement-reframe/BRAINSTORM.md` — Phase 4 deliverable, chosen direction, rationale, deliverables, constraints, open questions, routing
-- `.research/cross-repo-movement-reframe/PHASE_0_LANDSCAPE.md` — landscape synthesis from Session 17 (prior research survey)
-- `.research/cross-repo-movement-reframe/challenges/contrarian.md` — 8-challenge stress-test from Session 18 contrarian agent
+**Session 19 new artifacts:**
+- `.research/cross-repo-movement-reframe/RESEARCH_OUTPUT.md` v2.0 — final plan-ready research
+- `.research/cross-repo-movement-reframe/RESEARCH_OUTPUT.v2.md` — versioned snapshot
+- `.research/cross-repo-movement-reframe/claims.jsonl` — 98 claims (80 initial + 18 gap)
+- `.research/cross-repo-movement-reframe/sources.jsonl` — 107 sources
+- `.research/cross-repo-movement-reframe/metadata.json`
+- `.research/cross-repo-movement-reframe/findings/D1-D11.md` — per-agent primary outputs
+- `.research/cross-repo-movement-reframe/findings/V1-V2.md` — verifier outputs
+- `.research/cross-repo-movement-reframe/findings/G1-G2.md` — gap-pursuit outputs
+- `.research/cross-repo-movement-reframe/findings/dispute-resolutions.md` — 5 disputes
+- `.research/cross-repo-movement-reframe/challenges/contrarian-deep-research.md` — 8 challenges
+- `.research/cross-repo-movement-reframe/challenges/otb-deep-research.md` — 8 alternatives
+- `.planning/PR_REVIEW_LEARNINGS.md` — Review #18 entry (PR #11 R1, 13-item round)
+- `.planning/DEBT_LOG.md` — D2 entry (applyArbitration audit trail, deferred)
 
-**Prior research (consumed by brainstorm; still readable as context):**
-- `.research/migration-skill/BRAINSTORM_v2.md` — the two-layer architecture D' inherits
-- `.research/migration-skill/RESEARCH_OUTPUT.md` — 733-line research, 156 claims, 119 sources
-- `.research/file-registry-portability-graph/RESEARCH_OUTPUT.md` — R-frpg Option D (minimum-viable ledger + scope-tags)
-- `.research/sync-mechanism/BRAINSTORM.md` + `FIRST_PASS_ASSESSMENT.md` — superseded but readable
+**Brainstorm (unchanged, Session 18):**
+- `.research/cross-repo-movement-reframe/BRAINSTORM.md` — architecture direction
+- `.research/cross-repo-movement-reframe/PHASE_0_LANDSCAPE.md` — landscape synthesis
+- `.research/cross-repo-movement-reframe/challenges/contrarian.md` — Session 18 contrarian
 
-**Paused / superseded plans (will be formally deprecated in new plan's closeout):**
-- `.planning/piece-3-labeling-mechanism/structural-fix/` (DIAGNOSIS / DECISIONS / PLAN / SONASH_MIRROR_DELTA)
-- `.planning/piece-3-labeling-mechanism/` (parent PLAN + DECISIONS)
-- `.planning/piece-2-schema-design/` (DIAGNOSIS + DECISIONS + PLAN)
-- sync-mechanism plans under `.research/sync-mechanism/` (Piece 1a + 1b outputs)
-
-**Live infrastructure (survives the reframe):**
-- `scripts/lib/safe-fs.js`, `sanitize-error.cjs`, `security-helpers.js` — seed trio
-- `.claude/sync/schema/enums.json` — scope-tag enum (universal/user/project/machine/ephemeral)
-- `.claude/sync/label/backfill/apply-arbitration.js` + `preview.js` + helpers — generic infrastructure from commit `1b2afb4`
-- `.claude/hooks/plain-language-reminder.js` — UserPromptSubmit hook
+**Live infrastructure (unchanged, survives the reframe):**
+- `scripts/lib/safe-fs.js`, `sanitize-error.cjs`, `security-helpers.js`
+- `.claude/sync/schema/enums.json` — scope-tag enum
+- `.claude/sync/label/backfill/apply-arbitration.js` + `preview.js` + helpers (architecture-fix `1b2afb4`, now hardened by PR #11 R1)
+- `.claude/hooks/plain-language-reminder.js`
 
 **Branch state:**
-- JASON-OS: `fixes-42226` — all Session 18 work committed and pushed
-- SoNash: `CAS-41826` unchanged (Thread B awaiting decision register before further action)
+- JASON-OS: `fixes-42226` at `cc3d5f4` (local + remote). Main at `915220f` (PR #11 merge commit). fixes-42226 is 1 commit ahead of main via the research commit.
+- SoNash: `CAS-41826` unchanged.
 
 ---
 
 ## Carried forward (not session-blocking)
 
-- **T33** build `/recipe-audit` skill (from migration v2 consequences)
+- **T33** build `/recipe-audit` skill
 - **T34** retrofit `/deep-research` for filesystem verification + claim tagging
 - **T35** retrofit SCOPE sections across all 14 existing skills + skill-audit rubric update
 - **T32** SoNash mirror — SonarCloud two-variant bug + grep-scope-narrowness verifier port
+- **Pre-existing test failures** to surface as /todo entries:
+  - `buildSynthesisPrompt` test expects "Approve or reject?" gate language that synthesis-agent-template.md doesn't carry (pre-existing, unrelated to PR #11)
+  - `validate-catalog` smoke test fails with missing `ajv-formats` module (pre-existing dep resolution issue)
 
 All deferred pending new plan landing; not gating the cross-repo-movement-reframe work.

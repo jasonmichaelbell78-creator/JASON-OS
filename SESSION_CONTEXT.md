@@ -1,35 +1,53 @@
 # Session Context — JASON-OS
 
 ## Current Session Counter
-19
+20
 
 ## Uncommitted Work
 No
 
 ## Last Updated
-2026-04-23
+2026-04-24
 
 ---
 
 ## Quick Recovery
 
-**Last Checkpoint**: 2026-04-23 (Session 19 — PR #11 R1 review shipped + merged; `/deep-research cross-repo-movement-reframe` complete; Dependabot uuid fix landed)
-**Branch**: `fixes-42226` (post-merge, fast-forwarded to match origin/main tip `915220f`; both local + remote at commit `cc3d5f4`)
-**Working On**: Research complete → ready for `/deep-plan cross-repo-movement-reframe`
-**Home pickup**: clean. All artifacts committed and pushed. `/deep-research` produced `.research/cross-repo-movement-reframe/RESEARCH_OUTPUT.md` (v2.0, 71 KB) + 98 claims + 107 sources.
+**Last Checkpoint**: 2026-04-24 (Session 20 — `/deep-plan cross-repo-movement-reframe` Phase 0 CONFIRMED; authority-split tenet + `/deep-plan` SKILL v3.4 landed; T36 todo captured; DIAGNOSIS v2 applying the tenet)
+**Branch**: `fixes-42226` (local + origin synced at Session 20 start; this session's commit moves both forward together)
+**Working On**: `/deep-plan cross-repo-movement-reframe` at **Phase 1 pickup** (discovery, starting with Batch 1 on orchestrator shape)
+**Home pickup**: clean after Session 20 commit. Infrastructure added (tenet + skill v3.4); DIAGNOSIS v2 awaits Phase 1 execution. State file at `.claude/state/deep-plan.cross-repo-movement-reframe.state.json` (gitignored, machine-local) carries phase progress.
 
-### Home resume contract (next session)
+### Home resume contract (Session 20 → 21 fresh pickup)
 
-1. `/session-begin` (counter 19 → 20). Branch stays `fixes-42226` (or cut a new `deep-plan-<slug>` branch — planner's call).
-2. Read BRAINSTORM.md (Session 18 direction) + RESEARCH_OUTPUT.md v2.0 (Session 19 synthesis). Both are authoritative. The pre-plan deliverables were folded INTO the research (ledger schema, verb analysis context, bootstrap scaffold definition) — the only outstanding pre-plan deliverable is the decision register (register itself, not its contents).
-3. Run `/deep-plan cross-repo-movement-reframe`. Consumes: BRAINSTORM + RESEARCH_OUTPUT + the 3 planning-musts the contrarian surfaced + the 3 OTB alternatives worth a planning-time glance.
-4. New plan's closeout phase formally deprecates the five prior plans (DEPRECATED banners, archive planning state, clean gitignored state).
+Session 20 landed:
+- **Tenet `tenet_research_recommends_user_decides.md`** in auto-memory + MEMORY.md link (auto-memory, not in repo — loaded automatically every session).
+- **`/deep-plan` SKILL.md v3.4** — Phase 0 step 8 now mandates the four-bucket authority split in every DIAGNOSIS; Phase 1 rule 4 mandates research-recommended defaults surface as questions with research-default + weakness.
+- **Todo T36** in JASON-OS `.planning/todos.jsonl` for the deferred Option 3 work (claim-authority tagging in `/deep-research` itself).
+- **Mirror todo T52** in SoNash `.planning/todos.jsonl` (committed + pushed to SoNash main at `33a5a943`).
+- **DIAGNOSIS.md v2** at `.planning/cross-repo-movement-reframe/DIAGNOSIS.md` — restructured into 4 buckets (user-locked 11 / filesystem-fact 13 / research-recommended-defaults ~30 / research-speculations 13+). User confirmed Phase 0.
+
+Session 21 pickup:
+1. `/session-begin` — bump counter 20 → 21. Branch stays `fixes-42226`.
+2. Re-invoke `/deep-plan cross-repo-movement-reframe` — the skill will read the state file at `.claude/state/deep-plan.cross-repo-movement-reframe.state.json` and resume from Phase 1 Batch 1 (orchestrator shape).
+3. **First turn of Session 21 MUST resolve the open speed-vs-depth question** flagged at end of Session 20: walk each of the ~30 Bucket 3 research-recommended defaults as its own question (the discipline choice; longer but every scope-explosion vector has a gate) OR present Bucket 3 as a pre-discovery accept-or-override-any list then walk the rest one-by-one (the pragmatic choice; faster but relies on the user trusting most defaults). Don't start Batch 1 questions without resolving this. No default chosen; ASK THE USER.
+4. Phase 1 then runs ~8 batches covering orchestrator shape, `/context-sync` specifics, ledger design, profile discovery, comprehension cache + fast-path, decision register, closeout mechanics, and OTB planning-time glance. Target 55–70 questions total.
+5. Phase 2 produces standalone DECISIONS.md; Phase 3 produces PLAN.md; Phase 3.5 self-audits; Phase 4 gates on user approval.
+6. Closeout of the produced plan retires the five prior plans (sync-mechanism, schema-design, labeling-mechanism parent + structural-fix, migration-skill) via DEPRECATED banners + archival.
 
 ---
 
 ## Quick Status
 
-**Session 19 — three distinct pieces of work shipped.**
+**Session 20 — `/deep-plan cross-repo-movement-reframe` in progress; infrastructure landed.**
+
+Four things happened this session, in order:
+1. Remote sync brought both `fixes-42226` and `main` to their origin tips (fast-forward only; zero local-only commits lost).
+2. `/session-begin` bumped counter 19 → 20.
+3. `/deep-plan cross-repo-movement-reframe` produced DIAGNOSIS v1, which the user caught as conflating user-locked decisions with research-recommended defaults (the recurring scope-explosion pattern). Option 2 prevention selected: tenet memory + `/deep-plan` skill update (tenet **`tenet_research_recommends_user_decides.md`** landed in auto-memory with MEMORY.md link; `/deep-plan` SKILL.md bumped to v3.4 with bucket-split Phase 0 mandate + research-as-question Phase 1 rule). Option 3 (claim-authority tagging inside `/deep-research`) deferred: captured as T36 in JASON-OS and T52 in SoNash (committed + pushed to SoNash main at `33a5a943`).
+4. DIAGNOSIS.md rewritten v1 → v2 applying the new tenet structurally. Four buckets with explicit counts: user-locked 11 / filesystem-fact 13 / research-recommended-defaults ~30 / research-speculations 13+. User confirmed Phase 0. Session 21 picks up with Phase 1 Batch 1 (orchestrator shape) after resolving the open speed-vs-depth question.
+
+**Session 19 historical (retained as input to the active plan):**
 
 **Piece 1: PR #11 R1 review processed + merged.** 13 unique review items (2 Critical, 5 Major, 5 Minor, 1 Architectural) — 11 fixed across 3 commits, 1 deferred to debt log (`D2` audit trail), 1 rejected (stderr structured logs). All CRITICAL items were security hardening (path traversal in `applyRuntimeGuards`, prototype pollution in `applyArbitration`). Propagation sweep caught raw-fs writes in 2 sibling CLIs that Qodo didn't flag directly. Pushed, user merged as PR #11 (`915220f`).
 
@@ -60,36 +78,59 @@ During gap-pursuit, the D9 agent wrote your verbatim `weather_api_key` value int
 
 ---
 
-## Next Session Goals
+## Next Session Goals (Session 21)
 
 ### Step 1 — `/session-begin`
-Counter 19 → 20. Branch stays `fixes-42226` unless planner cuts a dedicated branch.
+Counter 20 → 21. Branch stays `fixes-42226`.
 
-### Step 2 — `/deep-plan cross-repo-movement-reframe`
+### Step 2 — Resume `/deep-plan cross-repo-movement-reframe` at Phase 1
 
-Inputs to hand the skill:
-- `.research/cross-repo-movement-reframe/BRAINSTORM.md` (Session 18, architecture locked)
-- `.research/cross-repo-movement-reframe/RESEARCH_OUTPUT.md` v2.0 (Session 19, plan-ready answers)
-- The 3 planning-musts above
-- The 3 OTB alternatives above (for the planner to consider, not mandatory to adopt)
+The state file at `.claude/state/deep-plan.cross-repo-movement-reframe.state.json`
+will trigger resume. DIAGNOSIS v2 is confirmed; Phase 1 discovery starts with
+Batch 1 on orchestrator shape. **First turn must answer the open
+speed-vs-depth question** before Phase 1 Batch 1 begins — see Home resume
+contract above.
 
-Produces the single plan deliverable that supersedes sync-mechanism, schema-design, labeling-mechanism (parent + structural-fix), and migration-skill plans.
+### Step 3 — Walk Phase 1 discovery batches (~8 batches, 55–70 questions)
 
-### Step 3 — Decision register (pre-plan deliverable #3)
+Each Bucket 3 research-recommended default is presented as a question with
+research-default + weakness; user accepts, overrides, or asks. Each Bucket 4
+speculation is an open question. State file persists after every batch.
 
-The only outstanding pre-plan deliverable. A one-page document marking each material decision from the 5 prior plans as *survives unchanged*, *superseded with named replacement*, or *discarded with rationale*. Can be produced inside the `/deep-plan` pass as Phase 0 input, or as a short dedicated step first. The research already provides the structural answers the register needs.
+### Step 4 — Phase 2/3/3.5/4
 
-### Step 4 — Rotate `weather_api_key` (operator task)
+DECISIONS.md standalone record, PLAN.md with audit checkpoints, self-audit
+pass, user approval gate before any implementation begins.
 
-Edit `~/.claude/statusline/config.local.toml` to swap in a fresh key from the weather API provider. Keep the file gitignored. Machine-local rotation on each machine.
+### Step 5 — Decision register (may fold into Phase 1 Batch 6 or be a separate short pass)
 
-### Step 5 — New plan's closeout phase
+One-page disposition of each material decision from the 5 prior plans —
+*survives unchanged*, *superseded with named replacement*, or *discarded
+with rationale*. Phase 1 Batch 6 in the DIAGNOSIS is currently sized for this.
 
-Formal deprecation of the five prior plans. DEPRECATED banners at top of each plan doc, pointers to new plan, archival of gitignored planning state, cleanup of superseded preview catalogs.
+### Step 6 — Rotate `weather_api_key` (operator task, still pending from Session 19)
+
+Edit `~/.claude/statusline/config.local.toml` to swap in a fresh key from the
+weather API provider. Keep the file gitignored. Machine-local rotation on
+each machine.
+
+### Step 7 — New plan's closeout phase (runs at end of produced plan)
+
+Formal deprecation of the five prior plans. DEPRECATED banners at top of
+each plan doc, pointers to new plan, archival of gitignored planning state,
+cleanup of superseded preview catalogs.
 
 ---
 
 ## Key artifact paths
+
+**Session 20 new artifacts:**
+- `.planning/cross-repo-movement-reframe/DIAGNOSIS.md` — v2, four-bucket authority split, Phase 0 confirmed
+- `.claude/state/deep-plan.cross-repo-movement-reframe.state.json` — plan state (gitignored, machine-local)
+- `.claude/skills/deep-plan/SKILL.md` — v3.4 (authority-split mandate, research-as-question rule)
+- `C:\Users\jbell\.claude\projects\C--Users-jbell--local-bin-JASON-OS\memory\tenet_research_recommends_user_decides.md` — auto-memory, linked from MEMORY.md
+- `.planning/todos.jsonl` — T36 added (Option 3 deferred work)
+- `/c/Users/jbell/.local/bin/sonash-v0/.planning/todos.jsonl` — T52 added + pushed to SoNash main at `33a5a943`
 
 **Session 19 new artifacts:**
 - `.research/cross-repo-movement-reframe/RESEARCH_OUTPUT.md` v2.0 — final plan-ready research

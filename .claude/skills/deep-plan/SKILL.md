@@ -8,12 +8,12 @@ description: >-
   written.
 compatibility: agentskills-v1
 metadata:
-  version: 3.0
+  version: 3.4
 ---
 
 <!-- prettier-ignore-start -->
-**Document Version:** 3.0
-**Last Updated:** 2026-03-07
+**Document Version:** 3.4
+**Last Updated:** 2026-04-24
 **Status:** ACTIVE
 <!-- prettier-ignore-end -->
 
@@ -136,6 +136,17 @@ reference actual patterns, not generic placeholders.
    - ROADMAP alignment check (aligned / misaligned / new direction)
    - Relevant existing systems and their patterns
    - Reframe check: is the task what it appears to be?
+   - **Authority split (MUST when `/deep-research` output is being
+     consumed):** structure prior findings into four buckets with counts —
+     (1) **user-locked** (from BRAINSTORM / CLAUDE.md / user constraints;
+     do not re-enter discovery), (2) **filesystem facts** (observed state,
+     not decided; the user does not ratify them), (3) **research-
+     recommended defaults** (HIGH/MEDIUM claims that MUST re-enter Phase 1
+     as questions with research-default + weakness), (4) **research
+     speculations** (ESTIMATED/LOW/UNVERIFIABLE claims that are open
+     discovery questions). Never collapse these into one "locked" list —
+     that is the scope-explosion failure mode. See
+     `tenet_research_recommends_user_decides.md`.
 9. **Verify code-state claims (MUST):** All claims in DIAGNOSIS.md about
    specific code state (line numbers, bug descriptions, specific values,
    corruption claims) MUST include a verify command. Claims without verification
@@ -178,22 +189,31 @@ surfaced and resolved with the user.
 3. **Offer defaults for every question** — "I recommend X because Y. Override?"
    When the user says "your call" or similar, treat it as delegation and choose
    the best option, stating what was chosen and why.
-4. **Reference existing patterns** — cite actual codebase conventions, not
+4. **Research-recommended defaults are questions, not decisions** (MUST) —
+   when a research finding carries HIGH/MEDIUM confidence and is recommending
+   an architectural specific (field shape, edge model, rollback rule, enum
+   contents, storage location, ordering, etc.), it MUST surface in Phase 1 as
+   its own question of the form: "research recommends X because Y; the weakness
+   of that recommendation is Z; accept default, override, or ask?" Do NOT
+   import research recommendations into the plan without an explicit Phase 1
+   ratification. Accepting the default is a decision, not a skip. See
+   `tenet_research_recommends_user_decides.md`.
+5. **Reference existing patterns** — cite actual codebase conventions, not
    generic options. "The existing debt system uses S0-S3 severity. Mirror this with I0-I3?"
-5. **Batch related questions** — group 5-8 related questions per batch. No rigid
+6. **Batch related questions** — group 5-8 related questions per batch. No rigid
    cap; use judgment based on question complexity. If a batch exceeds 10
    questions, split by sub-theme — present the most critical sub-theme first.
-6. **Inter-batch synthesis** — after each batch of answers, synthesize what was
+7. **Inter-batch synthesis** — after each batch of answers, synthesize what was
    learned before asking the next batch. This prevents redundant questions.
-7. **State inferences explicitly** — when an answer makes other questions
+8. **State inferences explicitly** — when an answer makes other questions
    obvious, state "Based on your answer to Q3, I'm inferring X for Q7" rather
    than silently skipping.
-8. **Save decisions after every batch** (MUST) — persist to
+9. **Save decisions after every batch** (MUST) — persist to
    `.claude/state/deep-plan.<topic-slug>.state.json` with task name, current
    batch number, all decisions so far, and timestamp. Each plan gets its own
    state file keyed by topic slug (e.g.,
    `deep-plan.github-optimization.state.json`).
-9. **Show progress** — "Batch 2 of ~3 complete. 12 decisions captured so far."
+10. **Show progress** — "Batch 2 of ~3 complete. 12 decisions captured so far."
 
 ### Mid-Discovery Check (MUST — after batch 2)
 
@@ -392,6 +412,7 @@ Capture in state file `process_feedback` field.
 
 | Version | Date       | Description                                                                              |
 | ------- | ---------- | ---------------------------------------------------------------------------------------- |
+| 3.4     | 2026-04-24 | Authority-split in Phase 0 DIAGNOSIS + research-as-question rule in Phase 1 (scope-explosion retro, Session 20) |
 | 3.3     | 2026-03-15 | Skill-audit: CL MUST for L/XL, verify-before-present, Integration section, failure paths |
 | 3.2     | 2026-03-15 | Convergence-loop integration: Phase 0 diagnosis + 3.5 self-audit                         |
 | 3.1     | 2026-03-12 | Add code-state verification requirement to Phase 0                                       |

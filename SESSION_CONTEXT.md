@@ -1,49 +1,67 @@
 # Session Context — JASON-OS
 
 ## Current Session Counter
-21
+22
 
 ## Uncommitted Work
 No
 
 ## Last Updated
-2026-04-24
+2026-04-25
 
 ---
 
 ## Quick Recovery
 
-**Last Checkpoint**: 2026-04-24 (Session 21 — `/deep-plan cross-repo-movement-reframe` Phase 1 Batches 1–3 complete; 35 decisions locked; speed-vs-depth gate resolved to Option A; two durable feedback memories saved; T37 todo captured)
-**Branch**: `fixes-42226` (local + origin synced at Session 21 start; this session's commits move both forward together)
-**Working On**: `/deep-plan cross-repo-movement-reframe` at **Phase 1 Batch 4 pickup** (discovery continues: `/extract` + profile discovery pairing)
-**Home pickup**: clean after Session 21 commits. Batches 1 (orchestrator), 2 (`/context-sync`), and 3 (`/port` + ledger) are locked. Batch 4 next. State file at `.claude/state/deep-plan.cross-repo-movement-reframe.state.json` (gitignored, machine-local) carries full decision record.
+**Last Checkpoint**: 2026-04-25 (Session 22 — Batch 2c locked at 41 decisions; Batch 4a deferred when user caught wheel-reinvention risk; full delegation Option 1 chosen for repo-analysis port; PORT_DECISIONS walkthrough started — Batch 1 + 2 mostly locked; one OPEN question on T1/T2/T3 labels)
+**Branch**: `fixes-42226` (local + origin synced at Session 22 start)
+**Working On**: `/deep-plan cross-repo-movement-reframe` — port walkthrough of SoNash repo-analysis paused mid-Batch 2 of the inline keep/remove/edit pass
+**Home pickup**: PORT_DECISIONS.md is the canonical walkthrough record at `.planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md`. It survives compaction and travels cross-locale via git.
 
-### Home resume contract (Session 21 → 22 fresh pickup)
+### Home resume contract (Session 22 → 23 fresh pickup)
 
-Session 21 landed — 35 decisions across 3 batches + revised batch plan:
+Session 22 happened across three movements. Briefly, in plain language:
 
-**Batch 1 — orchestrator shape (8 decisions):** `/migration` is the orchestrator name (user choice, not in Claude's offered list). Static list routing to four companions. Dual invocation: interactive menus default visible surface + utterance anywhere. Simple top dashboard (depth lives in companions). `/migration` writes state for compaction recovery (following skill-creator + skill-audit pattern). Shared CI-guard helper in `scripts/lib/`. Ask-then-scaffold on first run. Companion names confirmed: `/port`, `/sync-back`, `/extract`, `/context-sync`.
+**Movement 1 — Cross-locale state recovery and infra bridge.** Session 21 landed on a different machine; the deep-plan state file (`.claude/state/deep-plan.cross-repo-movement-reframe.state.json`) was gitignored and didn't travel. User manually transferred via Downloads. While solving the recovery, surfaced the systemic gap: long-lived deep-plan state files SHOULD travel cross-locale via git as a bridge until `/context-sync` absorbs them. Carved a narrow `.gitignore` exception (`!.claude/state/deep-plan.*.state.json`) to bridge active deep-plan state. Two superseded deep-plan state files (piece-2-schema-design, piece-3-labeling-mechanism) deleted as dead state. Bridge retirement filed as a closeout-phase task in this plan.
 
-**Batch 2 — `/context-sync` specifics (14 decisions including 3 meta):** Separate drift-record file. 7 fields. 5 drift states (NEW/CLEAN/SOURCE-DRIFTED/DEST-DRIFTED/BOTH-DRIFTED). CRLF→LF normalization + JSON key sort + strip 4 volatile frontmatter fields + comment-only changes count as drift. Skill creation routes through `/skill-creator` via state-file priming (Option C hybrid with pre-flight schema validator). All 4 data structures get schema validation at write time + periodic sweep in `/context-sync` AND `/skill-audit` Phase 2.5 via shared helper. `ajv-formats` dep fix elevated to PLAN.md pre-requisite. Machine-exclude via convention + explicit list + ask-on-new. Sidecar pattern for `settings.local.json` partial-sync. Tenets identified by filename prefix primary, frontmatter optional secondary. Memory-type → scope-tag mapping in `/context-sync` source, auto-memory as primary coverage (not canonical-memory — user called out auto-memory is used far more). CLAUDE.md tweak blocks via HTML sentinel comments. Menu-driven `/context-sync` + utterance. Forward-slash paths stored everywhere; shared `toNativePath()` helper at read sites.
+**Movement 2 — A1 amendment + Batch 2c reopen.** User instruction during recovery: `/context-sync` plan must include analysis of gitignored files (at minimum, inventory + classification), so the cross-locale gap that bit Session 22 cannot recur. Batch 2 re-opened as Batch 2c — six new decisions Q2C-1 through Q2C-6: walk every gitignored item from project root with cheap fast-path; three classes (machine-local-by-design / should-sync / ambiguous); triage file at `.claude/state/context-sync-triage.jsonl` (not mid-sync interrupt); should-sync syncing in v1 (no half-tool); drift record stretches 7 → 8 fields with `gitignore_class`; Q18 reframed as classifier-input. Cumulative count 35 → 41.
 
-**Batch 3 — `/port` + ledger (10 decisions):** Ledger stretches to **14 fields** at v1 (user override of Bucket 1 12-cap — explicit call to avoid a later revisit). Includes `source_status` + `source_content_hash`. Schema declares ALL 14 fields non-nullable per user's "no null fields" instruction. Storage mechanics package accepted (append-only, write-last, forward-pointer edge, `.claude/state/ledger.jsonl`, 5s lock). Ledger travels cross-machine via `/context-sync`. `unit_type` = 5 values with **`concept` renamed to `system`** (user examples: TDMS, pr-review/retro, CAS — multi-skill/script/file architectural units). `verdict` = 6 values (drop `greenfield-clone` and `blocked`); explained in-skill via SKILL.md glossary + menu tooltips + dashboard label resolution. Three-tag metric discipline (MEASURED/DERIVED/ESTIMATED) with self-audit lint. `/port` invocation: menu + utterance. Full pre-flight checks. Atomic failure semantics with rollback + explicit conflict resolution. Minimal output default with "details" trigger for full report.
+**Movement 3 — Wheel-reinvention catch + delegation pivot.** Heading into Batch 4 (profile discovery + `/extract`), user caught that we were about to re-invent SoNash's `repo-analysis` skill. Confirmed: full delegation chosen (Option 1). Manually port repo-analysis from SoNash to JASON-OS as a one-off bootstrap. JASON-OS profile-discovery becomes a transformer over repo-analysis output (acknowledged scope: 500-1000 lines, NOT 100-200 lines — directive-text generation is the bulk of it). Batch 4a deferred; will re-emerge smaller after delegation walkthrough lands. Delegation decision locked at cumulative count 42.
 
-**Process decisions landed Session 21:**
-- **Revised batch plan** (user caught helper-skill gap): Batch 4 `/extract` + profile, Batch 5 `/sync-back`, Batch 6 cache + fast-path, Batch 7 decision register, Batch 8 closeout + OTB merged.
-- **Two durable feedback memories created** in auto-memory: `feedback_batching_judgment.md` (don't batch for sake of batching) and `feedback_recommendations_mandatory.md` (every question carries recommendation with weakness).
-- **T37 added** to `.planning/todos.jsonl` — examine and define core tenets for JASON-OS (user has ideas).
+**The port walkthrough is in progress.** Canonical record: `.planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md`. Through 8 themed batches we walk every SoNash-specific concept in repo-analysis (SKILL.md + REFERENCE.md + shared/) and decide KEEP / REMOVE / EDIT inline.
 
-Session 22 pickup:
-1. `/session-begin` — bump counter 21 → 22. Branch stays `fixes-42226`.
-2. Re-invoke `/deep-plan cross-repo-movement-reframe` — state file resumes at **Phase 1 Batch 4** (`/extract` + profile discovery pairing).
-3. Batch 4 scope: ~8-10 questions covering profile discovery shape, owned/unowned split (research: bare-clone for unowned), `companion_files` population algorithm, profile 8-field structure, 6-field gate record, 3-field shape block, unowned staleness trigger, `/extract` invocation shape, `/extract` auth for protected repos, `/extract` output format, large-unowned-repo rate limiting.
-4. Remaining batches after 4: Batch 5 `/sync-back`, Batch 6 cache + fast-path, Batch 7 decision register, Batch 8 closeout + OTB. Projected total: 55-65 questions / decisions.
-5. Phase 2 produces standalone DECISIONS.md; Phase 3 produces PLAN.md; Phase 3.5 self-audits; Phase 4 gates on user approval.
-6. Closeout retires the five prior plans via DEPRECATED banners + archival.
+**Walkthrough status entering Session 23:**
+- Batch 1 — Routing & sibling integrations: 5/5 LOCKED (TDMS REMOVE, /synthesize REMOVE-with-stub, home-repo guard EDIT, /analyze router REMOVE, EXTRACTIONS.md REMOVE).
+- Batch 2 — Output artifacts: 9/10 LOCKED, 1 OPEN. Notable: original "REMOVE Creator View family" was rejected by user — Creator View is invaluable in SoNash and the cross-repo *understanding* layer is exactly what cross-repo *movement* depends on. Revised: KEEP creator-view.md and 6 sections, KEEP home-repo context loading (with EDIT for ROADMAP.md graceful-skip), KEEP adoption verdict (REDEFINE labels for port-decision context: full-mirror / experimental-subset / cherry-pick / don't-port-from), KEEP all 7 absence patterns. REMOVE only the curated-list outputs (content-eval.jsonl, mined-links.jsonl).
+- **OPEN question (9d):** T1 / T2 / T3 source-tier labels in Knowledge Candidates section — keep verbatim, or rename to JASON-OS-native port-priority labels (port-now / port-when-needed / note-only). User to decide at resume.
+
+Session 23 pickup:
+1. `/session-begin` — bump counter 22 → 23. Branch stays `fixes-42226`.
+2. Re-load `.planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md` for canonical walkthrough state.
+3. Resolve open question 9d (T1/T2/T3 labels).
+4. Continue port walkthrough: Batch 3 (scoring/classifiers/confidence framing) → Batch 4 (tagging) → Batch 5 (schema/validation) → Batch 6 (process pipeline, mostly KEEP) → Batch 7 (guard rails, mostly KEEP-with-edits) → Batch 8 (`scripts/cas/`, mostly REMOVE/DEFER).
+5. After walkthrough closes: actual port operation (file copy from SoNash with disposition table applied as mechanical edit pass). Estimated session-spanning work — likely a dedicated port-execution session.
+6. After port lands: re-emerge Batch 4 of the main plan as the now-smaller transformer-design batch (was: profile discovery + /extract; now: transformer-over-repo-analysis + /extract).
+7. Then Batches 5-8 of the main plan, Phase 2 DECISIONS.md compile, Phase 3 PLAN.md, Phase 3.5 self-audit, Phase 4 user-approval gate.
+8. Closeout retires the five prior plans via DEPRECATED banners + archival; T37 (core JASON-OS tenets) handled separately; bridge retirement (`.gitignore` exception) filed as closeout task once `/context-sync` ships.
+
+**Walkthrough decision count:** 14 LOCKED + 1 OPEN. Independent of and additional to the main /deep-plan decision count (42 from Batches 1-3 + 2c).
 
 ---
 
 ## Quick Status
+
+**Session 22 — Cross-locale state recovery + infra bridge + delegation pivot. Cumulative plan decisions 35 → 42; port walkthrough started (14 LOCKED, 1 OPEN).**
+
+Session 22 accomplishments:
+1. `/session-begin` bumped counter 21 → 22. Branch synced to `origin/fixes-42226` at `5d224ac` via fast-forward (4 commits from Session 21 close).
+2. **Cross-locale state-file recovery.** Session 21's `deep-plan.cross-repo-movement-reframe.state.json` was gitignored and didn't travel; user transferred manually via Downloads. One JSON syntax error (missing comma at line 126) fixed; file moved to canonical location at 14.6 KB / 41 cumulative decisions.
+3. **Infra bridge landed.** Carved a narrow `.gitignore` exception (`!.claude/state/deep-plan.*.state.json`) so long-lived deep-plan state files travel cross-locale via git until `/context-sync` absorbs the responsibility. Two superseded deep-plan state files (piece-2-schema-design, piece-3-labeling-mechanism) deleted as dead state. Bridge retirement filed as a closeout-phase task in this plan.
+4. **A1 amendment + Batch 2c reopen.** `/context-sync` plan must include analysis of gitignored files. Six new decisions Q2C-1 through Q2C-6 locked: walk every gitignored item from project root with cheap fast-path; three classes (machine-local-by-design / should-sync / ambiguous); triage file at `.claude/state/context-sync-triage.jsonl`; should-sync syncing in v1; drift record stretches 7 → 8 fields with `gitignore_class`; Q18 reframed as classifier-input. Cumulative count 35 → 41.
+5. **Wheel-reinvention catch + delegation pivot.** Heading into Batch 4, user caught that we were about to re-invent SoNash's `repo-analysis` skill. Option 1 (full delegation) chosen. JASON-OS profile-discovery becomes a transformer over repo-analysis output (acknowledged 500-1000 lines, not 100-200). Delegation decision locked at cumulative 42. Batch 4a deferred.
+6. **Port walkthrough started.** Canonical record at `.planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md`. Batch 1 (5/5 routing & sibling integrations) + Batch 2 (9/10 output artifacts) LOCKED. User pushback on "REMOVE Creator View" was correct — Creator View is the cross-repo *understanding* layer that cross-repo *movement* depends on; bundle revised to KEEP creator-view.md with 6 sections, KEEP home-repo context loading (with EDIT for ROADMAP.md graceful-skip), KEEP adoption verdict (REDEFINE labels: full-mirror / experimental-subset / cherry-pick / don't-port-from), KEEP all 7 absence patterns. Only the curated-list outputs REMOVE. One OPEN question (9d): T1/T2/T3 source-tier labels — keep verbatim or rename to JASON-OS-native port-priority labels.
+
+Session 21 historical (retained as input):
 
 **Session 21 — `/deep-plan cross-repo-movement-reframe` Phase 1 Batches 1–3 complete; 35 decisions locked; Batch 4 next.**
 
@@ -96,48 +114,71 @@ During gap-pursuit, the D9 agent wrote your verbatim `weather_api_key` value int
 
 ---
 
-## Next Session Goals (Session 22)
+## Next Session Goals (Session 23)
 
 ### Step 1 — `/session-begin`
-Counter 21 → 22. Branch stays `fixes-42226`.
+Counter 22 → 23. Branch stays `fixes-42226`.
 
-### Step 2 — Resume `/deep-plan cross-repo-movement-reframe` at Phase 1 Batch 4
+### Step 2 — Resume the repo-analysis port walkthrough
 
-The state file at `.claude/state/deep-plan.cross-repo-movement-reframe.state.json`
-will trigger resume. Batches 1 (orchestrator), 2 (`/context-sync`), and 3
-(`/port` + ledger) are locked with 35 decisions captured. **Batch 4 pairs
-`/extract` with profile discovery** — roughly 8–10 questions covering
-profile discovery shape + owned/unowned split (research: bare-clone for
-unowned), `companion_files` population algorithm, 8-field profile structure,
-6-field gate record, 3-field shape block, unowned-profile staleness trigger,
-`/extract` invocation shape, auth handling for protected repos, output format,
-large-unowned-repo rate limiting.
+Re-load `.planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md`
+as the canonical walkthrough record. State file pointer is at
+`.claude/state/deep-plan.cross-repo-movement-reframe.state.json` →
+`port_walkthrough_pointer` field.
 
-### Step 3 — Walk remaining batches (Batches 5–8)
+**First action: resolve open question 9d.** T1 / T2 / T3 source-tier labels
+in the Creator View Knowledge Candidates section — option (a) keep verbatim,
+or option (b) rename to JASON-OS-native port-priority labels (port-now /
+port-when-needed / note-only).
 
-Batch 5 `/sync-back` (~5–7 questions), Batch 6 comprehension cache + fast-path
-(~5–7), Batch 7 decision register (~2–3), Batch 8 closeout mechanics + OTB
-planning-time glance merged (~5–7). Projected total at Phase 1 completion:
-55–65 questions / decisions.
+### Step 3 — Continue port walkthrough Batches 3–8
 
-### Step 4 — Phase 2/3/3.5/4
+- Batch 3 — scoring, classifiers, confidence framing (~5 items).
+- Batch 4 — tagging (TAG_SUGGESTION.md, 8 categories, semantic tags).
+- Batch 5 — schema and validation (analysis-schema.js, state file schema).
+- Batch 6 — process pipeline (clone, dimension wave, deep read, coverage audit) — mostly KEEP.
+- Batch 7 — guard rails (rate limit, home repo, fork detection, large repo, monorepo) — mostly KEEP-with-edits.
+- Batch 8 — `scripts/cas/` (12 TDMS-adjacent scripts, mostly REMOVE/DEFER).
 
-DECISIONS.md standalone record (35 decisions already staged in state file),
-PLAN.md with audit checkpoints per the revised batch plan, self-audit pass,
-user approval gate before any implementation begins.
+### Step 4 — Execute the port
 
-### Step 5 — Rotate `weather_api_key` (operator task, still pending from Session 19)
+After walkthrough closes: actual port operation. File copy from SoNash with
+the disposition table from PORT_DECISIONS.md applied as a mechanical edit
+pass. Estimated session-spanning work — likely a dedicated port-execution
+session. Creates `.claude/skills/repo-analysis/` and `.claude/skills/shared/`
+in JASON-OS.
+
+### Step 5 — Re-emerge main plan Batch 4 (now smaller)
+
+Once repo-analysis is in JASON-OS, Batch 4 of the main `/deep-plan` re-emerges
+as the transformer-design batch (was: profile discovery + /extract; now:
+transformer-over-repo-analysis + /extract). Smaller scope because most
+implementation-axis decisions are now "delegate to repo-analysis."
+
+### Step 6 — Walk remaining main-plan batches (Batches 5–8)
+
+Batch 5 `/sync-back`, Batch 6 cache + fast-path, Batch 7 decision register,
+Batch 8 closeout + OTB. Projected main-plan total at Phase 1 close: 55–65
+decisions on top of the 42 already locked.
+
+### Step 7 — Phase 2 / 3 / 3.5 / 4
+
+DECISIONS.md standalone record, PLAN.md with audit checkpoints, self-audit
+pass, user approval gate.
+
+### Step 8 — Rotate `weather_api_key` (operator task, still pending from Session 19)
 
 Edit `~/.claude/statusline/config.local.toml` to swap in a fresh key from the
 weather API provider. Keep the file gitignored. Machine-local rotation on
 each machine.
 
-### Step 6 — New plan's closeout phase (runs at end of produced plan)
+### Step 9 — Plan closeout
 
 Formal deprecation of the five prior plans (sync-mechanism, schema-design,
 labeling-mechanism parent + structural-fix, migration-skill) via DEPRECATED
-banners + archival. Also: resolve T37 (examine / define core JASON-OS tenets)
-separately — user has ideas.
+banners + archival. Resolve T37 (examine / define core JASON-OS tenets)
+separately. Retire the `.gitignore` bridge exception once `/context-sync`
+ships and absorbs the cross-locale state-file responsibility.
 
 ---
 

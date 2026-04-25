@@ -43,7 +43,12 @@ tools/statusline/config.local.toml
 *.log
 
 # claude code — local state (committed: skills/agents/hooks/commands)
-.claude/state/
+# State directory contents are machine-local EXCEPT for long-lived
+# deep-plan state files, which travel cross-locale via git as a bridge
+# until /context-sync (cross-repo-movement-reframe plan) absorbs them.
+# Bridge retirement is a closeout-phase task in that plan.
+.claude/state/*
+!.claude/state/deep-plan.*.state.json
 .claude/tmp/
 .claude/projects/
 .claude/settings.local.json

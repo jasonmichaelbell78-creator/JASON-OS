@@ -1089,18 +1089,19 @@ special chars). Examples:
 Detection hierarchy: config file presence + dependency name together, not
 dependency name alone.
 
-| Framework    | Primary Signal                                    |
-| ------------ | ------------------------------------------------- |
-| Next.js      | `next` in deps AND `next.config.js/ts` present    |
-| React (CRA)  | `react-scripts` in deps, no framework config file |
-| Vite React   | `@vitejs/plugin-react` in devDeps                 |
-| Angular      | `@angular/core` dep AND `angular.json`            |
-| Vue          | `vue` dep AND optional `vue.config.js`            |
-| Django       | `django` in requirements.txt or pyproject.toml    |
-| FastAPI      | `fastapi` in requirements.txt                     |
-| Express/Node | `express` in package.json, no frontend framework  |
-| Go service   | `go.mod` present, no frontend frameworks          |
-| Rust service | `Cargo.toml` with lib or binary crate             |
+| Framework                    | Primary Signal                                                                                |
+| ---------------------------- | --------------------------------------------------------------------------------------------- |
+| Next.js                      | `next` in deps AND `next.config.js/ts` present                                                |
+| React (CRA)                  | `react-scripts` in deps, no framework config file                                             |
+| Vite React                   | `@vitejs/plugin-react` in devDeps                                                             |
+| Angular                      | `@angular/core` dep AND `angular.json`                                                        |
+| Vue                          | `vue` dep AND optional `vue.config.js`                                                        |
+| Django                       | `django` in requirements.txt or pyproject.toml                                                |
+| FastAPI                      | `fastapi` in requirements.txt                                                                 |
+| Express/Node                 | `express` in package.json, no frontend framework                                              |
+| Go service                   | `go.mod` present, no frontend frameworks                                                      |
+| Rust service                 | `Cargo.toml` with lib or binary crate                                                         |
+| Claude Code skill collection | `.claude/skills/` directory with at least one `SKILL.md` inside, OR `.claude/agents/` with at least one `*.md` |
 
 ---
 

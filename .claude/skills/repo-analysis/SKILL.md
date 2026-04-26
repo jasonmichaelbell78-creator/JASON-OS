@@ -16,11 +16,6 @@ description: >-
 
 **Shared conventions:** See `.claude/skills/shared/CONVENTIONS.md`
 
-**`/analyze` router:** This skill is the repo-handler arm of `/analyze` — direct
-invocation and router dispatch both supported. Handoff contract: the router
-passes `{target, auto_detected_type: "repo"}` as if the skill were invoked
-directly.
-
 # Repo Analysis
 
 Dual-lens analysis of external GitHub repositories. **Creator View** surfaces
@@ -46,9 +41,6 @@ Before any work begins, display:
 | You want to…                             | Use this                |
 | ---------------------------------------- | ----------------------- |
 | Analyze one external GitHub repo         | `/repo-analysis` (here) |
-| Let router auto-pick repo vs site vs PDF | `/analyze <target>`     |
-| Cross-repo synthesis across 3+ analyses  | `/synthesize`           |
-| Audit the home repo (SoNash itself)      | `/audit-comprehensive`  |
 | Research a domain or technology broadly  | `/deep-research`        |
 | Explore design space before planning     | `/brainstorm`           |
 
@@ -65,16 +57,17 @@ Before any work begins, display:
 4. **No silent skips.** After every SHOULD step, verify the expected output
    exists. If missing: retry once with mitigation, then report to user.
 5. **Home repo guard.** If target matches
-   `jasonmichaelbell78-creator/sonash-v0`, redirect to `/audit-comprehensive`.
+   `jasonmichaelbell78-creator/JASON-OS`, error with explanation: home-repo
+   audit is not yet ported to JASON-OS — analyze a different repo, or run
+   home-repo introspection manually until a dedicated audit skill lands.
 6. **Rate limit safety.** Check `gh api rate_limit` before every API batch.
    Abort if `remaining < 200`.
 7. **State file on every phase transition.** Long analyses WILL hit compaction.
-8. **No TDMS auto-pollution.** TDMS intake is opt-in via routing menu only.
-9. **Creator View is mandatory** for Standard/Deep. Quick Scan includes a
+8. **Creator View is mandatory** for Standard/Deep. Quick Scan includes a
    lightweight creator lens. The creator lens captures what the repo KNOWS, not
    just its health.
-10. **Conversational, not clinical.** Creator View MUST be written in
-    conversational prose. Anti-goal: must NOT read like a technical manual.
+9. **Conversational, not clinical.** Creator View MUST be written in
+   conversational prose. Anti-goal: must NOT read like a technical manual.
 
 ## When to Use
 
@@ -86,10 +79,9 @@ Before any work begins, display:
 
 ## When NOT to Use
 
-- Cross-repo synthesis → `/synthesize`
-- Home repo audit → `/audit-comprehensive`
 - Domain / technology research → `/deep-research`
 - Quick dependency check → `gh api` directly
+- Home repo audit → not yet ported to JASON-OS; manual introspection until a dedicated audit skill lands
 
 > See [REFERENCE.md](./REFERENCE.md) for dimension catalog, tool stack, output
 > schemas, absence patterns, Creator View specification (§14), process details
@@ -103,10 +95,9 @@ Before any work begins, display:
 `--lens=adoption|creator` (override auto-detected primary lens)
 
 **Output:** `.research/analysis/<repo-slug>/` — analysis.json (unified schema
-v3.0, validated by `scripts/lib/analysis-schema.js`), findings.jsonl,
-value-map.json, creator-view.md, summary.md, deep-read.md, content-eval.jsonl,
-coverage-audit.jsonl, extraction-journal.jsonl entries. Handler-specific:
-repomix-output.txt (gitignored), mined-links.jsonl (curated-list only),
+v1.0, validated by `scripts/lib/analysis-schema.js`), findings.jsonl,
+value-map.json, creator-view.md, summary.md, deep-read.md,
+coverage-audit.jsonl. Handler-specific: repomix-output.txt (gitignored),
 trends.jsonl (re-analysis comparison).
 
 **Schema contract:** analysis.json MUST validate against the unified Zod schema
@@ -336,9 +327,6 @@ prompt:
 `"Curated list has N entries. Evaluate all / top 50 by signal / custom scope?"`.
 Soft user-confirmation; never hard-block.
 
-Append relationships to `.research/reading-chain.jsonl`. Populate
-`related_repos[]` and `cross_repo_connections[]` in value-map.json.
-
 **Done when:** value-map.json exists AND all 4 candidate arrays present AND
 content + anti-pattern promotion rules applied.
 
@@ -369,28 +357,7 @@ bound.
 **Signal sources for repo-analysis**: `creator-view.md`, entry `notes`,
 `engineer-view.md`, `mined-links.jsonl`, top dependencies from repomix output.
 
-**Done when:** user-approved tags written to `analysis.json.tags` AND each
-`extraction-journal.jsonl` row.
-
----
-
-## Cross-Repo Extraction Tracking (MUST for Standard/Deep)
-
-After Phase 6, update both files:
-
-1. **`.research/extraction-journal.jsonl`** (machine-readable, unified v2.0
-   schema shared with website-analysis). Remove stale entries for the repo;
-   write fresh entries for all candidates.
-2. **`.research/EXTRACTIONS.md`** (human-readable, generated). **Do NOT edit
-   manually.** Run: `node scripts/cas/generate-extractions-md.js`.
-
-Both are canonical: journal is the data source; EXTRACTIONS.md is the
-regenerated reading interface.
-
-**Done when:** `grep -c "$SOURCE" .research/extraction-journal.jsonl` >= 1 AND
-script output confirms the source in EXTRACTIONS.md.
-
-> **Full record schema + regeneration detail** — see REFERENCE.md §15.6.
+**Done when:** user-approved tags written to `analysis.json.tags`.
 
 ---
 
@@ -428,8 +395,10 @@ analysis prose), immediately retry via Bash/Python heredoc.
 
 1. **Rate limit safety** — `gh api rate_limit` before every API batch; abort if
    `remaining < 200`.
-2. **Home repo guard** — target matches `jasonmichaelbell78-creator/sonash-v0` →
-   redirect to `/audit-comprehensive`.
+2. **Home repo guard** — target matches
+   `jasonmichaelbell78-creator/JASON-OS` → error with explanation: home-repo
+   audit not yet ported to JASON-OS; analyze a different repo or use manual
+   introspection until a dedicated audit skill lands.
 3. **Large repo safety** — >5000 files or >500MB clone → confirm with user
    before proceeding.
 4. **Fork detection** — archive + fork + low stars → flag as low-signal before
@@ -447,20 +416,18 @@ analysis prose), immediately retry via Bash/Python heredoc.
 Run minimum floor per CONVENTIONS §8 plus domain checks:
 
 1. Artifact presence (analysis.json, findings.jsonl, value-map.json,
-   creator-view.md, summary.md, deep-read.md, content-eval.jsonl OR
-   mined-links.jsonl, coverage-audit.jsonl, extraction-journal.jsonl)
+   creator-view.md, summary.md, deep-read.md, coverage-audit.jsonl)
 2. Schema contract — analysis.json validates
 3. Completeness — all ran phases produced output
 4. Schema drift — `skillVersion` matches expected
 5. Regression check — compare finding count delta vs prior analysis
 6. REFERENCE.md contract — structure matches
-7. Extraction journal — `grep -c "$SOURCE"` >= 1, EXTRACTIONS.md rebuilt
-8. Tags populated — `analysis.json.tags` non-empty (user-approved)
-9. Coverage audit decisions — every item has `user_decision` or `analyzed`
-10. Phase ordering — state file `phases_completed` shows
-    `phase-3.5-content-eval` before `phase-4-creator-view`, `phase-6c-tags`
-    before `self-audit`
-11. Prior feedback replay — `prior_feedback_shown: true` if prior state existed
+7. Tags populated — `analysis.json.tags` non-empty (user-approved)
+8. Coverage audit decisions — every item has `user_decision` or `analyzed`
+9. Phase ordering — state file `phases_completed` shows
+   `phase-3.5-content-eval` before `phase-4-creator-view`, `phase-6c-tags`
+   before `self-audit`
+10. Prior feedback replay — `prior_feedback_shown: true` if prior state existed
     (CONVENTIONS §18)
 
 Report failures to user before routing.
@@ -469,18 +436,17 @@ Report failures to user before routing.
 
 ## Routing Menu
 
-Presented after Standard or Deep. 8 options:
+Presented after Standard or Deep. 7 options:
 
-| Option                  | Action                                        |
-| ----------------------- | --------------------------------------------- |
-| 1. Extract value        | Load repomix + value-map. Present candidates. |
-| 2. Send to TDMS         | Transform findings to TDMS. Opt-in only.      |
-| 3. Deep-plan this       | Inject analysis as research context.          |
-| 4. Save to memory       | Persist key findings as project memory.       |
-| 5. Adoption verdict     | Full WR-01 through WR-06 assessment.          |
-| 6. Explore insights     | Deeper conversation about Creator View.       |
-| 7. Done                 | Cleanup, confirm artifacts, track invocation. |
-| 8. Cross-repo synthesis | If 3+ repos analyzed, offer `/synthesize`.    |
+| Option              | Action                                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Extract value    | Load repomix + value-map. Present candidates.                                                                                         |
+| 2. Deep-plan this   | Inject analysis as research context.                                                                                                  |
+| 3. Save to memory   | Persist key findings as project memory.                                                                                               |
+| 4. Adoption verdict | Full WR-01 through WR-06 assessment.                                                                                                  |
+| 5. Explore insights | Deeper conversation about Creator View.                                                                                               |
+| 6. Done             | Cleanup, confirm artifacts, track invocation.                                                                                         |
+| 7. Promote to /port | `/port not yet built — analysis output saved to .research/analysis/<slug>/, run /port manually when available`. Stub errors helpfully. |
 
 ---
 
@@ -504,14 +470,18 @@ phase-level resume.
 
 ## Integration
 
-- **Upstream:** `/deep-research`, `/brainstorm`, `/analyze` (router)
-- **Downstream:** `/deep-plan`, `/synthesize`, TDMS, project memory
-- **Neighbors:** `/audit-comprehensive` (home repo), dimension agents
-- **Cross-skill contract:** MUST preserve `last_synthesized_at` field on
-  `analysis.json` when writing — this field is set by `/synthesize` Phase 5 and
-  must not be dropped by handler re-runs (v2.0 contract, Session #284).
+- **Upstream:** `/deep-research`, `/brainstorm`
+- **Downstream:** `/deep-plan`, `/port` (stub — see Routing Menu option 7),
+  project memory
+- **Neighbors:** dimension agents
+- **Cross-skill contract:** MUST preserve cross-skill placeholder fields on
+  `analysis.json` when writing — these are set by sibling skills (which do not
+  yet exist) and must not be dropped by handler re-runs. Authoritative list
+  lives in `.claude/skills/shared/CONVENTIONS.md` §12: `last_extracted_at` (set
+  by `/port`), `last_ported_to` (set by `/port`), `last_sync_back_at` (set by
+  `/sync-back`), `last_synced_at` (set by `/context-sync`).
 - **References:** [REFERENCE.md](./REFERENCE.md), [ARCHIVE.md](./ARCHIVE.md),
-  [\_shared/TAG_SUGGESTION.md](../_shared/TAG_SUGGESTION.md)
+  [shared/TAG_SUGGESTION.md](../shared/TAG_SUGGESTION.md)
 
 ## Retro & Prior Feedback Replay
 

@@ -1,11 +1,11 @@
 "use strict";
 
 /**
- * Content Analysis System — Self-Audit
+ * Content Analysis System — Self-Audit (JASON-OS port)
  *
  * Validates any handler's output directory against CONVENTIONS.md Section 13.
  * Run after any analysis completes to catch naming mismatches, missing artifacts,
- * schema failures, and extraction gaps BEFORE presenting results.
+ * and schema failures BEFORE presenting results.
  *
  * Usage: node scripts/cas/self-audit.js --slug=<slug>
  *
@@ -14,6 +14,14 @@
  *   1 = one or more checks failed (details printed)
  *
  * @see .claude/skills/shared/CONVENTIONS.md (Section 13: Handler Output Contract)
+ *
+ * JASON-OS port adaptation (PORT_DECISIONS.md Batch 8 #12):
+ *   - Dropped extraction-journal.jsonl + EXTRACTIONS.md checks (the
+ *     extraction-journal system was cut in Batch 1 #5).
+ *   - Dropped last_synthesized_at validation (/synthesize cut in Batch 1 #2).
+ *   - Dropped tag-consistency check across analysis ↔ journal (no journal).
+ *   - Kept artifact presence, schema validation, behavioral state-file
+ *     check, citation/home-repo path checks. These survive cleanly.
  */
 
 const fs = require("node:fs");
@@ -22,21 +30,41 @@ const {
   sanitizeError,
   validatePathInDir,
   refuseSymlinkWithParents,
-  slugify,
 } = require("../lib/security-helpers.js");
-const { safeReadText, safeReadJson, isValidArtifactFile } = require("../lib/safe-cas-io.js");
-const { safeParseLine } = require("../lib/parse-jsonl-line");
+const { readUtf8Sync } = require("../lib/safe-fs.js");
 
 const PROJECT_ROOT = path.resolve(__dirname, "../.."); // validatePathInDir: constant-path (no user input)
 const ANALYSIS_DIR = path.join(PROJECT_ROOT, ".research", "analysis");
-const JOURNAL_PATH = path.join(PROJECT_ROOT, ".research", "extraction-journal.jsonl");
-const EXTRACTIONS_MD_PATH = path.join(PROJECT_ROOT, ".research", "EXTRACTIONS.md");
+
+// JASON-OS port: SoNash had a separate `scripts/lib/safe-cas-io.js` module
+// providing `safeReadText` / `safeReadJson` / `isValidArtifactFile`. Those
+// helpers live inline here against `scripts/lib/safe-fs.js` (the JASON-OS
+// canonical safe I/O module). Behavior preserved: parent-chain symlink
+// refusal, regular-file enforcement, ENOENT propagation.
+function safeReadText(filePath) {
+  refuseSymlinkWithParents(filePath);
+  return readUtf8Sync(filePath);
+}
+function safeReadJson(filePath) {
+  return JSON.parse(safeReadText(filePath));
+}
+function isValidArtifactFile(filePath) {
+  try {
+    refuseSymlinkWithParents(filePath);
+    const st = fs.lstatSync(filePath);
+    if (st.isSymbolicLink()) return false;
+    if (!st.isFile()) return false;
+    return st.size > 0;
+  } catch {
+    return false;
+  }
+}
 
 // Step 10.5 extended checks: filename/ID patterns cited from Creator View
-// that count as "specific citations" per AUDIT_SPEC check 5a.
+// that count as "specific citations" per AUDIT_SPEC check 5a. JASON-OS port:
+// content-eval.jsonl removed (Batch 2 #10).
 const CITATION_ARTIFACT_NAMES = [
   "deep-read.md",
-  "content-eval.jsonl",
   "coverage-audit.jsonl",
   "findings.jsonl",
   "value-map.json",
@@ -83,12 +111,12 @@ const MUST_STANDARD_DEEP = [
 ];
 
 // SHOULD artifacts — Standard/Deep only (warn if missing = phase skip)
-// Per CONVENTIONS Section 13.2
+// Per CONVENTIONS Section 13.2.
+// JASON-OS port: content-eval.jsonl dropped (PORT_DECISIONS.md Batch 2 #10).
 const SHOULD_ARTIFACTS = [
   { file: "findings.jsonl", description: "Findings (Phase 2/5)", phase: "2" },
   { file: "summary.md", description: "Summary (Phase 5)", phase: "5" },
   { file: "deep-read.md", description: "Deep Read (Phase 2b)", phase: "2b" },
-  { file: "content-eval.jsonl", description: "Content Eval (Phase 4b)", phase: "4b" },
   { file: "coverage-audit.jsonl", description: "Coverage Audit (Phase 6b)", phase: "6b" },
 ];
 
@@ -274,50 +302,6 @@ function checkSchema(dir, slug) {
   return results;
 }
 
-function matchesSource(entrySource, targetSource) {
-  if (entrySource === targetSource) return true;
-  return slugify(entrySource) === slugify(targetSource);
-}
-
-function checkExtractions(slug, source) {
-  const results = { pass: [], fail: [], warn: [] };
-
-  let lines;
-  try {
-    // safeReadText refuses parent-chain symlinks and enforces regular-file.
-    lines = safeReadText(JOURNAL_PATH).trim().split("\n");
-  } catch (err) {
-    if (err.code === "ENOENT") {
-      results.warn.push("extraction-journal.jsonl not found");
-    } else {
-      results.warn.push(`Could not read journal: ${sanitizeError(err)}`);
-    }
-    return results;
-  }
-
-  let count = 0;
-  let untagged = 0;
-  for (const rawLine of lines) {
-    const entry = safeParseLine(rawLine);
-    if (!entry) continue;
-    if (matchesSource(entry.source, source)) {
-      count++;
-      if (!entry.tags || entry.tags.length === 0) untagged++;
-    }
-  }
-
-  if (count === 0) {
-    results.fail.push(`No extraction journal entries for source: ${source}`);
-  } else {
-    results.pass.push(`${count} extraction journal entries for ${source}`);
-    if (untagged > 0) {
-      results.warn.push(`${untagged} of ${count} extraction entries have no tags (CONVENTIONS 14)`);
-    }
-  }
-
-  return results;
-}
-
 function checkBehavioral(dir, slug, sourceType) {
   const results = { pass: [], fail: [], warn: [] };
   const depth = getDepth(dir);
@@ -367,50 +351,12 @@ function checkBehavioral(dir, slug, sourceType) {
 
 // ---------------------------------------------------------------------------
 // Step 10.5 extended checks (folded into self-audit per T29 Session #277).
-// Checks 5a, 5c, 6a, 6b, 6c, 7b, 7c, 8 from AUDIT_SPEC.md. Skipped: 5b (prose
-// style — heuristics too noisy), 7a (research-index depth match — retired per
-// Cat B3: research-index.jsonl is deep-research topic index, not CAS).
+// JASON-OS port: extraction-journal-related checks (6a, 6b, 6c, 7b, 7c)
+// dropped per PORT_DECISIONS.md Batch 8 #12 + Batch 1 #5. Surviving checks:
+// 5a (Creator View specific citations), 5c (home-repo refs broken-link
+// detection), 8 (re-analysis trends signal). Skipped: 5b (prose style —
+// heuristics too noisy), 7a (research-index depth match).
 // ---------------------------------------------------------------------------
-
-function countValueMapCandidates(vmData) {
-  // Dedupe by lowercase name so value-maps with the same candidate classified
-  // under two split-keys (e.g., both knowledgeCandidates and
-  // antiPatternCandidates) count as one for 6a journal-count parity.
-  const seen = new Set();
-  const addAll = (arr) => {
-    if (!Array.isArray(arr)) return;
-    for (const c of arr) {
-      const name = (c.name || c.title || "").toString().trim().toLowerCase();
-      if (name) seen.add(name);
-    }
-  };
-  if (Array.isArray(vmData.candidates)) {
-    addAll(vmData.candidates);
-  } else {
-    addAll(vmData.patternCandidates);
-    addAll(vmData.knowledgeCandidates);
-    addAll(vmData.contentCandidates);
-    addAll(vmData.antiPatternCandidates);
-  }
-  return seen.size;
-}
-
-function collectJournalEntries(source) {
-  const entries = [];
-  let raw;
-  try {
-    raw = safeReadText(JOURNAL_PATH);
-  } catch {
-    return entries;
-  }
-  for (const line of raw.split("\n")) {
-    if (!line.trim()) continue;
-    const entry = safeParseLine(line);
-    if (!entry) continue;
-    if (matchesSource(entry.source, source)) entries.push(entry);
-  }
-  return entries;
-}
 
 function countCitations(creatorViewText) {
   if (!creatorViewText) return 0;
@@ -473,7 +419,7 @@ function check5aSpecificCitations(dir, results) {
     results.pass.push(`Creator View cites >=2 specific items (${count} refs found)`);
   } else {
     results.fail.push(
-      `Creator View has only ${count} specific citation(s) to deep-read/content-eval/findings — Step 10.5 check 5a requires >=2`
+      `Creator View has only ${count} specific citation(s) to deep-read/findings/value-map — Step 10.5 check 5a requires >=2`
     );
   }
 }
@@ -580,126 +526,6 @@ function check5cHomeRepoRefs(dir, results) {
   );
 }
 
-function check6aJournalCount(dir, source, results) {
-  const vmPath = path.join(dir, "value-map.json");
-  let vm;
-  try {
-    vm = safeReadJson(vmPath);
-  } catch {
-    return; // value-map missing — already covered by MUST check
-  }
-  const vmCount = countValueMapCandidates(vm);
-  const journalCount = collectJournalEntries(source).length;
-  if (vmCount === 0) return; // nothing to compare
-  if (journalCount >= vmCount) {
-    results.pass.push(`journal >= value-map (${journalCount} >= ${vmCount}) — Step 10.5 check 6a`);
-  } else {
-    results.fail.push(
-      `journal (${journalCount}) < value-map candidates (${vmCount}) — ${vmCount - journalCount} missing extraction entries (Step 10.5 check 6a)`
-    );
-  }
-}
-
-function check6bExtractionsMdSection(slug, source, results) {
-  let text;
-  try {
-    text = safeReadText(EXTRACTIONS_MD_PATH);
-  } catch {
-    results.warn.push("EXTRACTIONS.md not found (Step 10.5 check 6b)");
-    return;
-  }
-  // Heuristic: section exists if a markdown heading contains slug or source
-  const needles = [slug, source, slugify(source)];
-  const found = needles.some((n) => {
-    if (!n) return false;
-    const escaped = n.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-    const re = new RegExp(String.raw`^#+\s.*` + escaped, "im");
-    return re.test(text);
-  });
-  if (found) {
-    results.pass.push("EXTRACTIONS.md section exists for source (Step 10.5 check 6b)");
-  } else {
-    results.fail.push(
-      `EXTRACTIONS.md has no section matching "${slug}" or source — run generate-extractions-md.js (Step 10.5 check 6b)`
-    );
-  }
-}
-
-function check6cPerCandidateSchema(source, results) {
-  const entries = collectJournalEntries(source);
-  if (entries.length === 0) return; // covered by checkExtractions
-  let validate;
-  try {
-    ({ validate } = require("../lib/analysis-schema.js"));
-  } catch {
-    return;
-  }
-  const sample = entries.slice(0, 3);
-  const fails = [];
-  for (const entry of sample) {
-    const r = validate(entry, "extraction");
-    if (!r.success) fails.push(`"${entry.candidate || "(noname)"}": ${r.error}`);
-  }
-  if (fails.length === 0) {
-    results.pass.push(
-      `Per-candidate schema: ${sample.length}/${sample.length} sampled entries valid (Step 10.5 check 6c)`
-    );
-  } else {
-    const moreSuffix = fails.length > 1 ? ` (+${fails.length - 1} more)` : "";
-    results.fail.push(
-      `Per-candidate schema failures (${fails.length}/${sample.length}): ${fails[0]}${moreSuffix} (Step 10.5 check 6c)`
-    );
-  }
-}
-
-function check7bTagConsistency(dir, source, results) {
-  const analysisPath = path.join(dir, "analysis.json");
-  let analysis;
-  try {
-    analysis = safeReadJson(analysisPath);
-  } catch {
-    return;
-  }
-  const analysisTags = new Set(Array.isArray(analysis.tags) ? analysis.tags : []);
-  if (analysisTags.size === 0) return;
-  const entries = collectJournalEntries(source);
-  const journalTags = new Set();
-  for (const e of entries) {
-    if (Array.isArray(e.tags)) for (const t of e.tags) journalTags.add(t);
-  }
-  if (journalTags.size === 0) {
-    // Already covered by checkExtractions untagged warn
-    return;
-  }
-  const common = [...analysisTags].filter((t) => journalTags.has(t));
-  // WARN if no overlap at all (divergence)
-  if (common.length === 0) {
-    results.warn.push(
-      `Tag sets between analysis.json (${analysisTags.size} tags) and journal entries (${journalTags.size} tags) have zero overlap (Step 10.5 check 7b)`
-    );
-  }
-}
-
-function check7cLastSynthesizedAt(dir, results) {
-  const analysisPath = path.join(dir, "analysis.json");
-  let data;
-  try {
-    data = safeReadJson(analysisPath);
-  } catch {
-    return;
-  }
-  const v = data.last_synthesized_at;
-  if (v === null || v === undefined) {
-    results.pass.push("last_synthesized_at: null (not synthesized yet) — Step 10.5 check 7c");
-    return;
-  }
-  if (typeof v === "string" && !Number.isNaN(Date.parse(v))) {
-    results.pass.push(`last_synthesized_at: valid ISO date — Step 10.5 check 7c`);
-  } else {
-    results.fail.push(`last_synthesized_at invalid: ${JSON.stringify(v)} (Step 10.5 check 7c)`);
-  }
-}
-
 function check8ReanalysisSignal(dir, results) {
   const trendsPath = path.join(dir, "trends.jsonl");
   if (fs.existsSync(trendsPath)) {
@@ -713,7 +539,7 @@ function check8ReanalysisSignal(dir, results) {
   // Absence is not a fail — most sources have no trends.jsonl yet.
 }
 
-function checkStep10Extended(dir, slug, source) {
+function checkStep10Extended(dir, slug /* unused after journal-check drop */) {
   const results = { pass: [], fail: [], warn: [] };
   const depth = getDepth(dir);
   const isStandardOrDeep = depth === "standard" || depth === "deep";
@@ -721,11 +547,6 @@ function checkStep10Extended(dir, slug, source) {
 
   check5aSpecificCitations(dir, results);
   check5cHomeRepoRefs(dir, results);
-  check6aJournalCount(dir, source, results);
-  check6bExtractionsMdSection(slug, source, results);
-  check6cPerCandidateSchema(source, results);
-  check7bTagConsistency(dir, source, results);
-  check7cLastSynthesizedAt(dir, results);
   check8ReanalysisSignal(dir, results);
 
   return results;
@@ -765,25 +586,22 @@ function main() {
 
   const artifacts = checkArtifacts(dir, slug);
   const schema = checkSchema(dir, slug);
-  const extractions = checkExtractions(slug, source);
   const behavioral = checkBehavioral(dir, slug, sourceType);
-  const extended = checkStep10Extended(dir, slug, source);
+  const extended = checkStep10Extended(dir, slug);
 
   const allPass = [
     ...artifacts.pass,
     ...schema.pass,
-    ...extractions.pass,
     ...behavioral.pass,
     ...extended.pass,
   ];
   const allFail = [
     ...artifacts.fail,
     ...schema.fail,
-    ...extractions.fail,
     ...behavioral.fail,
     ...extended.fail,
   ];
-  const allWarn = [...artifacts.warn, ...extractions.warn, ...behavioral.warn, ...extended.warn];
+  const allWarn = [...artifacts.warn, ...behavioral.warn, ...extended.warn];
 
   if (allPass.length > 0) {
     console.log(`\nPASS (${allPass.length}):`);

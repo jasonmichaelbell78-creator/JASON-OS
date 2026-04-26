@@ -9,8 +9,8 @@ description: >-
 ---
 
 <!-- prettier-ignore-start -->
-**Document Version:** 5.0
-**Last Updated:** 2026-04-15
+**Document Version:** 1.0
+**Last Updated:** 2026-04-25
 **Status:** ACTIVE
 <!-- prettier-ignore-end -->
 
@@ -237,10 +237,6 @@ analysis.json.
 
 ## Content Evaluation (Phase 3.5 of M — MUST for Standard/Deep)
 
-> **Phase renumbered from 4b to 3.5 in v5.0** (breaking change for existing
-> state files — see Version History migration note). Execution order is
-> unchanged; the number now matches the execution slot.
-
 Evaluate the repo's embedded content for specific relevance to home context.
 Runs BEFORE Creator View and feeds into it. A repo's value often lives in its
 references, not its code.
@@ -461,11 +457,6 @@ State file: `.claude/state/repo-analysis.<repo-slug>.state.json`
 Update after every phase. On re-invocation: offer Resume/Re-run/Compare. See
 REFERENCE.md §8 for schema.
 
-**v5.0 migration note:** Existing state files with `phases_completed` containing
-`phase-4b-content-eval` will be auto-migrated to `phase-3.5-content-eval` on
-next resume. Self-audit phase-ordering check accepts either label during
-transition window (through v5.2).
-
 ## Compaction Resilience
 
 Artifacts as checkpoints: analysis.json, findings.jsonl, summary.md,
@@ -513,42 +504,13 @@ cd scripts/reviews && npx tsx write-invocation.ts --data '{
 
 ---
 
-_v5.0 | 2026-04-15 | Skill-audit batch 2026-04-15-analysis-quartet Wave 2.
-**Breaking:** Phase 4b → 3.5 (Content Eval) — state files with
-`phase-4b-content-eval` in `phases_completed` auto-migrate on resume.
-Structural: /analyze router ack, Warm-up block, Routing Guide, Delegation &
-Defaults, consolidated top-5 Guard Rails, scope-explosion soft prompt, Done-when
-gates per phase, PHASE N of M markers, enriched invocation tracking, Prior
-Feedback Replay per CONVENTIONS §18, Tag Suggestion body replaced with
-`shared/TAG_SUGGESTION.md` reference. Detail extractions to REFERENCE.md §14
-(Creator View full spec already present), §15.4 (Content Eval detail), §15.5
-(Coverage Audit detail), §15.6 (Extraction Tracking detail). v4.2 footer moved
-to ARCHIVE.md in Wave 1._
-
-_v4.6 | 2026-04-13 | Session #278: Creator View Section 2b Use-As-Is Verdict as
-MUST-produce for product repos. Populates analysis.json adoption_verdict /
-adoption_blockers / adoption_recommendation._
-
-_v4.5 | 2026-04-12 | Session #276: Per-phase artifact gate, self-audit +4 checks
-(EXTRACTIONS.md presence, tags non-empty, coverage decisions recorded, phase
-ordering in state file)._
-
-_v4.4 | 2026-04-10 | PR #505 Gemini review: split Process Overview into
-Standard/Deep and Quick Scan flows; removed stale "GATE Interactive" row._
-
-_v4.3 | 2026-04-06 | Convergence: CONVENTIONS.md ref, self-audit phase, schema
-drift fix, artifact path alignment, agent_budget removal, retro persistence,
-invocation tracking. Per DECISIONS.md #1-20._
-
-_v4.2 and earlier — see [ARCHIVE.md](./ARCHIVE.md)._
+_v1.0 | 2026-04-25 | Initial port from SoNash repo-analysis v5.0
+(PORT_DECISIONS.md disposition applied across 8 batches, 61 LOCKED
+decisions). JASON-OS schema versioning restarts at 1.0; SoNash version
+trail preserved in [ARCHIVE.md](./ARCHIVE.md)._
 
 ## Version History
 
-| Version         | Date       | Description                                                                                  |
-| --------------- | ---------- | -------------------------------------------------------------------------------------------- |
-| 5.0             | 2026-04-15 | Skill-audit batch Wave 2 rewrite — phase renumber 4b → 3.5 (breaking).                       |
-| 4.6             | 2026-04-13 | Creator View §2b Use-As-Is Verdict MUST for product repos (application/framework/tool-demo). |
-| 4.5             | 2026-04-12 | Per-phase artifact gate + self-audit +4 checks.                                              |
-| 4.4             | 2026-04-10 | Split Process Overview into Standard/Deep + Quick Scan.                                      |
-| 4.3             | 2026-04-06 | Convergence: CONVENTIONS.md ref, self-audit phase, schema drift fix.                         |
-| 4.2 and earlier | —          | See [ARCHIVE.md](./ARCHIVE.md).                                                              |
+| Version | Date       | Description                                                                                |
+| ------- | ---------- | ------------------------------------------------------------------------------------------ |
+| 1.0     | 2026-04-25 | Initial port from SoNash repo-analysis v5.0 (PORT_DECISIONS.md disposition applied).       |

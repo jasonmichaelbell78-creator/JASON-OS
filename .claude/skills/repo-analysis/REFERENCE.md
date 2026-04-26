@@ -1,6 +1,6 @@
 <!-- prettier-ignore-start -->
-**Document Version:** 4.2
-**Last Updated:** 2026-04-06
+**Document Version:** 1.0
+**Last Updated:** 2026-04-25
 **Status:** ACTIVE
 <!-- prettier-ignore-end -->
 
@@ -1500,24 +1500,12 @@ Analyze all / Select categories / Skip? [A/S/N]
 
 ---
 
----
-
----
-
 ## 18. Version History
 
-| Version | Date       | Description                                         |
-| ------- | ---------- | --------------------------------------------------- |
-| 4.0     | 2026-04-05 | Creator View v2: dual scoring lens, 6-section CV,   |
-|         |            | repo type classification, link mining pipeline,     |
-|         |            | fit separation, anti-ideas, cross-repo awareness,   |
-|         |            | reading chain. 30-decision deep-plan.               |
-| 3.0     | 2026-04-03 | Dual-lens rewrite: Creator View + Engineer View.    |
-|         |            | Knowledge dimensions (KN-01-05). No silent skips.   |
-|         |            | Inline analysis for small repos. Repomix mandatory. |
-|         |            | SKILL.md compressed to <300 lines.                  |
-| 2.0     | 2026-04-03 | Schema alignment, adoption assessment, extraction   |
-|         |            | persistence, agent capture fixes, repomix           |
-| 1.2     | 2026-04-03 | Output path: .research/analysis/<slug>/             |
-| 1.1     | 2026-04-02 | Skill-audit: 16 decisions — UX, guard rails, labels |
-| 1.0     | 2026-04-02 | Initial: 3 tiers, 45 dimensions, routing, resume    |
+| Version | Date       | Description                                                                          |
+| ------- | ---------- | ------------------------------------------------------------------------------------ |
+| 1.0     | 2026-04-25 | Initial port from SoNash repo-analysis v5.0 (PORT_DECISIONS.md disposition applied). |
+
+> JASON-OS schema versioning restarts at 1.0. The SoNash version trail
+> (v1.0–v5.0) is preserved in
+> [ARCHIVE.md](./ARCHIVE.md) so prior design decisions remain discoverable.

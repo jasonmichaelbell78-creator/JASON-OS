@@ -1,17 +1,29 @@
 # repo-analysis — Version History Archive
 
 <!-- prettier-ignore-start -->
-**Document Version:** 1.0
-**Last Updated:** 2026-04-15
+**Document Version:** 1.1
+**Last Updated:** 2026-04-25
 **Status:** ARCHIVE (read-only)
 <!-- prettier-ignore-end -->
 
 Archived version history entries for `/repo-analysis`. The active
-[SKILL.md](./SKILL.md) carries the most recent entries (v4.3 and newer); older
-entries live here to keep SKILL.md under the ~300-line process-section target.
+[SKILL.md](./SKILL.md) carries the most recent entries; older entries (and the
+SoNash trail prior to the JASON-OS port) live here to keep SKILL.md focused on
+current behavior.
 
 See `SKILL.md` for current version and active change log. This file is
 append-only from newer → older; do not edit entries once archived.
+
+---
+
+## JASON-OS port boundary | 2026-04-25
+
+Everything **above** the v4.2 entry below describes the SoNash repo-analysis
+v5.0 source skill from which the JASON-OS port (v1.0) derives. The v1.0 entry
+recorded in [SKILL.md](./SKILL.md) marks the port date and applies the
+PORT_DECISIONS.md disposition (61 LOCKED decisions across 8 batches). Future
+JASON-OS-side history (v1.1, v1.2, ...) lives in SKILL.md and rotates here as
+that history grows.
 
 ---
 

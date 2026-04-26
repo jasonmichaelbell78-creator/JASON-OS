@@ -29,11 +29,13 @@ const scoringBandEnum = z.enum(["Critical", "Needs Work", "Healthy", "Excellent"
 
 const classificationEnum = z.enum(["active-sprint", "park-for-later", "evergreen", "not-relevant"]);
 
+// JASON-OS port: pruned `anti-pattern` + `content` per PORT_DECISIONS.md
+// Batch 2 #6 (anti-pattern fed Creator View §6 / EXTRACTIONS.md flow we cut)
+// + Batch 2 #10 (content was curated-list-only). Architecture-pattern,
+// design-principle, workflow-pattern, tool kept for /port consumer.
 const candidateTypeEnum = z.enum([
   "pattern",
-  "anti-pattern",
   "knowledge",
-  "content",
   "architecture-pattern",
   "design-principle",
   "workflow-pattern",
@@ -48,10 +50,10 @@ const effortEnum = z.enum(["E0", "E1", "E2", "E3"]);
 
 const relevanceEnum = z.enum(["high", "medium", "low"]);
 
-// Source authority/trust tier (D#13, D#32). Repos default to T1 (first-party
-// artifacts). Other types span T1-T4 based on editorial authority. Stored on
-// each analysis.json so synthesis can weight evidence accordingly.
-const sourceTierEnum = z.enum(["T1", "T2", "T3", "T4"]);
+// JASON-OS port: source_tier removed per PORT_DECISIONS.md Batch 5 #1.
+// Replaced conceptually by port-priority labels on Knowledge Candidates
+// (port-now / port-when-needed / note-only) per Batch 2 #9d. Equivalence
+// preserved in REFERENCE.md §14.7.
 
 // Synthesis paradigm — analytical lens applied across sources (D#7).
 const paradigmEnum = z.enum(["thematic", "narrative", "matrix", "meta-pattern"]);
@@ -108,10 +110,9 @@ const analysisRecordCore = z.object({
   summary: z.string(),
   creator_view: z.string(),
   candidates: z.array(candidateSchema),
-  last_synthesized_at: z.string().nullable().default(null),
-  // T29: source authority tier (D#13, D#32). Optional for backward
-  // compatibility — migrate-v3.js fills defaults for existing records.
-  source_tier: sourceTierEnum.optional(),
+  // JASON-OS port stub (PORT_DECISIONS.md Batch 1 #2): preserves a future
+  // /synthesize re-activation path without later schema migration.
+  cross_repo_links: z.array(z.string()).nullable().default(null),
 });
 
 // --- Type-specific optional fields ---
@@ -144,7 +145,11 @@ const repoFields = z
           .passthrough(),
       ])
     ),
-    adoption_verdict: z.string(),
+    // JASON-OS port: top-level adoption_verdict string removed per
+    // PORT_DECISIONS.md Batch 5 #1. The richer adoption_assessment block
+    // (verdict + verdict_score + WR-* dimensions + recommendation, with
+    // relabeled verdict per Batch 2 #9c) lives in analysis.json directly
+    // and is documented in REFERENCE.md §3.1.
   })
   .partial();
 
@@ -354,7 +359,6 @@ const synthesisRecord = z.object({
       slug: z.string(),
       source: z.string(),
       source_type: sourceTypeEnum,
-      source_tier: sourceTierEnum,
       depth: depthEnum,
     })
   ),
@@ -480,7 +484,6 @@ module.exports = {
   noveltyEnum,
   effortEnum,
   relevanceEnum,
-  sourceTierEnum,
   paradigmEnum,
   synthesisModeEnum,
   convergenceEnum,

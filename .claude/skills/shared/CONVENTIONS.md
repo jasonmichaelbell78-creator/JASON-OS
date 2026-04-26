@@ -185,6 +185,24 @@ never write invalid output.
 **Import path:** `require("../../lib/analysis-schema.js")` from scripts, or
 relative path from handler context.
 
+**Cross-skill preserve-on-rewrite list (JASON-OS, per
+PORT_DECISIONS.md Batch 5 #4):** Each writing skill controls its own field
+name. When any handler re-runs and rewrites `analysis.json`, it MUST preserve
+the following fields verbatim if they are already present (do not overwrite,
+do not drop):
+
+| Field                | Set by         | Purpose                                                         |
+| -------------------- | -------------- | --------------------------------------------------------------- |
+| `last_extracted_at`  | `/port`        | Timestamps the most recent /port operation against this analysis |
+| `last_ported_to`     | `/port`        | Records the destination path the analysis was ported to         |
+| `last_sync_back_at`  | `/sync-back`   | Timestamps the most recent sync-back to the source repo         |
+| `last_synced_at`     | `/context-sync`| Timestamps the most recent context refresh                      |
+
+These are placeholder names; the named sibling skills do not yet exist in
+JASON-OS. The contract pattern lives here so the writing skill (currently only
+`/repo-analysis`) controls its own field name and downstream skills extend the
+list without coordinating with handler code.
+
 ---
 
 ## 13. Handler Output Contract

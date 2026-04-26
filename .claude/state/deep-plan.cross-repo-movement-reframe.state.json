@@ -185,9 +185,20 @@
         "Forks-over-time — mitigated long-term by /sync-back; short-term by manual periodic mirror.",
         "Overhead for cheap cases — mitigated by repo-analysis's Quick depth tier."
       ],
-      "next_step": "Walkthrough in progress. Canonical record at .planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md. Batch 1 (5/5) and Batch 2 (9/10) LOCKED; one OPEN question on T1/T2/T3 source-tier labels (9d). Resume contract documented in PORT_DECISIONS.md."
+      "next_step": "Walkthrough COMPLETE 2026-04-25. All 8 batches locked, 61 decisions captured. Canonical record at .planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md. Next phase: actual port operation (file copy from SoNash + mechanical edit pass applying disposition table). After port lands, main-plan Batch 4 re-emerges as the smaller transformer-design batch."
     },
-    "port_walkthrough_pointer": ".planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md — canonical record of the keep/remove/edit walkthrough; survives compaction and cross-locale via git",
+    "port_walkthrough_pointer": ".planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md — canonical record of the keep/remove/edit walkthrough; 61 decisions LOCKED; survives compaction and cross-locale via git",
+    "port_walkthrough_complete_session_22": {
+      "closed_at": "2026-04-25",
+      "total_decisions": 61,
+      "by_disposition": {
+        "keep": "~37 (incl. KEEP-as-is, KEEP-with-edit, KEEP-with-port-time-adaptation)",
+        "edit": "~10 (substantive reshaping at port-time)",
+        "remove": "~11 (TDMS, extraction-journal, /synthesize, curated-list outputs, SoNash migrations)",
+        "defer": "3 (SQLite search index trio — revisit at >50 analyses)"
+      },
+      "next_action": "Execute the actual port operation — separate session-spanning piece of work, sequencing per PORT_DECISIONS.md 'Next Step' section."
+    },
     "cumulative_decisions_count": 42
   },
   "phase_2": {"status": "not_started", "decisions_md_path": null},

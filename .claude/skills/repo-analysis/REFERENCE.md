@@ -759,9 +759,15 @@ standalone visibility and in-context relevance.
 ## 5b. Repo Type Classification
 
 Classifies the repository into a primary type that drives scoring lens selection
-(Section 4.3), conditional phases (link mining, Section 16), and display format.
-Classification runs during Quick Scan (Phase 0) using API data and is optionally
-refined during Standard mode (Phase 1) with full file access.
+(Section 4.3) and display format. Classification runs during Quick Scan (Phase 0)
+using API data and is optionally refined during Standard mode (Phase 1) with
+full file access.
+
+> **JASON-OS port note (PORT_DECISIONS.md Batch 3 #2):** the `curated-list`
+> type still classifies — useful as a flag for human judgment — but the
+> dedicated link-mining downstream pipeline was cut (curated-list outputs were
+> never JASON-OS port targets). Treat curated-list classifications as
+> informational; analysis still runs the standard pipeline.
 
 ### Detection Signal Matrix
 

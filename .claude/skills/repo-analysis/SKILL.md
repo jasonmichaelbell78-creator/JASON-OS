@@ -123,7 +123,7 @@ PHASE 4 of 9   Creator View   -> Load home context + Deep Read + Content Eval, c
 PHASE 5 of 9   Engineer View  -> Merge dimensions, compute bands, dual-lens scoring
 PHASE 6 of 9   Value Map      -> Pattern + knowledge + content + anti-pattern candidates
 PHASE 6b of 9  Coverage Audit -> Scan for unexplored content (interactive)
-PHASE 6c of 9  Tag Suggestion -> Per _shared/TAG_SUGGESTION.md
+PHASE 6c of 9  Tag Suggestion -> Per shared/TAG_SUGGESTION.md
 SELF-AUDIT + ROUTING
 ```
 
@@ -354,7 +354,7 @@ field (`analyze` / `skip`) or `status: "analyzed"`.
 ## Tag Suggestion (Phase 6c of M — MUST for Standard/Deep)
 
 Follow the canonical protocol in
-[`.claude/skills/_shared/TAG_SUGGESTION.md`](../_shared/TAG_SUGGESTION.md). Per
+[`.claude/skills/shared/TAG_SUGGESTION.md`](../shared/TAG_SUGGESTION.md). Per
 CONVENTIONS §14: at least 3 semantic tags per entry, 8 categories, no upper
 bound.
 
@@ -520,7 +520,7 @@ Structural: /analyze router ack, Warm-up block, Routing Guide, Delegation &
 Defaults, consolidated top-5 Guard Rails, scope-explosion soft prompt, Done-when
 gates per phase, PHASE N of M markers, enriched invocation tracking, Prior
 Feedback Replay per CONVENTIONS §18, Tag Suggestion body replaced with
-`_shared/TAG_SUGGESTION.md` reference. Detail extractions to REFERENCE.md §14
+`shared/TAG_SUGGESTION.md` reference. Detail extractions to REFERENCE.md §14
 (Creator View full spec already present), §15.4 (Content Eval detail), §15.5
 (Coverage Audit detail), §15.6 (Extraction Tracking detail). v4.2 footer moved
 to ARCHIVE.md in Wave 1._

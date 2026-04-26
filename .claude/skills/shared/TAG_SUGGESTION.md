@@ -22,9 +22,10 @@ depths. Quick Scan MAY skip (tags filled opportunistically on promotion).
 
 ## What
 
-Propose tags for BOTH the analysis record (`analysis.json.tags`) AND each
-extraction-journal entry (`extraction-journal.jsonl` rows) per CONVENTIONS.md
-§14:
+Propose tags for the analysis record (`analysis.json.tags`) per CONVENTIONS.md
+§14. (SoNash also tagged `extraction-journal.jsonl` rows; that destination was
+cut in the JASON-OS port per PORT_DECISIONS.md Batch 1 #5 + Batch 4 #4.
+Ledger-side tagging is a future `/port` concern.)
 
 - **At least 3 semantic tags per entry** (required)
 - Draw from the 8 categories: `domain`, `technology`, `concept`, `technique`,
@@ -53,9 +54,9 @@ extraction-journal entry (`extraction-journal.jsonl` rows) per CONVENTIONS.md
    Accept / Modify / Add?
    ```
 
-5. **Wait for explicit user response.** Do NOT pre-populate `analysis.json.tags`
-   or `extraction-journal.jsonl` entries without approval.
-6. **Write approved tags** to both files once accepted. Update
+5. **Wait for explicit user response.** Do NOT pre-populate
+   `analysis.json.tags` without approval.
+6. **Write approved tags** to `analysis.json.tags`. Update
    `.research/tag-vocabulary.json` with any newly approved tags.
 
 ## Writing to `.research/tag-vocabulary.json` (sanctioned pattern)

@@ -212,6 +212,11 @@ at the building and ignoring the books.
   docs)
 - Referenced external resources (arXiv papers, linked repos, datasets) —
   cataloged for Phase 3.5 evaluation
+- **JASON-OS-shape patterns** (PORT_DECISIONS.md Batch 6 #3) — additional
+  globs for Claude Code skill collections and JASON-OS-style targets:
+  `.planning/<topic>/`, `.claude/skills/<skill>/`, `.research/<topic>/`,
+  `MEMORY.md`, `BOOTSTRAP_DEFERRED.md`. Cost negligible — patterns no-op
+  when irrelevant.
 
 **Output:** `deep-read.md` listing what was found, read, and cataloged for Phase
 3.5. For each read artifact, note knowledge not visible from code.
@@ -489,18 +494,34 @@ state file. Optional structured dimensions: `worked_well`, `would_change`,
 target, replay prior `process_feedback` during VALIDATE and ask whether to
 adjust approach. Log `prior_feedback_shown: true` in the new state file.
 
-**Invocation tracking** — on Done routing, capture enriched context:
+**Invocation tracking** — on Done routing, append a single JSONL row to
+`.claude/state/invocations.jsonl` via `safeAppendFileSync` from
+`scripts/lib/safe-fs.js` (JASON-OS-native; replaces the SoNash
+`scripts/reviews/write-invocation.ts` mechanic per PORT_DECISIONS.md
+Batch 6 #7):
 
-```bash
-cd scripts/reviews && npx tsx write-invocation.ts --data '{
-  "skill":"repo-analysis","type":"skill","success":true,
-  "schema_version":1,"completeness":"stub",
-  "origin":{"type":"manual"},
-  "context":{"target":"TARGET_REPO","mode":"repo","depth":"DEPTH",
-             "lens":"LENS","score":SCORE,"decisions":DECISION_COUNT,
-             "candidates":CANDIDATE_COUNT}
-}'
+```js
+const path = require("node:path");
+const { safeAppendFileSync } = require("./scripts/lib/safe-fs.js");
+
+const row = {
+  timestamp: new Date().toISOString(),
+  skill: "repo-analysis",
+  target: TARGET_REPO,           // e.g. "owner/name"
+  depth: DEPTH,                   // "quick" | "standard" | "deep"
+  success: true,
+  decisions_count: DECISION_COUNT,
+  candidates_count: CANDIDATE_COUNT,
+};
+
+safeAppendFileSync(
+  path.join(".claude", "state", "invocations.jsonl"),
+  JSON.stringify(row) + "\n"
+);
 ```
+
+Any future analytics tool can consume the JSONL stream incrementally; the
+file is git-tracked (state-pattern) and survives session boundaries.
 
 ---
 

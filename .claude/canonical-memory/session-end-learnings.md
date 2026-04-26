@@ -202,3 +202,50 @@ type: project
   plan pairs skill + primary data structure (pattern from `/context-sync` +
   drift record): Batch 3 `/port`+ledger, Batch 4 `/extract`+profile, Batch 5
   `/sync-back` (standalone), Batch 6 cache, etc.
+
+## Session 22 (2026-04-25)
+
+- **Subagent delegation for high-volume mechanical edits.** When a new skill
+  registers in `.claude/skills/`, the harness re-injects the full skill list
+  (large payload) on every Edit tool call to that skill's files. After ~5
+  surgical edits to the new `repo-analysis/SKILL.md`, orchestrator context
+  burn was unsustainable. Delegating to a subagent with PORT_DECISIONS.md
+  as the instruction set finished the remaining ~45 edits across 8 batch
+  commits in one agent invocation, with no orchestrator skill-list overhead.
+  Conclusion: when a port or refactor exceeds ~10 surgical edits to a freshly
+  registered skill's files, prefer subagent delegation over inline Edit calls.
+  The trigger is the skill-list re-injection, not the edit count itself.
+
+- **Decisions-table-as-instruction-set works as a delegation contract.**
+  PORT_DECISIONS.md was authored conversationally during the walkthrough as
+  a record for human review. It also worked as a self-contained instruction
+  set for the subagent — 61 numbered decisions with rationale produced
+  mechanical edits without judgment-call drift. Pattern is reusable: when the
+  orchestrator authors a decisions table for human review, that same table is
+  a usable subagent prompt for execution. The decision-with-rationale shape
+  (not just the decision) is what prevents the agent from second-guessing.
+
+- **Bundle-REMOVE invites overcorrection; decompose first.** Item 9 of port
+  walkthrough Batch 2 bundled "Creator View family" as a single REMOVE
+  (creator-view.md + adoption verdict + T1/T2/T3 + absence patterns +
+  Knowledge Candidates section), framed as "SoNash-specific lens for
+  adoption decisions." User pushed back: Creator View captures cross-repo
+  *understanding*, which cross-repo *movement* depends on. Decomposing to
+  per-item disposition (KEEP creator-view.md + KEEP home-repo context loading
+  + KEEP adoption verdict with relabel + KEEP absence patterns + REMOVE only
+  curated-list outputs) was correct. Conclusion: when a REMOVE bundle
+  conjoins items with different rationales, the bundling itself is the
+  failure mode — decompose to per-item before locking. Bundles can be used
+  for batch-presentation efficiency, but each item must carry its own
+  disposition rationale, not a shared one.
+
+- **Cross-locale state recovery worked via narrative + manual file transfer.**
+  Session 21's gitignored deep-plan state file didn't travel between machines.
+  The SESSION_CONTEXT.md "Home resume contract" section the user authored at
+  Session 21 close enabled rough state reconstruction (narrative form), and
+  the user's manual file transfer via Downloads provided the authoritative
+  canonical state. One JSON syntax fix (missing comma) restored full state.
+  Conclusion: the narrative resume contract is a useful fallback even when
+  the structured state file is available — the two layers are mutually
+  reinforcing, not redundant. The infra fix (`.gitignore` exception bridging
+  long-lived plan state files) prevents recurrence.

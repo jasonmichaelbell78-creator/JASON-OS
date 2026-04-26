@@ -154,7 +154,9 @@ repo description and README (Contents API, first 200 lines). Write 2-3
 sentences: "This repo appears to understand/demonstrate/teach X." Teaser only,
 not full Creator View.
 
-**source_tier:** Repos emit `source_tier: "T1"` (first-party artifacts).
+<!-- source_tier removed in JASON-OS port (PORT_DECISIONS.md Batch 5 #1). -->
+<!-- Replaced by port-priority labels on Knowledge Candidates per Batch 2 #9d. -->
+
 
 **Done when:** analysis.json exists AND creator lens sentences written.
 
@@ -274,10 +276,11 @@ Informed by THREE upstream inputs: home repo context, Deep Read artifacts (Phase
 
 1. What This Repo Understands (+ Blindspots)
 2. What's Relevant To Your Work
-   - 2b. Use-As-Is Verdict (product repos only — Adopt/Trial/Extract-only/Avoid)
+   - 2b. Use-As-Is Verdict (product repos only —
+     full-mirror/experimental-subset/cherry-pick/don't-port-from)
 3. Where Your Approach Differs (Ahead / Different / Behind)
 4. The Challenge
-5. Knowledge Candidates (T1 active / T2 systems / T3 lower)
+5. Knowledge Candidates (port-now / port-when-needed / note-only)
 6. What's Worth Avoiding
 
 Write output to `creator-view.md`. **Self-verify:** re-read generated Creator
@@ -295,7 +298,8 @@ View; verify each home repo claim references something that exists.
 
 Health tables, scoring bands, absence patterns, adoption assessment. 6 summary
 dimensions: Security, Reliability, Maintainability, Documentation, Process,
-Velocity. Adoption: Adopt/Trial/Extract/Avoid.
+Velocity. Adoption verdict labels:
+full-mirror/experimental-subset/cherry-pick/don't-port-from.
 
 Two scoring lenses computed (adoption + creator); both shown, primary marked.
 Override with `--lens`. See REFERENCE.md §4.

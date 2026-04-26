@@ -122,14 +122,14 @@ signals.
 WR-04 (from license + alternatives search), WR-06 (from age, stars, contributor
 diversity). Other dimensions require clone.
 
-**Adoption verdict bands:**
+**Adoption verdict bands** (JASON-OS port-decision labels):
 
-| Band    | Score  | Interpretation                                           |
-| ------- | ------ | -------------------------------------------------------- |
-| Adopt   | 75-100 | Integrate as-is, benefits clearly outweigh costs         |
-| Trial   | 55-74  | Worth a proof-of-concept, some concerns to address first |
-| Extract | 30-54  | Don't adopt whole — cherry-pick valuable parts instead   |
-| Avoid   | 0-29   | Costs outweigh benefits, build or find alternatives      |
+| Band                | Score  | Interpretation                                                                |
+| ------------------- | ------ | ----------------------------------------------------------------------------- |
+| full-mirror         | 75-100 | Mirror the whole repo / dependency wholesale; benefits clearly outweigh costs |
+| experimental-subset | 55-74  | Try a bounded subset; some concerns to address before committing further      |
+| cherry-pick         | 30-54  | Don't port wholesale — extract individual parts that fit                      |
+| don't-port-from     | 0-29   | Costs outweigh benefits, build native or find alternatives                    |
 
 ### 1.4 Deep Mode Dimensions (requires 12-month history, 12 dimensions)
 
@@ -198,10 +198,9 @@ diversity). Other dimensions require clone.
 
 ## 3. Output Schemas
 
-Eight primary artifacts plus one injectable Markdown summary. All written to
-`.research/analysis/<repo-slug>/`. All v2.0 artifacts include a `schema_version`
-field. Files without `schema_version` are implicitly v1.0 and will be migrated
-on re-scan (re-scan IS the migration; old files archived to `archive/`).
+Six primary artifacts plus one injectable Markdown summary. All written to
+`.research/analysis/<repo-slug>/`. All artifacts include a `schema_version`
+field; JASON-OS port begins at `1.0`.
 
 ### 3.1 `analysis.json`
 
@@ -214,7 +213,7 @@ See `.claude/skills/shared/CONVENTIONS.md` Section 12 for schema contract.
 ```json
 {
   "id": "UUID",
-  "schema_version": "3.0",
+  "schema_version": "1.0",
   "source_type": "repo",
   "source": "OWNER/REPO",
   "slug": "repo-slug",
@@ -234,7 +233,7 @@ See `.claude/skills/shared/CONVENTIONS.md` Section 12 for schema contract.
   "candidates": [
     {
       "name": "Candidate Name",
-      "type": "pattern|knowledge|content|anti-pattern",
+      "type": "pattern|knowledge",
       "description": "What it is and why it matters",
       "novelty": "high|medium|low",
       "effort": "E0|E1|E2|E3",
@@ -242,7 +241,7 @@ See `.claude/skills/shared/CONVENTIONS.md` Section 12 for schema contract.
       "tags": ["architecture"]
     }
   ],
-  "last_synthesized_at": null,
+  "cross_repo_links": null,
 
   "metadata": {
     "url": "https://github.com/OWNER/REPO",
@@ -289,7 +288,7 @@ See `.claude/skills/shared/CONVENTIONS.md` Section 12 for schema contract.
     { "pattern": "SECURITY_FACADE", "confidence": "Medium", "evidence": "..." }
   ],
   "adoption_assessment": {
-    "verdict": "Trial|Adopt|Extract|Avoid",
+    "verdict": "full-mirror|experimental-subset|cherry-pick|don't-port-from",
     "verdict_score": 62,
     "dimensions": {
       "WR-01_stack_compatibility": {
@@ -347,7 +346,7 @@ See `.claude/skills/shared/CONVENTIONS.md` Section 12 for schema contract.
 | `summary`             | string | 2-3 sentence summary of what this source is and what was learned |
 | `creator_view`        | string | Full Creator View prose (from creator-view.md)                   |
 | `candidates`          | array  | All candidates from value-map.json in unified format             |
-| `last_synthesized_at` | string | ISO8601 or null — set by synthesis, not by handler               |
+| `cross_repo_links`    | array  | Stub for future `/synthesize` re-activation (default `null`); see Batch 1 #2 |
 
 **Repo-specific fields (optional — type-specific extensions):**
 
@@ -360,7 +359,7 @@ See `.claude/skills/shared/CONVENTIONS.md` Section 12 for schema contract.
 | `summary_bands.*`                    | object | 6-dimension summary: Security, Reliability, etc.          |
 | `absence_patterns`                   | array  | Objects with pattern name, confidence, and evidence       |
 | `adoption_assessment`                | object | Whole-repo adoption verdict + WR dimensions (see Sec 1.3) |
-| `adoption_assessment.verdict`        | string | Adopt / Trial / Extract / Avoid                           |
+| `adoption_assessment.verdict`        | string | full-mirror / experimental-subset / cherry-pick / don't-port-from |
 | `adoption_assessment.verdict_score`  | number | Weighted average of WR dimensions, 0-100                  |
 | `adoption_assessment.recommendation` | string | One-sentence adoption recommendation                      |
 
@@ -380,8 +379,7 @@ average. Display alongside overall band:
 
 ### 3.2 `findings.jsonl`
 
-One record per finding. Uses a lightweight analysis-native format. TDMS intake
-(routing option 2) transforms to TDMS-compatible format at intake time.
+One record per finding. Uses a lightweight analysis-native format.
 
 ```jsonl
 {
@@ -407,22 +405,6 @@ One record per finding. Uses a lightweight analysis-native format. TDMS intake
 | `title`          | string | Yes      | Short finding title                      |
 | `description`    | string | Yes      | Full description with evidence           |
 | `recommendation` | string | Yes      | Recommended action                       |
-
-**TDMS intake transform (routing option 2):**
-
-When the user selects "Send to TDMS", each finding is transformed to
-TDMS-compatible format before intake:
-
-| findings.jsonl field | TDMS field       | Transform                                    |
-| -------------------- | ---------------- | -------------------------------------------- |
-| `id`                 | `source_id`      | Prefixed: `repo-analysis-<slug>-<date>-F001` |
-| `severity`           | `severity`       | `high`→S1, `medium`→S2, `low`→S3, `info`→S3  |
-| `title`              | `title`          | Direct copy                                  |
-| `detail`             | `description`    | Direct copy                                  |
-| `recommendation`     | `recommendation` | Direct copy                                  |
-| (derived)            | `category`       | Derived from dimension prefix                |
-| (derived)            | `status`         | Always `NEW`                                 |
-| (derived)            | `source`         | `repo-analysis-<slug>-<YYYY-MM-DD>`          |
 
 ### 3.3 `value-map.json`
 
@@ -468,44 +450,15 @@ user acts on candidates.
       "effort": "E0|E1",
       "novelty": "High|Med|Low"
     }
-  ],
-  "contentCandidates": [
-    {
-      "name": "MCP backend tutorial",
-      "description": "Specific content item with direct home applicability",
-      "source": "guides/mcp-backend.md",
-      "relevance": "high|medium|low",
-      "effort": "E0|E1",
-      "novelty": "High|Med|Low",
-      "url": "https://example.com/resource"
-    }
-  ],
-  "antiPatternCandidates": [
-    {
-      "name": "CELEBRITY_STAGNATION",
-      "description": "Cautionary lesson — what NOT to replicate",
-      "source": "Observed pattern in governance model",
-      "relevance": "high|medium|low",
-      "effort": "E0",
-      "novelty": "High|Med|Low"
-    }
-  ],
-  "cross_repo_connections": [
-    {
-      "target_repo": "owner/name",
-      "connection_type": "shared-pattern|complementary|overlapping-finding|referenced",
-      "detail": "..."
-    }
-  ],
-  "related_repos": [
-    {
-      "url": "https://github.com/owner/repo",
-      "relationship": "inspired-by|uses|similar-to|contrast|extends|referenced-in",
-      "discovery_context": "How this relationship was discovered"
-    }
   ]
 }
 ```
+
+> Content candidates and anti-pattern candidates were dropped from the JASON-OS
+> port (PORT_DECISIONS.md Batch 2 #6 + #10). Content was tied to
+> curated-list-only outputs that were cut entirely; anti-pattern fed an
+> EXTRACTIONS.md flow we no longer have. Cheap re-add later if either earns its
+> place.
 
 **Required fields:**
 
@@ -524,14 +477,6 @@ user acts on candidates.
 | `personal_fit_score` | number | Personal fit to active projects (0-100). Sprint-dependent                                                   |
 | `fit_class`          | string | Derived: `active-sprint` (fit≥60), `park-for-later` (fit<60, obj≥60), `evergreen` (both≥40), `not-relevant` |
 | `notes`              | string | Portability concerns, adaptation requirements, context                                                      |
-
-**Related repos (discovered during analysis):**
-
-| Field                               | Type   | Description                                                |
-| ----------------------------------- | ------ | ---------------------------------------------------------- |
-| `related_repos[].url`               | string | GitHub URL of related repo                                 |
-| `related_repos[].relationship`      | string | inspired-by/uses/similar-to/contrast/extends/referenced-in |
-| `related_repos[].discovery_context` | string | How this relationship was discovered                       |
 
 **Extraction tracking fields (added during Extract routing flow):**
 
@@ -627,229 +572,6 @@ expected by deep-plan's DIAGNOSIS.md injection. Contains human-readable summary
 of all findings, dimension bands, absence patterns, and value map highlights.
 This is the primary display artifact shown inline after each phase.
 
-### 3.6 Extraction Persistence Artifacts
-
-Three artifacts track extraction decisions and outcomes across repos.
-
-#### 3.6.1 Per-Candidate Extraction Result
-
-**Location:** `.research/analysis/<slug>/extractions/<candidate-slug>.json`
-
-Written when user acts on a candidate in the Extract routing flow.
-
-```json
-{
-  "candidate": "HARNESS.md Methodology",
-  "repo": "HKUDS/CLI-Anything",
-  "scan_date": "2026-04-03",
-  "status": "selected",
-  "decision": "extract|skip|defer",
-  "decision_date": "2026-04-03",
-  "decision_notes": "7-phase SOP applicable to JASON-OS agent-native tooling",
-  "source_files": [
-    "cli-anything-plugin/HARNESS.md",
-    "cli-anything-plugin/guides/"
-  ],
-  "extracted_to": "docs/reference/HARNESS_METHODOLOGY.md",
-  "adaptation_notes": "Adapted Phase 3 examples for TypeScript/Node",
-  "dependencies_added": [],
-  "follow_up": "Evaluate SKILL.md format for sonash skill files"
-}
-```
-
-| Field                | Type   | Required | Description                                      |
-| -------------------- | ------ | -------- | ------------------------------------------------ |
-| `candidate`          | string | Yes      | Name from value-map.json                         |
-| `repo`               | string | Yes      | Source repo identifier                           |
-| `scan_date`          | string | Yes      | Date of analysis that found this candidate       |
-| `status`             | string | Yes      | `selected`, `extracted`, `integrated`, `skipped` |
-| `decision`           | string | Yes      | `extract`, `skip`, or `defer`                    |
-| `decision_date`      | string | Yes      | ISO 8601 date of decision                        |
-| `decision_notes`     | string | Yes      | Reasoning for the decision                       |
-| `source_files`       | array  | No       | Specific files in source repo                    |
-| `extracted_to`       | string | No       | Destination path in our repo (if extracted)      |
-| `adaptation_notes`   | string | No       | What was changed during extraction               |
-| `dependencies_added` | array  | No       | New dependencies required                        |
-| `follow_up`          | string | No       | Remaining work or related investigations         |
-
-#### 3.6.2 Cross-Entity Extraction Journal
-
-**Location:** `.research/extraction-journal.jsonl` (canonical root path)
-
-Append-only log across ALL analyzed entities (repos and websites). One line per
-extraction decision. Uses unified v2.0 schema shared with website-analysis.
-Legacy files at `.research/analysis/extraction-journal.jsonl` have been removed.
-All data lives at the canonical location only.
-
-```jsonl
-{
-  "schema_version": "2.0",
-  "source_type": "repo",
-  "source": "HKUDS/CLI-Anything",
-  "candidate": "HARNESS.md Methodology",
-  "type": "pattern",
-  "decision": "extract",
-  "decision_date": "2026-04-03",
-  "extracted_to": "docs/reference/HARNESS_METHODOLOGY.md",
-  "extracted_at": "2026-04-03",
-  "notes": "7-phase SOP for agent-native CLI wrapping.",
-  "novelty": "high",
-  "effort": "E0",
-  "relevance": "high"
-}
-```
-
-| Field            | Type   | Required | Description                                      |
-| ---------------- | ------ | -------- | ------------------------------------------------ |
-| `schema_version` | string | Yes      | Schema version (`"2.0"`)                         |
-| `source_type`    | string | Yes      | `"repo"` or `"website"`                          |
-| `source`         | string | Yes      | Repo name or URL                                 |
-| `candidate`      | string | Yes      | Candidate name from value-map                    |
-| `type`           | string | Yes      | content/pattern/tool/knowledge/anti-pattern/etc. |
-| `decision`       | string | Yes      | extract/defer/skip/investigate                   |
-| `decision_date`  | string | Yes      | ISO date when decision was made                  |
-| `extracted_to`   | string | No       | Destination path (null if not yet extracted)     |
-| `extracted_at`   | string | No       | ISO date when extraction completed               |
-| `notes`          | string | No       | Optional context about the candidate             |
-| `novelty`        | string | Yes      | high/medium/low                                  |
-| `effort`         | string | Yes      | E0/E1/E2/E3                                      |
-| `relevance`      | string | Yes      | high/medium/low                                  |
-
-#### 3.6.3 `EXTRACTIONS.md` (Human-Readable Summary)
-
-**Location:** `.research/EXTRACTIONS.md` (canonical root path only). Legacy
-files at `.research/analysis/EXTRACTIONS.md` have been removed.
-
-Auto-regenerated from `extraction-journal.jsonl` after each Extract routing
-flow. Grouped by status for quick scanning.
-
-```markdown
-# Extraction Candidates — Cross-Repo Summary
-
-Generated: 2026-04-05 | Total: 7 candidates across 1 repo
-
-## Extracted (0)
-
-_None yet._
-
-## Deferred (7)
-
-### HKUDS/CLI-Anything (7 candidates) -- Verdict: Trial (62)
-
-| Candidate              | Novelty | Effort | Fit             | Notes                                                       |
-| ---------------------- | ------- | ------ | --------------- | ----------------------------------------------------------- |
-| HARNESS.md Methodology | High    | E0     | [ACTIVE-SPRINT] | 7-phase SOP for agent-native CLI wrapping.                  |
-| SKILL.md Format        | High    | E0     | [PARK]          | AI-discoverable skill definition. Compare against existing. |
-| Plugin Marketplace     | High    | E2     | [PARK]          | Brilliant but not current sprint.                           |
-
-_(truncated for brevity)_
-
-#### Per-Repo Detail: HKUDS/CLI-Anything
-
-| Candidate              | Novelty | Effort | Obj | Fit | Notes                                       |
-| ---------------------- | ------- | ------ | --- | --- | ------------------------------------------- |
-| HARNESS.md Methodology | High    | E0     | 92  | 78  | Directly applicable to JASON-OS agent work. |
-| SKILL.md Format        | High    | E0     | 88  | 25  | High objective, low fit to current sprint.  |
-| Plugin Marketplace     | High    | E2     | 85  | 30  | Brilliant but not current sprint.           |
-
-## Skipped (3)
-
-...
-```
-
-**Fit badge derivation rules** (see Section 14.7 for full derivation table):
-
-- `personal_fit_score >= 60` --> `[ACTIVE-SPRINT]`
-- `personal_fit_score < 60 AND objective_score >= 60` --> `[PARK]`
-- `objective_score >= 40 AND personal_fit_score >= 40` --> `[EVERGREEN]`
-- Otherwise --> no badge (low value)
-
-### 3.7 `mined-links.jsonl`
-
-**Location:** `.research/analysis/<slug>/mined-links.jsonl`
-
-One record per link extracted during the Link Mining Pipeline (Section 16).
-Produced conditionally when `repo_type` is `curated-list` or `registry`.
-Supports incremental deepening: Depth 0 entries have `confidence: "low"`,
-upgraded to `"high"` after Depth 1 fetching.
-
-```jsonl
-{
-  "schema_version": "2.0",
-  "title": "FastAPI",
-  "url": "https://github.com/tiangolo/fastapi",
-  "category": "Web Frameworks > Python",
-  "source_line": "- [FastAPI](https://github.com/tiangolo/fastapi) - Modern, fast web framework for building APIs with Python.",
-  "description": "Modern, fast web framework for building APIs with Python.",
-  "objective_score": 88,
-  "personal_fit_score": 35,
-  "personal_fit_projects": [
-    "sonash-v0"
-  ],
-  "confidence": "low|high",
-  "depth": 0,
-  "fetch_status": "not_fetched|success|failed|rate_limited",
-  "tags": [
-    "python",
-    "web-framework",
-    "async"
-  ],
-  "notes": "Optional analyst notes"
-}
-```
-
-**Field definitions:**
-
-| Field                   | Type   | Required | Description                                                      |
-| ----------------------- | ------ | -------- | ---------------------------------------------------------------- |
-| `title`                 | string | Yes      | Link title (from markdown text or fetched page title)            |
-| `url`                   | string | Yes      | Target URL                                                       |
-| `category`              | string | Yes      | Category from source repo's taxonomy (heading-based)             |
-| `source_line`           | string | Yes      | Raw markdown line where link was found                           |
-| `description`           | string | Yes      | Description (from markdown context or fetched meta)              |
-| `objective_score`       | number | Yes      | Context-independent quality/relevance score (0-100)              |
-| `personal_fit_score`    | number | Yes      | Fit to active projects (0-100), scored against home context      |
-| `personal_fit_projects` | array  | Yes      | Which active projects this link is relevant to                   |
-| `confidence`            | string | Yes      | `"low"` (Depth 0, metadata only) or `"high"` (Depth 1+, fetched) |
-| `depth`                 | number | Yes      | 0 (parsed), 1 (HEAD+selective fetch), 2 (targeted deep-dive)     |
-| `fetch_status`          | string | Yes      | `not_fetched`, `success`, `failed`, or `rate_limited`            |
-| `tags`                  | array  | Yes      | Descriptive tags for filtering and synthesis                     |
-| `notes`                 | string | No       | Optional analyst notes or context                                |
-
-### 3.8 `reading-chain.jsonl`
-
-**Location:** `.research/reading-chain.jsonl` (canonical root path, cross-repo,
-NOT per-slug). Legacy files at `.research/analysis/reading-chain.jsonl` remain
-valid
-
-Append-only log of relationships between analyzed repos. Populated during Phase
-4 (Creator View) and Phase 6 (Value Map) when cross-repo relationships are
-discovered. Consumed by the `/synthesize` skill for reading chain generation and
-cross-repo knowledge maps.
-
-```jsonl
-{
-  "schema_version": "2.0",
-  "from_repo": "sindresorhus/awesome-nodejs",
-  "to_repo": "tiangolo/fastapi",
-  "relationship": "referenced-in",
-  "discovery_context": "Listed in awesome-nodejs Web Frameworks section",
-  "discovered_during": "sindresorhus/awesome-nodejs scan",
-  "date": "2026-04-05"
-}
-```
-
-**Field definitions:**
-
-| Field               | Type   | Required | Description                                                                 |
-| ------------------- | ------ | -------- | --------------------------------------------------------------------------- |
-| `from_repo`         | string | Yes      | Source repo (`owner/repo` format)                                           |
-| `to_repo`           | string | Yes      | Target repo (`owner/repo` format)                                           |
-| `relationship`      | string | Yes      | `inspired-by`, `uses`, `similar-to`, `contrast`, `extends`, `referenced-in` |
-| `discovery_context` | string | Yes      | How this relationship was discovered                                        |
-| `discovered_during` | string | Yes      | Which repo scan discovered this (`owner/repo scan`)                         |
-| `date`              | string | Yes      | ISO 8601 date of discovery                                                  |
-
 ---
 
 ## 4. Scoring Bands
@@ -915,14 +637,14 @@ User override at scan time: `--lens=adoption|creator`
 
 ### 4.4 Verdict Tables
 
-**Adoption lens verdicts:**
+**Adoption lens verdicts** (JASON-OS port-decision labels):
 
-| Score | Verdict | Interpretation                                           |
-| ----- | ------- | -------------------------------------------------------- |
-| 75+   | Adopt   | Integrate as-is, benefits clearly outweigh costs         |
-| 55-74 | Trial   | Worth a proof-of-concept, some concerns to address first |
-| 30-54 | Extract | Don't adopt whole -- cherry-pick valuable parts instead  |
-| 0-29  | Avoid   | Costs outweigh benefits, build or find alternatives      |
+| Score | Verdict             | Interpretation                                                  |
+| ----- | ------------------- | --------------------------------------------------------------- |
+| 75+   | full-mirror         | Mirror wholesale; benefits clearly outweigh costs               |
+| 55-74 | experimental-subset | Try a bounded subset; some concerns to address before adopting  |
+| 30-54 | cherry-pick         | Don't port wholesale -- extract individual parts that fit       |
+| 0-29  | don't-port-from     | Costs outweigh benefits, build native or find alternatives      |
 
 **Creator lens verdicts:**
 
@@ -1333,8 +1055,10 @@ special chars). Examples:
 
 ### Home Repo Guard
 
-- Exact URL match on `jasonmichaelbell78-creator/sonash-v0`
-- On match: warn user and offer redirect to `/audit-comprehensive`
+- Exact URL match on `jasonmichaelbell78-creator/JASON-OS`
+- On match: error with explanation — home-repo audit is not yet ported to
+  JASON-OS; analyze a different repo or use manual introspection until a
+  dedicated audit skill lands
 - Do NOT proceed with repo-analysis on the home repo
 
 ### Error Handling
@@ -1612,11 +1336,18 @@ The most important section. Opinionated, specific, actionable.
 What you could LEARN from deeper engagement. Not code to extract — understanding
 to gain.
 
-**Tier structure:**
+**Port-priority structure** (JASON-OS-native labels per PORT_DECISIONS.md
+Batch 2 #9d):
 
-- **Tier 1: Directly relevant** — connects to active projects, current sprint
-- **Tier 2: Deepens understanding** — builds systems knowledge, mental models
-- **Tier 3: Interesting but lower priority** — worth knowing, not urgent
+- **port-now: Directly relevant** — connects to active projects, current sprint
+  (was Tier 1 / T1 in SoNash)
+- **port-when-needed: Deepens understanding** — builds systems knowledge, mental
+  models (was Tier 2 / T2)
+- **note-only: Interesting but lower priority** — worth knowing, not urgent
+  (was Tier 3 / T3)
+
+Cross-repo conversation mapping: `T1 ↔ port-now`, `T2 ↔ port-when-needed`,
+`T3 ↔ note-only`.
 
 Added to `value-map.json` alongside pattern candidates. Knowledge candidates use
 extraction effort E0 (read/study) or E1 (experiment/prototype).
@@ -1628,7 +1359,7 @@ discarding. For each, explain why it scored high objectively and why it doesn't
 fit the current sprint. Frame as "worth parking, not discarding" with specific
 reasoning for why each is high-objective.
 
-**Fit badge derivation (used in value-map.json and EXTRACTIONS.md):**
+**Fit badge derivation (used in value-map.json):**
 
 | Condition                                            | Badge             |
 | ---------------------------------------------------- | ----------------- |
@@ -1709,70 +1440,6 @@ concurrent. See Section 10 for agent allocation.
 4. Bot-commit filtering (exclude dependabot, renovate, etc.)
 5. Monthly aggregation for temporal fingerprint (Section 7)
 
-### 15.4 Content Evaluation Detail (Phase 3.5)
-
-> Absorbed from SKILL.md v5.0 to keep SKILL.md under ~330 lines. Phase 3.5 was
-> numbered 4b prior to v5.0.
-
-Evaluate the repo's embedded content for specific relevance to home context.
-Runs BEFORE Creator View (Phase 4) and feeds into it. Applies to ALL repo types.
-
-#### 15.4.1 Curated-List / Registry Repos
-
-The repo's value IS its links. Evaluate them, not just count them.
-
-- **Depth 0 (MUST):** Parse entries, classify by category, score categories
-  against home context (SoNash features, JASON-OS domains, current roadmap).
-- **Depth 1 (MUST for medium/high categories):** Evaluate individual entries
-  within relevant categories. For each: name, what it does, auth requirements,
-  specific applicability to home work. Filter structured metadata (auth type,
-  HTTPS, CORS) to surface zero-friction integration candidates.
-- **Depth 2 (interactive gate):** Targeted deep-dive on selected entries. Fetch
-  docs, test endpoints, evaluate quality. Gate: _"N entries look relevant.
-  Deep-dive? [Y/N/Select]"_
-
-Output to `mined-links.jsonl` (curated-list) or `content-eval.jsonl` (other).
-See §16 for link mining spec. If Depth 1 fetch fails for >50% of links, abort
-Depth 1 and present Depth 0 results.
-
-#### 15.4.2 Framework / Library / Tool Repos
-
-Evaluate internal documentation artifacts identified in Deep Read (Phase 2b):
-
-- **Guides and tutorials:** Read each. Note which are relevant to home work.
-- **Per-module docs** (e.g., 37 SKILL.md files in cli-anything): Sample
-  representative examples. Compare against home equivalents. Identify the
-  best-built and worst-built examples.
-- **Embedded SKILL.md / instruction files:** Read and compare against home
-  SKILL.md format. Note structural differences.
-
-#### 15.4.3 Research / Experimental Repos
-
-Evaluate referenced external resources:
-
-- **Papers / arXiv references:** Summarize relevance. Note if the paper's
-  methodology applies to home work.
-- **Linked repos** (forks, parent repos, related projects): Catalog with
-  one-line relevance assessment.
-- **Datasets / models referenced:** Note if accessible and applicable.
-- **Notebooks:** Read for methodology patterns, not just code.
-
-#### 15.4.4 Output Schema
-
-Write `content-eval.jsonl` with one entry per evaluated item:
-
-```json
-{
-  "category": "guide|api|tutorial|paper|repo|notebook|skill-file",
-  "name": "...",
-  "url": "...",
-  "relevance": "high|medium|low|none",
-  "applicability": "...",
-  "home_connection": "..."
-}
-```
-
-This output feeds directly into Creator View Section 2.
 
 ### 15.5 Coverage Audit Detail (Phase 6b)
 
@@ -1819,197 +1486,15 @@ Analyze all / Select categories / Skip? [A/S/N]
 #### 15.5.3 User Decision Handling
 
 - **Analyze** → Run additional analysis, update affected artifacts
-  (creator-view.md, value-map.json, content-eval.jsonl), re-verify.
+  (creator-view.md, value-map.json), re-verify.
 - **Select categories** → Same as Analyze, but only for chosen categories.
 - **Skip** → Record skipped items in `coverage-audit.jsonl` with
-  `user_decision: "skip"`. Do NOT silently discard — the record ensures the next
-  run or `/synthesize` knows what was deferred.
-
-### 15.6 Cross-Repo Extraction Tracking Detail
-
-> Absorbed from SKILL.md v5.0.
-
-After writing value-map.json, update both cross-repo extraction files.
-
-#### 15.6.1 `extraction-journal.jsonl` Schema (v2.0, unified with website-analysis)
-
-Machine-readable, one JSON object per line:
-
-```json
-{
-  "schema_version": "2.0",
-  "source_type": "repo",
-  "source": "owner/name",
-  "candidate": "Name",
-  "type": "pattern|knowledge|content|anti-pattern|tool",
-  "decision": "defer|extract|skip|investigate",
-  "decision_date": "YYYY-MM-DD",
-  "extracted_to": null,
-  "extracted_at": null,
-  "notes": "...",
-  "novelty": "high|medium|low",
-  "effort": "E0|E1|E2|E3",
-  "relevance": "high|medium|low"
-}
-```
-
-Remove stale entries for the repo being re-analyzed. Write fresh entries for all
-candidates in value-map.json.
-
-#### 15.6.2 `EXTRACTIONS.md` Regeneration
-
-Human-readable cross-repo summary with Table of Contents. **Do NOT edit
-manually.** After updating the journal, run:
-
-```bash
-node scripts/cas/generate-extractions-md.js
-```
-
-This regenerates the entire file from the journal including header stats, TOC
-(source, type, candidate counts by category), and per-source tables.
-
-#### 15.6.3 Canonicality
-
-- `extraction-journal.jsonl` is the **data source** — always updated first.
-- `EXTRACTIONS.md` is the **generated reading interface** — always regenerated
-  from the journal, never manually appended.
-
-Self-audit verifies: `grep -c "$SOURCE" .research/extraction-journal.jsonl` >= 1
-AND the generator script output confirms the source is included in
-EXTRACTIONS.md.
+  `user_decision: "skip"`. Do NOT silently discard — the record ensures the
+  next run knows what was deferred.
 
 ---
 
-## 16. Link Mining Pipeline
-
-Conditional phase (Phase 4b in SKILL.md) that runs only when `repo_type` is
-`curated-list` or `registry`. Extracts, scores, and optionally fetches links
-found in the repository's markdown files. Output: `mined-links.jsonl` (Section
-3.7).
-
-### 16.1 Phase 4b Process (10 Steps)
-
-```
-4b.1  Parse markdown structure --> extract all links with context
-4b.2  Categorize links using source repo's own category structure
-4b.3  Score at Depth 0 (category match + keyword overlap with home context)
-4b.4  Write mined-links.jsonl with confidence: "low"
-4b.5  Interactive gate: "[N] links extracted. Fetch and verify? ~[M] min. [y/N]"
-4b.6  If yes --> Depth 1: HEAD-first (5 req/sec), selective full fetch (1 req/sec)
-4b.7  Update mined-links.jsonl: confidence --> "high", fetch_status updated
-4b.8  Present top-N by personal_fit_score with [ACTIVE-SPRINT]/[PARK] badges
-4b.9  Interactive gate: "Targeted deep-dive on specific links? [select/N]"
-4b.10 If yes --> Depth 2: full fetch + analysis on selected links only
-```
-
-### 16.2 Markdown Parsing Rules
-
-Three link formats detected, in order of prevalence in curated lists:
-
-**List format** (most common in awesome-lists):
-
-```markdown
-- [Title](URL) - Description
-- [Title](URL) -- Description
-```
-
-**Table format:**
-
-```markdown
-| Name    | URL                                 | Description          |
-| ------- | ----------------------------------- | -------------------- |
-| FastAPI | https://github.com/tiangolo/fastapi | Modern web framework |
-```
-
-**Heading-based categories:**
-
-```markdown
-## Category Name
-
-### Subcategory Name
-
-- [Title](URL) - Description
-```
-
-The source repo's category taxonomy is preserved in the `category` field of
-`mined-links.jsonl`. Heading hierarchy maps to category path (e.g.,
-`"Web Frameworks > Python"`).
-
-### 16.3 Depth 1 -- HEAD-First Strategy
-
-Designed for efficiency when processing 500-1000+ links from large curated
-lists. Estimated time: ~5 minutes for 850 links.
-
-1. **Group links by domain.** Links to the same domain share rate limit budget.
-2. **HEAD request at 5 req/sec**, max 5 concurrent per domain. Record:
-   - HTTP status code
-   - Content-Type header
-   - Content-Length header
-   - Title from headers (if available)
-3. **Filter for full fetch.** Only full-fetch links where:
-   - Depth 0 `personal_fit_score >= 40`, OR
-   - Depth 0 `objective_score >= 70`
-4. **Full fetch filtered links at 1 req/sec.** Extract:
-   - Page title (from `<title>` tag)
-   - Meta description
-   - Open Graph tags (`og:title`, `og:description`, `og:image`)
-   - First 500 characters of body text
-5. **Re-score with enriched data.** Update `confidence: "high"` in
-   `mined-links.jsonl`.
-
-### 16.4 Depth 2 -- Targeted Deep-Dive
-
-User selects specific links from Depth 1 results. For each selected link:
-
-1. Full page fetch and analysis
-2. Follow internal links one level (links within the same domain)
-3. Write enriched findings to `mined-links.jsonl` with `depth: 2`
-
-### 16.5 Home Context for Link Scoring
-
-Same loading order as Creator View (Section 14.2):
-
-1. `SESSION_CONTEXT.md` (primary) -- active sprint items populate
-   `personal_fit_projects[]`
-2. `ROADMAP.md` (secondary) -- project direction for medium-term relevance
-3. `CLAUDE.md` -- stack constraints for compatibility filtering
-
 ---
-
-## 17. Cross-Repo Awareness
-
-Lightweight cross-referencing during per-repo analysis. Not full synthesis
-(that's `/synthesize`) -- just awareness of what's already been analyzed and how
-repos relate.
-
-### 17.1 During Phase 4 (Creator View)
-
-1. Check `.research/analysis/*/value-map.json` for existing analyses
-2. If matches found (similar `ecosystem_tags`, overlapping candidates):
-   - Add cross-reference notes in Creator View Section 2 (What's Relevant)
-   - Example: "This repo's rate limiter pattern is similar to what you found in
-     fastapi/fastapi (analyzed 2026-03-15). Their approach differs in..."
-3. Populate `related_repos[]` in `value-map.json` for any relationships
-   discovered
-
-### 17.2 During Phase 6 (Value Map Generation)
-
-1. Append to `.research/analysis/reading-chain.jsonl` (Section 3.8) for any repo
-   relationships discovered during analysis
-2. Check `reading-chain.jsonl` for existing chains that this repo extends
-3. If this repo was referenced by a previously-analyzed repo, note the
-   back-reference
-
-### 17.3 Synthesis Auto-Offer
-
-After analysis completion, if 3+ repos have been analyzed:
-
-```
-"You've analyzed [N] repos. Cross-repo synthesis available via /synthesize.
-Run now? [y/N]"
-```
-
-Check: `ls .research/analysis/*/analysis.json | wc -l >= 3`
 
 ---
 

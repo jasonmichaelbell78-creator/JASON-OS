@@ -438,7 +438,7 @@ When Cat 12 scores **<7** (no self-audit, structural-only, or missing key
 dimensions), the canonical Phase 4 implementation is:
 
 1. **Create** `scripts/skills/<target-skill>/self-audit.js` per
-   [SELF_AUDIT_PATTERN.md](../_shared/SELF_AUDIT_PATTERN.md). Use
+   [SELF_AUDIT_PATTERN.md](../shared/SELF_AUDIT_PATTERN.md). Use
    `scripts/skills/skill-audit/self-audit.js` as the template; replace
    domain-specific dimension checks. This gives MUST dimensions 1-5 + 8-9 (and
    6-7 for Complex tier) automated coverage out of the box.

@@ -1,0 +1,229 @@
+{
+  "id": "aac0ad53-868e-4039-94e5-01ebe248ba35",
+  "schema_version": "1.0",
+  "source_type": "repo",
+  "source": "jdpolasky/ai-chief-of-staff",
+  "slug": "ai-chief-of-staff",
+  "title": "Chief of Staff — personal operating system on Claude Code + Obsidian, framed as ADHD prosthetic",
+  "analyzed_at": "2026-04-27T06:30:00Z",
+  "depth": "standard",
+  "tags": [
+    "claude-code",
+    "obsidian",
+    "personal-os",
+    "memory-management",
+    "adhd",
+    "markdown-rag",
+    "skill-system",
+    "jason-os-relevant"
+  ],
+  "scoring": {
+    "quality_band": "Excellent",
+    "quality_score": 84,
+    "personal_fit_band": "Healthy",
+    "personal_fit_score": 78,
+    "classification": "park-for-later"
+  },
+  "summary": "A personal operating system on Claude Code + Obsidian, framed as an ADHD prosthetic. Five skills (/setup, /start, /sync, /wrap, /audit) drive a daily loop with persistent memory in .claude/memory/. Lived-in by the author across 100+ sessions before publication. Reference-grade documentation (~3,500+ lines of prose, ~200 lines of code). Adoption verdict: don't-port-from (different problem domain). Creator-lens classification: park-for-later — 13 knowledge candidates and 7 patterns/principles surfaced; 4 are port-now (rubber-stamp danger warning, search-vs-read tenet, tool-cost ranking + cheapest-tool-first, don't-batch-install discipline).",
+  "creator_view": "Full creator view at .research/analysis/ai-chief-of-staff/creator-view.md. Six MUST-produce sections: What This Repo Understands (with blindspots), What's Relevant To Your Work, Where Your Approach Differs, The Challenge, Knowledge Candidates, What's Worth Avoiding. Note: an earlier draft skipped 4 artifacts under a 'JASON-OS doesn't use Obsidian' heuristic the skill text does not endorse; user reversed every skip and the rewritten view incorporates the full coverage. SKILL.md v1.1 hard-gates Coverage Audit to prevent the failure recurring.",
+  "candidates": [
+    {
+      "name": "Memory firings log + decay analysis with bootstrap gate",
+      "type": "pattern",
+      "description": "Append one line per memory-that-fired to a session-indexed log; decay analysis surfaces dormant memories; analysis gated on 10 distinct sessions to avoid false signal during bootstrap. Concrete cost: one append per turn. Applies when JASON-OS auto-memory exceeds ~30-40 entries OR stale-memory drift becomes visible. Source: docs/memory.md, .claude/skills/audit/SKILL.md, .claude/skills/wrap/SKILL.md.",
+      "novelty": "medium",
+      "effort": "E1",
+      "relevance": "medium",
+      "tags": ["memory-management", "decay-analysis", "bootstrap-gate", "jason-os-relevant"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/memory.md"
+    },
+    {
+      "name": "Two-tier user-readable vs machinery file separation",
+      "type": "design-principle",
+      "description": "User-facing daily-read files at top level (Command Center, To-Do); machinery (session counter, hot context, append-only logs) lives behind a single folder boundary (_system/). Applies when JASON-OS grows a user-facing layer beyond CLAUDE.md and SESSION_CONTEXT.md. Source: ARCHITECTURE.md §Technical, docs/protocols.md.",
+      "novelty": "medium",
+      "effort": "E1",
+      "relevance": "medium",
+      "tags": ["file-organization", "design-principle", "jason-os-relevant"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/ARCHITECTURE.md"
+    },
+    {
+      "name": "/audit skill as scheduled aggregate cross-system check",
+      "type": "pattern",
+      "description": "Read-mostly periodic check (every 7 sessions). Six dimensions: redundant memory, stale memory, MEMORY.md index drift, broken wikilinks, skill-vs-system drift, gated decay analysis. Surfaces findings; user picks fixes. Applies when JASON-OS skill or rule count grows past ~20 and aggregate drift becomes invisible. Source: .claude/skills/audit/SKILL.md.",
+      "novelty": "low",
+      "effort": "E1",
+      "relevance": "medium",
+      "tags": ["audit", "drift-detection", "skill-system", "jason-os-relevant"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/.claude/skills/audit/SKILL.md"
+    },
+    {
+      "name": "Setup skill as runnable first-time interview",
+      "type": "pattern",
+      "description": "Skippable conversational interview that ships a working system in 10 minutes; minimum 4 questions then explicit ship-it-or-keep-going gate. Edge cases for input variations handled inline. Applies if JASON-OS ships as a clone-and-run template (not a current goal). Source: .claude/skills/setup/SKILL.md.",
+      "novelty": "low",
+      "effort": "E1",
+      "relevance": "low",
+      "tags": ["wizard", "onboarding", "skill-system"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/.claude/skills/setup/SKILL.md"
+    },
+    {
+      "name": "Use-both / bridge-via-Claude-MCP architecture pattern",
+      "type": "architecture-pattern",
+      "description": "Personal layer in tool A + collaborative layer in tool B + Claude reading both via MCP. Maps onto SoNash + JASON-OS + cross-repo-movement-reframe split as a shape reference for how to think about the architecture. Source: docs/notion-vs-obsidian.md, docs/notion-vs-obsidian-deep.md.",
+      "novelty": "high",
+      "effort": "E0",
+      "relevance": "medium",
+      "tags": ["architecture", "mcp", "cross-repo", "jason-os-relevant"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/notion-vs-obsidian-deep.md"
+    },
+    {
+      "name": "ADAM coherence_monitor.py reading session JSONL for compaction events",
+      "type": "pattern",
+      "description": "Read Claude Code JSONL session files; detect compaction events; write alerts. JASON-OS has compact-restore.js as part of session-start hook layer. Pattern is to MONITOR session JSONL for state changes. Worth a future /repo-analysis on the ADAM repo itself. Source: CREDITS.md (script not shipped in this repo).",
+      "novelty": "medium",
+      "effort": "E1",
+      "relevance": "medium",
+      "tags": ["hooks", "compaction", "session-monitoring", "jason-os-relevant"],
+      "url": "https://github.com/ajsupplycollc/Adam"
+    },
+    {
+      "name": "Dual-mode docs (human + LLM coach)",
+      "type": "workflow-pattern",
+      "description": "README written so a human reads it as install steps OR pastes it into Claude and Claude walks them through. obsidian-setup.md has 'For the human reading this' section followed by 'Below the line is Claude's operating manual.' Applies if/when JASON-OS produces public-facing documentation. Source: README.md, docs/obsidian-setup.md.",
+      "novelty": "medium",
+      "effort": "E0",
+      "relevance": "low",
+      "tags": ["documentation", "writing-pattern"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/README.md"
+    },
+    {
+      "name": "Rubber-stamp danger for AI-drafted feedback memories",
+      "type": "knowledge",
+      "description": "When the model drafts a feedback memory after a correction, the same model that just made the mistake is now writing the rule meant to prevent it. Review like an intern wrote it; reject anything that sounds self-exculpating; tighten rules that try to cover more ground than the moment justified. Port-now: add one sentence to JASON-OS auto-memory writing instructions in CLAUDE.md (or a tenet memory). Source: docs/feedback-loop.md.",
+      "novelty": "high",
+      "effort": "E0",
+      "relevance": "high",
+      "tags": ["memory-management", "feedback-loop", "ai-failure-modes", "jason-os-relevant"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/feedback-loop.md"
+    },
+    {
+      "name": "Search-vs-read structural design tenet",
+      "type": "knowledge",
+      "description": "AI working through search-API-mediated workspace degrades on cross-source synthesis; AI with direct file-system access handles it. Articulates the access-pattern angle of JASON-OS's existing filesystem-verification posture. Port-now: pair with tenet_filesystem_verification.md or extend that tenet. Source: docs/notion-vs-obsidian.md, docs/notion-vs-obsidian-deep.md.",
+      "novelty": "high",
+      "effort": "E0",
+      "relevance": "high",
+      "tags": ["tenet", "filesystem-access", "design-principle", "jason-os-relevant"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/notion-vs-obsidian-deep.md"
+    },
+    {
+      "name": "Tool-cost ranking + cheapest-tool-first rule",
+      "type": "knowledge",
+      "description": "Ranking: raw file read < CLI shell exec < eval-via-CLI < MCP server. MCP servers cost tokens before any call (schemas load up-front). Rule: 'raw reads for known paths, CLI for search and listings, semantic only for cross-domain, MCP only when you need rendered view.' JASON-OS has ToolSearch for deferred MCP tools but no stated principle. Port-now: tenet candidate. Source: docs/obsidian-setup.md Layer 5.",
+      "novelty": "high",
+      "effort": "E0",
+      "relevance": "high",
+      "tags": ["tenet", "tool-selection", "context-budget", "jason-os-relevant"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/obsidian-setup.md"
+    },
+    {
+      "name": "Format-longevity / plain-text-outlives-the-tool",
+      "type": "knowledge",
+      "description": "Plain-text markdown is readable in any text editor in 30 years; proprietary databases aren't. Asymmetric migration pain. JASON-OS lives this implicitly; doesn't articulate it. Port-when-needed: tenet candidate when a substrate decision is up for debate. Source: docs/notion-vs-obsidian-deep.md.",
+      "novelty": "low",
+      "effort": "E0",
+      "relevance": "medium",
+      "tags": ["tenet", "format-longevity", "design-principle"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/notion-vs-obsidian-deep.md"
+    },
+    {
+      "name": "Compact four-laws crystallization as CLAUDE.md frame",
+      "type": "knowledge",
+      "description": "Four operating laws (Operating Constraint, Verification Protocol, Scope Discipline, Execute-Don't-Meta-Talk) with rationale and copy-pasteable instruction blocks. Compactness contrasts with JASON-OS CLAUDE.md §4's 16 behavioral guardrails — comparison data for a future trim pass. Source: docs/laws.md.",
+      "novelty": "low",
+      "effort": "E0",
+      "relevance": "medium",
+      "tags": ["claude-md", "behavioral-rules", "comparison-data"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/laws.md"
+    },
+    {
+      "name": "Don't-batch-install operational discipline",
+      "type": "knowledge",
+      "description": "'Add these one at a time. Verify each one works before adding the next. Never batch-install MCP servers and hope they all come up.' Generalizes to skill-porting, hook-adding, dependency-introduction. Port-now: add as cross-cutting rule in JASON-OS conventions or CLAUDE.md §4. Source: docs/obsidian-setup.md Layer 4.",
+      "novelty": "low",
+      "effort": "E0",
+      "relevance": "medium",
+      "tags": ["operational-discipline", "verification", "jason-os-relevant"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/obsidian-setup.md"
+    },
+    {
+      "name": "CREDITS.md as a maintained attribution protocol",
+      "type": "workflow-pattern",
+      "description": "Written rules for when attribution gets added; per-file docstring requirements for code-adapted vs concept-adapted; full MIT copyright + URL + path on code-adapted. Port-when-needed: when JASON-OS ↔ SoNash cross-pollination gets dense enough that informal attribution stops working. Source: CREDITS.md.",
+      "novelty": "medium",
+      "effort": "E1",
+      "relevance": "medium",
+      "tags": ["attribution", "lineage", "process-discipline", "jason-os-relevant"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/CREDITS.md"
+    },
+    {
+      "name": "Markdown-as-substrate scaling pattern (plugin-ecosystem inspiration)",
+      "type": "knowledge",
+      "description": "Obsidian plugin ecosystem (Dataview, Smart Connections, Templater, Tasks) demonstrates that typed-markdown corpus with frontmatter has more depth than 'a folder of notes': declarative queries, local-embedding semantic layer, logic-in-templates. Existence proof of where markdown-substrate systems can grow. Inspiration only; no port. Source: docs/obsidian-setup.md Layer 2.",
+      "novelty": "medium",
+      "effort": "E0",
+      "relevance": "low",
+      "tags": ["markdown-rag", "plugin-ecosystem", "scaling-patterns"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/obsidian-setup.md"
+    },
+    {
+      "name": "Editor-as-CLI tool-tier insight",
+      "type": "knowledge",
+      "description": "Author's hard-won lesson: 'I spent weeks doing MCP gymnastics that the CLI would have replaced in a single command.' Validates the cheapest-tool-first principle from a different angle. Source: docs/obsidian-setup.md Layer 3.",
+      "novelty": "medium",
+      "effort": "E0",
+      "relevance": "medium",
+      "tags": ["tool-selection", "operational-discipline"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/obsidian-setup.md"
+    },
+    {
+      "name": "Memory has decay; needs scheduled review with bootstrap gate",
+      "type": "knowledge",
+      "description": "Memory rules go stale. Two mechanisms: ambient (when a memory fires and the user disagrees, the rule gets revisited) + scheduled (every N sessions, surface dormant memories). Bootstrap gate prevents false-positive dormant flags during initial accumulation. Pairs conceptually with the firings-log pattern above. Source: docs/memory.md, docs/feedback-loop.md.",
+      "novelty": "medium",
+      "effort": "E0",
+      "relevance": "medium",
+      "tags": ["memory-management", "decay-analysis", "bootstrap-gate"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/docs/memory.md"
+    },
+    {
+      "name": "Adjacent-implementations listing as research-honesty discipline",
+      "type": "knowledge",
+      "description": "Naming peer projects with rationale per project so 'the field is named rather than strawmanned.' Inspirational shape for any future research-output framing. Source: CREDITS.md, ARCHITECTURE.md.",
+      "novelty": "medium",
+      "effort": "E0",
+      "relevance": "low",
+      "tags": ["research-discipline", "writing-pattern"],
+      "url": "https://github.com/jdpolasky/ai-chief-of-staff/blob/main/CREDITS.md"
+    }
+  ],
+  "cross_repo_links": null,
+  "metadata": {
+    "stars": 41,
+    "forks": 7,
+    "license": "MIT",
+    "primary_language": "Python",
+    "created_at": "2026-04-15T05:47:50Z",
+    "pushed_at": "2026-04-27T04:51:20Z",
+    "default_branch": "main",
+    "is_archived": false,
+    "is_fork": false,
+    "disk_usage_kb": 88,
+    "file_count": 31,
+    "repomix_token_count": 32468
+  },
+  "process_feedback": null,
+  "completed_at": null,
+  "current_phase": "phase-6c-tags-complete-pending-self-audit"
+}

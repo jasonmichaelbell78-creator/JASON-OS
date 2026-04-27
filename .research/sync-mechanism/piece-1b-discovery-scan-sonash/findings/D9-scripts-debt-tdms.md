@@ -3,7 +3,7 @@
 **Agent:** D9
 **Profile:** codebase
 **Date:** 2026-04-18
-**Scope:** `/c/Users/jason/Workspace/dev-projects/sonash-v0/scripts/debt/` (28 files)
+**Scope:** `/c/Users/<user>/Workspace/dev-projects/sonash-v0/scripts/debt/` (28 files)
 
 ---
 

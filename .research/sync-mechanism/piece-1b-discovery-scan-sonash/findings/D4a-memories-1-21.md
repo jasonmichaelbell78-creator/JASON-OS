@@ -3,7 +3,7 @@
 **Agent:** D4a
 **Profile:** codebase
 **Date:** 2026-04-18
-**Scope:** `~/.claude/projects/C--Users-jason-Workspace-dev-projects-sonash-v0/memory/` — alphabetical positions 1–21
+**Scope:** `~/.claude/projects/C--Users-<user>-Workspace-dev-projects-sonash-v0/memory/` — alphabetical positions 1–21
 **Total memory files in repo:** 83
 **Files inventoried this slice:** 21
 

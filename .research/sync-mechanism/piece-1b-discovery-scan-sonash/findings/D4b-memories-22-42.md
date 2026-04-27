@@ -3,7 +3,7 @@
 **Agent:** D4b
 **Profile:** codebase
 **Date:** 2026-04-18
-**Scope:** `~/.claude/projects/C--Users-jason-Workspace-dev-projects-sonash-v0/memory/` lines 22–42 (alphabetical sort)
+**Scope:** `~/.claude/projects/C--Users-<user>-Workspace-dev-projects-sonash-v0/memory/` lines 22–42 (alphabetical sort)
 **Memory count:** 21
 **Files covered:** `feedback_no_blanket_count_labels.md` through `feedback_tdms_intake_path.md`
 

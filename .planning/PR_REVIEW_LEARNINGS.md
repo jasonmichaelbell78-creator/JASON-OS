@@ -1,5 +1,468 @@
 # PR Review Learnings
 
+#### Review #21: PR #12 Round 3 — SonarCloud cognitive complexity + Qodo R3 follow-ups (2026-04-27)
+
+**Source:** Mixed (SonarCloud + Qodo)
+**PR/Branch:** PR #12 / `fixes-42226` → `main`
+**Items:** 9 unique total — 1 SonarCloud cognitive-complexity (redaction script `main()` at 19 vs 15 cap), 8 Qodo code suggestions ranging importance 2-9. Net new — no R1/R2 ghosts.
+
+**Patterns Identified:**
+
+1. **Reviewers flag the "what" but the "why" sometimes lives in
+   surrounding prose.** R3 surfaced a real bug: the repomix command
+   in REFERENCE.md / SKILL.md never `cd`s into the cloned repo
+   before running, so following the literal command verbatim would
+   analyze the home repo instead of the target. The skill text said
+   "from the cloned directory" in prose, but the literal command
+   block is what an agent reads under time pressure. **Lesson: when
+   a markdown command depends on cwd, encode the cwd in the
+   command (`cd "<path>" &&`), not in the surrounding sentence.**
+   The instructional prose can disagree with the literal and the
+   literal wins.
+   - Root cause: ports / refactors of these command blocks have
+     iterated on flags (`--no-install`, `--compress`, etc.) and
+     output paths but never re-checked the cwd assumption that
+     was implicit in the original invocation.
+   - Prevention: mark any markdown command that relies on cwd with
+     an explicit `cd "<dir>" &&` prefix, even when adjacent prose
+     says where to run it.
+
+2. **Trust the reviewer's own importance score on suggestions.**
+   Three of the four R3 rejections were items where Qodo's own
+   self-rating was 2-3/10 with explicit "this would break things"
+   or "this is awkward" rationale embedded in the Why. Q3-S3
+   wanted explanatory text injected directly into a code block
+   (Qodo: "confusing"). Q3-S4 wanted symlink-escape protection
+   added to a one-shot local script (Qodo: "actual security risk
+   negligible"). Q3-S7 wanted relative paths in JSONL records
+   (Qodo: "would likely break tools relying on this specific path
+   format"). **The reviewer is telling us not to apply these — the
+   right move is to record the rejection citing the reviewer's
+   own caveat, not waste time evaluating from scratch.**
+
+3. **Cognitive-complexity refactors continue to follow the
+   "extract per-iteration body into a helper" pattern.** SC-1's
+   `main()` was at 19 vs 15 cap. Same shape as R1's three
+   refactors: outer loop over a list of things + inner per-item
+   classification + inner per-item logging + inner per-item
+   write. Extracting `processFile(rel)` returning
+   `{touched, occurrences}` plus two read-helpers
+   (`readUtf8OrNull`, `countOccurrences`) collapsed it well below
+   15. Same lesson as R1: when the loop body is more than a
+   couple statements, extract it. Keep the outer loop a thin
+   reduce.
+
+4. **Verification surfaces self-modifying-script hazards that
+   neither reviewer caught.** While running the dry-run to
+   confirm the SC-1 refactor preserved behavior, the dry-run
+   reported 17 replacements would land in the redaction script's
+   own file — its regex literals contain the username token by
+   design. In R2 the script was untracked when run, so
+   `git ls-files` skipped it. Now that it's committed, a future
+   non-dry-run would self-corrupt. Added a `SELF_REL` skip
+   guard. **Lesson: any script that walks tracked files and
+   contains literal patterns matching its own walk targets needs
+   an explicit self-skip.**
+
+**Resolution:**
+
+- Fixed: 5 items (+ 1 bonus self-skip guard caught during verification)
+  - SC-1 (cognitive complexity): refactored `main()` in the
+    redaction script. Extracted `readUtf8OrNull`,
+    `countOccurrences`, and `processFile(rel)` helpers.
+    `main()` is now a thin reduce over `processFile` results.
+  - Q3-S1 (repomix cwd bug, importance 9): added `cd "<clone-dir>"`
+    inside a `(...)` subshell to the repomix command in both
+    REFERENCE.md (§15.1) and SKILL.md (Phase 1). Without this,
+    the literal command would scan the home repo instead of the
+    target.
+  - Q3-S2 (sanitize unknown source_type log): wrap
+    `ctx.sourceType` in `String(...).replace(/[\r\n\x1b]/g, " ")`
+    before pushing into the warn message. Defends against
+    CR/LF/escape-sequence injection from a malformed
+    `analysis.json`.
+  - Q3-S5 (severity bucket inconsistency): trends.jsonl example
+    in REFERENCE.md used `S0/S1/S2/S3` but findings.jsonl schema
+    uses `high/medium/low/info`. Updated both the example and
+    the field-description table cell. Pre-existing port-time
+    drift, DAS=1.
+  - Q3-S6 (NUL-delimited file listing): switched
+    `git ls-files` to `git ls-files -z` with `\0` split in the
+    redaction script. Defends against repos with filenames
+    containing newlines.
+  - Bonus: SELF_REL skip guard in the redaction script — caught
+    during smoke-test of SC-1 + Q3-S6 fixes; the script would
+    otherwise rewrite its own regex literals on a future run
+    now that it's tracked in git.
+- Deferred: 0 items.
+- Rejected: 4 items
+  - Q3-S3 (inject explanatory prose into example code block):
+    Qodo's own caveat — "this snippet is a high-level markdown
+    instruction... making the change... confusing." The
+    "Both lenses always shown. Primary marked with [PRIMARY]"
+    framing is type-agnostic by design.
+  - Q3-S4 (realpathSync symlink-escape protection in redaction
+    script): Qodo's own importance 2/10 with rationale "this is
+    a one-shot historical script run locally by the developer,
+    making the actual security risk negligible." The script
+    walks `git ls-files` (only tracked files); symlinks would
+    have been caught at commit time.
+  - Q3-S7 (replace `~/.claude/projects/...` with relative paths
+    in JSONL memory records): Qodo's own importance 2/10 with
+    rationale "changing to a relative path would likely break
+    tools relying on this specific path format." The JSONL
+    records exist specifically to document where memory files
+    live on disk; relative paths defeat the purpose.
+  - Q3-S8 (replace `<user>` placeholder with `REDACTED_USER`):
+    `<user>` is the standard CLI/path-doc placeholder
+    convention and renders as literal text in GitHub-flavored
+    markdown (no recognized HTML tag). Switching would invalidate
+    the R2 mechanical-replacement commit and produce another
+    large diff for marginal gain. If a downstream tool ever
+    actually trips on the angle brackets we'd reconsider.
+
+**Key Learnings:**
+
+- **Markdown command literals win over surrounding prose.** When a
+  command depends on cwd, encode the `cd` in the command itself
+  rather than in the sentence above it. Skill text under time
+  pressure gets read literally.
+- **Reviewer self-ratings are signal, not noise.** Three of four
+  R3 rejections came with the reviewer's own 2-3/10 importance
+  score and embedded "this would break things" rationale. Trust
+  the score; record the reviewer's own caveat as the rejection
+  justification.
+- **Cognitive-complexity refactors follow a predictable shape.**
+  Outer loop + per-item classification/logging/write inside →
+  extract `processItem(...)` helper, collapse outer loop to a
+  thin reduce. Same pattern as R1's three refactors.
+- **Tracked status changes the safety profile of a one-shot
+  script.** A script that's safe to run when untracked can
+  self-corrupt once committed if it walks `git ls-files` and
+  contains its own walk targets in literals. Adding a
+  `SELF_REL` skip guard is cheap insurance.
+- **Defense-in-depth on log sinks pays off in
+  audit/verification scripts.** The `ctx.sourceType` sanitization
+  protects the audit's terminal output from a malformed
+  `analysis.json` containing CR/LF or escape sequences. Cheap,
+  preventive, no behavioral change on the happy path.
+
+---
+
+#### Review #20: PR #12 Round 2 — repo-wide PII sweep + Qodo R2 follow-ups (2026-04-27)
+
+**Source:** Qodo (Compliance + PR Code Suggestions)
+**PR/Branch:** PR #12 / `fixes-42226` → `main`
+**Items:** 11 unique total — 1 critical (operator-PII / absolute-path leak; Qodo flagged 1 file in PR diff, sweep surfaced 37 files repo-wide), 2 verification compliance items (`sanitizeError` audit), 8 code suggestions (importance 3-7).
+
+**Patterns Identified:**
+
+1. **Reviewer scope is the PR diff, but PII patterns are repo-wide.**
+   Qodo flagged exactly one file (`D9-context-sync-inventory.md`)
+   because that's what PR #12's diff contained. A propagation sweep
+   for the same `C:/Users/<username>/...` shape surfaced **37 files
+   and 550 occurrences** across `.research/` and `.planning/`,
+   accumulated over multiple prior sessions. The lesson: when a
+   reviewer flags PII in a research artifact, never assume the
+   flagged file is the boundary of the leak — committed research
+   directories accumulate operator-state references invisibly. A
+   one-shot redaction script + git-ls-files walk catches the whole
+   set in seconds; hand-editing one file misses 36.
+   - Root cause: research-agent output captures absolute paths from
+     filesystem walks verbatim. There's no sanitization step between
+     "agent found this absolute path" and "agent writes it into a
+     committed JSONL/MD".
+   - Prevention: when porting / adapting research-output skills (deep-
+     research, repo-analysis, sync-mechanism scans), require absolute
+     paths to pass through a placeholder pass before write. The
+     `<user>` placeholder convention is mechanical and reversible
+     for any operator-local re-resolution.
+
+2. **`sanitizeError`'s Windows pattern only covered the backslash
+   form.** The regex set covered `C:\Users\<name>\` (backslashes,
+   matching Node fs error output on Windows) but not the
+   forward-slash variant `C:/Users/<name>/`. In practice the
+   Windows-fs error path uses backslashes so this wasn't an active
+   vulnerability — but research artifacts and prose carry the
+   forward-slash form (created via `path.join`-then-display
+   conversions). Adding the `[A-Z]:\/Users\/[^/\s]+` pattern is a
+   non-disruptive hardening that closes the gap before some
+   future error-message path constructs the forward-slash form.
+   - Root cause: the sanitizer was written for the in-practice error
+     surface (Node fs); it didn't anticipate the prose/display
+     surface where the same path takes a different shape.
+   - Prevention: when adding/auditing sanitization patterns, list
+     every shape the same secret/path can take in different
+     contexts (errors, logs, stdout prose, JSON, JSONL) and add
+     all of them.
+
+3. **Pre-existing port-time documentation drift clusters together.**
+   Three of the eight Qodo R2 suggestions were doc-only fixes to
+   `repo-analysis/REFERENCE.md`: `schema_version` cell said `"3.0"`
+   but the JASON-OS port schema is `"1.0"`; the auth guard rule said
+   "always authenticate, never unauthenticated API calls" but the
+   same section listed deps.dev as legitimately unauthenticated;
+   the example output used a verdict label `Trial` that doesn't
+   appear in our schema's verdict enum. **All three were leftovers
+   from the SoNash → JASON-OS port that survived because no one
+   reads documentation top-to-bottom during a port.** They surface
+   only when a reviewer like Qodo specifically cross-references
+   prose against schema/code.
+   - Root cause: port process trims and adapts content but doesn't
+     re-validate every example/cell/rule against the post-port
+     reality.
+   - Prevention: add a port-time linter pass that grabs every quoted
+     value (`"3.0"`, `Trial`, version strings) from REFERENCE.md and
+     verifies they appear in the corresponding schema/enum. Scoped
+     for post-Foundation tooling, not blocking now.
+
+4. **`npx --no-install` enforces "use the project-installed dep".**
+   Markdown commands like `npx repomix --compress ...` look
+   deterministic but silently fall through to network install if
+   the local install is missing. Adding `--no-install` makes the
+   failure visible at exec time instead of producing a wrong-version
+   output that looks correct. Same principle applies to any other
+   `npx`-invoked tool the skills call.
+
+**Resolution:**
+
+- Fixed: 8 items + 2 verified-PASS (no fix needed)
+  - C-1 (PII / absolute-path leak): repo-wide sweep via
+    `scripts/one-shot/redact-operator-username.js`. Replaced the
+    operator username `jason` with `<user>` in 37 files / 550
+    occurrences (all path-shaped contexts only — Windows
+    forward-slash, backslash, git-bash, Unix `/Users/`, and Claude
+    project-hash forms). Project name `jason-os`/`JASON-OS`,
+    user's email, and prose mentions preserved. Added forward-
+    slash variant to `sanitizeError`'s SENSITIVE_PATTERNS so
+    future error paths in that shape get scrubbed automatically.
+    Redaction script kept under `scripts/one-shot/` for
+    reproducibility from history.
+  - V-1, V-2 (Generic: Secure Error Handling + Secure Logging
+    Practices): VERIFIED no fix needed. `sanitizeError` actively
+    redacts Linux/macOS home paths, Windows backslash paths,
+    credentials, bearer tokens, DB connection strings, env-var
+    refs, and internal IPs. Recorded as PASS in this entry.
+  - Q-S1 (self-audit unknown source_type fallback):
+    `checkBehavioral` now skips state-file lookup entirely with a
+    clear warn message instead of probing
+    `unknown.<slug>.state.json`.
+  - Q-S2 + Q-S4 (repomix command hardening): added `--no-install`,
+    `mkdir -p`, and quoted output paths in both SKILL.md (Phase 1)
+    and REFERENCE.md (§15.1).
+  - Q-S3 (analyzed_at optional default): chained
+    `.optional().default(null)` after the existing
+    `trim().min(1).nullable()`.
+  - Q-S5 (schema_version doc cell): `"3.0"` → `"1.0"` in
+    REFERENCE.md.
+  - Q-S6 (auth guard wording): clarified to apply to GitHub API
+    calls only.
+  - Q-S8 (verdict label example): `Trial` → `experimental-subset`.
+- Deferred: 0 items.
+- Rejected: 1 item — Q-S7 (`superRefine` for candidate-count
+  enforcement) with rationale: schema-level enforcement here would
+  couple the schema to a depth-specific business rule that already
+  lives in `self-audit.js`'s `checkCandidateCount`. Schema's job is
+  structural validity; the depth-specific candidate rule is the
+  audit's job and produces a clearer pass/fail message there.
+  Qodo's own importance score (3) reflects the same trade-off.
+
+**Key Learnings:**
+
+- **A reviewer-flagged PII finding is the start of the propagation
+  sweep, not the end.** Qodo only saw 1 file because the PR diff
+  only included 1 file. The same pattern lived in 36 others. A
+  single regex + `git ls-files` walk found them all. This is the
+  pattern for any PII finding in committed research artifacts.
+- **Port-time doc drift hides until a reviewer cross-references
+  prose against schema.** Three independent doc fixes in
+  REFERENCE.md were all leftovers from the SoNash port. Worth a
+  port-time linter pass when post-Foundation tooling allows.
+- **Idempotent one-shot scripts under `scripts/one-shot/` are the
+  right mechanism for repo-wide mechanical replacements.** The
+  redaction is reproducible from history (anyone can re-run it),
+  the regex is reviewable, and the patterns can be extended as
+  new variants surface (case variants, trailing-anchor variants
+  surfaced in two retry passes during this round).
+- **`npx --no-install` is a small, free win** for any markdown
+  command that's claimed to use a project-installed dep. Failure
+  modes become visible instead of silent.
+- **Sanitization patterns need to enumerate every shape of the
+  same secret.** The Windows forward-slash variant slipped past
+  `sanitizeError` not because the code was wrong but because the
+  pattern set didn't enumerate the prose/display shape of the
+  same path.
+
+---
+
+#### Review #19: Sessions 19-23 cross-repo-movement-reframe + repo-analysis port (PR #12) — Round 1 (2026-04-27)
+
+**Source:** Mixed (SonarCloud + Qodo + Gemini)
+**PR/Branch:** PR #12 / `fixes-42226` → `main`
+**Items:** 24 unique total — SonarCloud 3 (cognitive complexity), Qodo Code Review 4, Qodo PR Compliance 3 (custom-rule failures), Qodo Suggestions 5, Gemini 9. All this-PR origin (no DAS scoring needed). After triage: 22 fixed, 1 deferred via /add-debt (G-2: SKILL.md exceeds 500-line limit), 1 rejected with technical justification (Q-4: uuid override out-of-range — intentional Dependabot resolution).
+
+**Patterns Identified:**
+
+1. **Cognitive-complexity hotspots cluster in main + checkArtifacts +
+   checkSchema in CLI scripts.** SonarCloud flagged three functions in
+   `scripts/cas/self-audit.js` with cognitive complexity scores of 24,
+   21, 16 against a 15-allowed cap. The shape was the same in all three:
+   one function held both the "iterate over a static config list of
+   things to check" outer loop AND the "decide the verdict + format the
+   pass/fail/warn message" inner branching. Splitting by **what gets
+   evaluated** (per-MUST-artifact, per-SHOULD-artifact, per-WRONG-name
+   for checkArtifacts; loadAnalysisOrFail / checkSchemaVersion /
+   runZodValidation / checkCandidateCount / checkMediaSpecific for
+   checkSchema; validateSlug / resolveAnalysisDir / readAnalysisMetadata
+   / aggregateResults / printAggregate for main) dropped each well below
+   15 without touching behavior. The win comes from factoring **the
+   per-item verdict into its own helper** — once the loop body is one
+   function call, the complexity collapses.
+   - Root cause: scripts grew incrementally — one config list at a
+     time. Each addition added a new branch to the same function rather
+     than extracting because "it's still small."
+   - Prevention: when a script's per-item-evaluation function reaches
+     more than two distinct verdict shapes (pass / fail / warn /
+     special-case), eagerly extract `evaluateOne(...)`. This pattern
+     transfers to all CAS handler scripts and any future linter-style
+     pipelines.
+
+2. **Schema-validator strictness gap: required strings accepted empty +
+   whitespace.** `analysis-schema.js` declared every required identifier
+   field as `z.string()` with no `.min(1)` / `.trim()`. The Zod
+   schema accepted `""` and `"   "` for `id`, `slug`, `title`,
+   `summary`, `creator_view`, etc., which would only surface downstream
+   when a self-audit assertion or human reader hit the empty value.
+   Pattern for any Zod schema: required string fields that act as
+   identifiers or content MUST chain `.trim().min(1)` so the validator
+   rejects whitespace-only content at the boundary, not three layers
+   deeper.
+   - Root cause: schema written greenfield with the assumption "writers
+     populate these correctly" — true for the happy path but not for
+     coercion edge cases.
+   - Prevention: add `.trim().min(1)` to every required string in
+     analysis-schema.js as part of port hardening; check the same
+     pattern when porting/writing future schemas (extraction journal,
+     synthesis ledger, etc.).
+
+3. **Path-handling security debt clusters around four
+   primitives.** Qodo and SonarCloud's security pass on
+   `scripts/cas/self-audit.js` independently surfaced four related
+   gaps: (a) absolute path leaked in error message → use slug instead;
+   (b) `existsSync` in `findBrokenHomeRefs` follows symlinks → use
+   `refuseSymlinkWithParents` + `lstatSync`; (c) `fs.existsSync(dir)`
+   on the analysis directory check is TOCTOU + symlink-following → use
+   `lstatSync` + `isDirectory` in one call; (d) `safeReadText` did not
+   verify regular-file before delegating to readUtf8Sync. **All four
+   reduce to: at every filesystem boundary, refuse symlinks AND verify
+   file type AND avoid leaking absolute paths in user-facing
+   strings.** The four feel separate but are one pattern.
+   - Root cause: scripts used the JASON-OS safe I/O helpers but only
+     in the obvious read paths — auxiliary paths (existence checks,
+     error messages, parent-directory checks) drifted to raw `fs.*`
+     calls.
+   - Prevention: when porting scripts, audit every `fs.existsSync`
+     and every error-message-with-path string. The grep for both is
+     30 seconds and catches this whole pattern at once.
+
+4. **DAS framework + delegated-accept worked as designed.** All 24
+   items were this-PR origin, so DAS scoring was only needed for the
+   single Gemini structural deferral (G-2 / DEBT D3). DAS = 2
+   (Recommend act) + user delegation = filed cleanly to debt log
+   without further interaction. The split between "fix now" and "track
+   as debt" stayed crisp because the debt entry preserved DAS scoring
+   in the notes field for future reviewers.
+
+**Resolution:**
+
+- Fixed: 22 items
+  - SonarCloud cognitive-complexity refactor (S-1, S-2, S-3) — split
+    `checkArtifacts`, `checkSchema`, `main` in `scripts/cas/self-audit.js`
+    into focused helpers; complexity scores all under 15 now.
+  - Qodo Q-1 (error swallowing in getDepth) → main now reads metadata
+    once and surfaces non-ENOENT errors via `console.error`.
+  - Qodo Q-2 (zod missing as production dep) → already moved to
+    `dependencies` via `npm install zod`; lockfile updated.
+  - Qodo Q-3 (candidate-type prose drift) → SKILL.md Phase 6 prose
+    aligned with `analysis-schema.js` enum (six types listed: pattern,
+    knowledge, architecture-pattern, design-principle,
+    workflow-pattern, tool).
+  - Qodo Q-4 (uuid override out-of-range) → REJECTED: uuid v14 is
+    API-compatible with v8 for node-notifier's `uuid.v4()` usage; the
+    semver mismatch is the intentional cost of resolving Dependabot
+    alert #1.
+  - Qodo Compliance QC-1 (abs-path leak) → main prints
+    `slug` not `dir`.
+  - Qodo Compliance QC-2 (process_feedback content logged) → only
+    length is logged now.
+  - Qodo Compliance QC-S1 (state-file path containment) →
+    `validatePathInDir(STATE_DIR, stateRel)` before the join.
+  - Qodo Suggestions QS-1 (strict slug validation) → `SLUG_RE`
+    regex + `.`/`..` rejection at entry.
+  - Qodo Suggestions QS-2 (existsSync follows symlinks) →
+    `pathExistsRefusingSymlinks` helper.
+  - Qodo Suggestions QS-3 (race-safe directory check) →
+    `refuseSymlinkWithParents` + `lstatSync` + `isDirectory` in
+    `resolveAnalysisDir`.
+  - Qodo Suggestions QS-4 (safeReadText regular-file enforcement) →
+    `lstatSync` + `isFile` check before `readUtf8Sync`.
+  - Qodo Suggestions QS-5 (schema strictness) → `.trim().min(1)` on
+    every required string + nested array of strings in
+    `analysisRecordCore` and `candidateSchema`.
+  - Gemini G-1 (`.research/analysis/*/source/` not in .gitignore) →
+    rule added.
+  - Gemini G-3 (SKILL.md repomix command) → corrected to
+    `npx repomix --compress --output <slug>/repomix-output.txt`.
+  - Gemini G-4 (REFERENCE.md repomix command) → same fix.
+  - Gemini G-5 (`_shared/` path drift in active skills) → propagation
+    sweep across `deep-plan`, `skill-audit`, `skill-creator`,
+    `repo-analysis` — all `_shared/` references corrected to
+    `shared/`.
+  - Gemini G-6 (Invocation Tracking section in SKILL_STANDARDS.md)
+    → rewritten to JASON-OS-native `safeAppendFileSync` pattern.
+  - Gemini G-7 (`_shared/` in AUDIT_TEMPLATE.md) → fixed.
+  - Gemini G-8 (MASTER_DEBT cross-reference DEFERRED) → marker added
+    pointing at `.planning/DEBT_LOG.md` as the v0 stub.
+  - Gemini G-9 (TDMS Intake DEFERRED) → marker added; v0 close-out
+    uses `/add-debt` per accepted finding.
+- Deferred: 1 item — DEBT D3 (G-2: SKILL.md exceeds soft line cap, 590
+  vs ~500 target). DAS = 2, user delegated.
+- Rejected: 1 item — Q-4 (UUID semver override) with technical
+  justification: uuid v14 is API-compatible with v8 for the
+  `uuid.v4()` call shape that node-notifier uses; the override is the
+  intentional resolution of Dependabot alert #1.
+
+**Key Learnings:**
+
+- **Cognitive-complexity refactors are mostly mechanical when the
+  loop body becomes a helper.** All three S-* items reduced cleanly
+  by extracting the per-item verdict logic. No semantic changes,
+  no behavior changes — just reshape. This is the pattern for any
+  CAS handler script that grows past 200 lines.
+- **Run propagation sweeps before committing path-rename fixes.**
+  G-7 surfaced because the `_shared/` rename hit two files in the
+  initial fix but four others in active skills. The Critical Rule 7
+  propagation sweep caught the rest in 30 seconds via one Grep call.
+  Without it, the next /skill-audit invocation would have hit a
+  broken link.
+- **Filesystem boundary hardening clusters into one pattern.** The
+  four QS-* security items (QS-2, QS-3, QS-4, plus QC-1's
+  abs-path leak) all reduce to: refuse symlinks, verify type,
+  hide absolute paths from output. When porting CAS scripts that
+  use `fs.existsSync` or print paths in errors, audit all four
+  patterns simultaneously rather than treating them as separate.
+- **Zod schemas need `.trim().min(1)` on identifier strings as a
+  default.** The `analysisRecordCore` change validated against the
+  smoke-test artifact without breaking the existing record — this
+  is non-disruptive hardening that should be the porting default,
+  not a post-review patch.
+- **DAS framework + delegated-accept handled the structural debt
+  cleanly.** G-2 was the only deferral and the DAS score (2,
+  Recommend act, user delegated) plus debt entry preserved the
+  reasoning for the next refactor pass.
+
+---
+
 #### Review #18: Sessions 15-18 structural-fix + back-fill machinery (PR #11) — Round 1 (2026-04-23)
 
 **Source:** Mixed (Qodo + Gemini)
@@ -500,7 +963,7 @@ After triage: 11 fixed, 1 deferred (D2), 1 rejected.
      for cases where full record conversion is too risky.
 
 3. **Propagation sweep surfaces peer-bundle hygiene issues.** Grepping for
-   `C:/Users/jason/` across the repo surfaced 6 instances in
+   `C:/Users/<user>/` across the repo surfaced 6 instances in
    `.research/jason-os-mvp/` (sources.jsonl, G1-session-rhythm-infra.md,
    GV1-codebase-claims.md) — out of this PR's scope but same
    absolute-local-path anti-pattern.
@@ -532,7 +995,7 @@ After triage: 11 fixed, 1 deferred (D2), 1 rejected.
   the field mapping to the canonical schema. Did NOT convert 222 records
   (risk > reward — no consumer, would break audit integrity).
 - **Item 3 (Qodo, MINOR — local path leak):** `PORT_ANALYSIS.md` replaced
-  absolute `C:/Users/jason/Workspace/dev-projects/sonash-v0/...` with
+  absolute `C:/Users/<user>/Workspace/dev-projects/sonash-v0/...` with
   `<local SoNash checkout>/...` generic placeholder.
 - **G1 (Gemini, MINOR — team header stale):** `research-plan-team.md`
   example header "state management migration" → "cross-project sync

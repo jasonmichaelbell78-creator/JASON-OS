@@ -1,0 +1,268 @@
+# Shared Audit Template
+
+<!-- prettier-ignore-start -->
+**Document Version:** 1.0
+**Last Updated:** 2026-02-24
+**Status:** ACTIVE
+<!-- prettier-ignore-end -->
+
+Common boilerplate for all single-session audit skills. Referenced via:
+`Read .claude/skills/shared/AUDIT_TEMPLATE.md for standard audit procedures.`
+
+**JASON-OS v0.1 scope note:** Sections referencing infrastructure not yet
+ported (`docs/technical-debt/MASTER_DEBT.jsonl`, `scripts/debt/intake-audit.js`,
+`scripts/reset-audit-triggers.js`, `npm run validate:canon`,
+`docs/audits/single-session/`) carry DEFERRED markers inline. The procedures
+themselves remain spec-correct for the future port; today, audit skills MAY
+skip the gated steps silently.
+
+---
+
+## Evidence Requirements (MANDATORY)
+
+**All findings MUST include:**
+
+1. **File:Line Reference** - Exact location (e.g., `lib/utils.ts:45`)
+2. **Code Snippet** - The actual problematic code (3-5 lines of context)
+3. **Verification Method** - How you confirmed this is an issue
+4. **Standard Reference** - ESLint rule, TypeScript error, or best practice
+   citation
+
+**Confidence Levels:**
+
+- **HIGH (90%+)**: Confirmed by external tool, verified file exists, code
+  snippet matches
+- **MEDIUM (70-89%)**: Found via pattern search, file verified, but no tool
+  confirmation
+- **LOW (<70%)**: Pattern match only, needs manual verification
+
+**S0/S1 findings require:**
+
+- HIGH or MEDIUM confidence (LOW confidence S0/S1 must be escalated)
+- Dual-pass verification (re-read the code after initial finding)
+- Cross-reference with tool output
+
+---
+
+## Dual-Pass Verification (S0/S1 Only)
+
+For all S0 (Critical) and S1 (High) findings:
+
+1. **First Pass**: Identify the issue, note file:line and initial evidence
+2. **Second Pass**: Re-read the actual code in context
+   - Verify the issue is real and not a false positive
+   - Check for existing handling or intentional patterns
+   - Confirm file and line still exist
+3. **Decision**: Mark as CONFIRMED or DOWNGRADE (with reason)
+
+Document dual-pass result in finding: `"verified": "DUAL_PASS_CONFIRMED"` or
+`"verified": "DOWNGRADED_TO_S2"`
+
+---
+
+## Cross-Reference Validation
+
+Before finalizing findings, cross-reference with:
+
+1. **Tool output** - Mark findings as "TOOL_VALIDATED" if tools flagged same
+   issue
+2. **Prior audits** - Check `docs/audits/single-session/<type>/` for duplicate
+   findings
+
+Findings without tool validation should note: `"cross_ref": "MANUAL_ONLY"`
+
+---
+
+## JSONL Output Format
+
+**CRITICAL - Use JSONL_SCHEMA_STANDARD.md format:**
+
+```json
+{
+  "category": "<audit-category>",
+  "title": "Short specific title",
+  "fingerprint": "<category>::<primary_file>::<identifier>",
+  "severity": "S0|S1|S2|S3",
+  "effort": "E0|E1|E2|E3",
+  "confidence": 90,
+  "files": ["path/to/file.ts:123"],
+  "why_it_matters": "1-3 sentences explaining impact",
+  "suggested_fix": "Concrete remediation direction",
+  "acceptance_tests": ["Array of verification steps"],
+  "evidence": ["code snippet", "grep output", "tool output"]
+}
+```
+
+**For S0/S1 findings, ALSO include:**
+
+```json
+{
+  "verification_steps": {
+    "first_pass": { "method": "...", "evidence_collected": ["..."] },
+    "second_pass": { "method": "...", "confirmed": true, "notes": "..." },
+    "tool_confirmation": { "tool": "...", "reference": "..." }
+  }
+}
+```
+
+**Required fields:** `category`, `fingerprint`, `files` (array with
+`file.ts:123`), `confidence` (number 0-100), `acceptance_tests` (non-empty
+array).
+
+---
+
+## Context Recovery
+
+If the session is interrupted (compaction, timeout, crash):
+
+1. Check for state file: `.claude/state/audit-<type>-<date>.state.json`
+2. If state file exists and < 24 hours old: Resume from last completed stage
+3. If stale (> 24 hours): Start fresh
+4. Always preserve any partial findings already written
+
+---
+
+## Post-Audit Validation
+
+Before finalizing:
+
+1. Run: `node scripts/validate-audit.js <output.jsonl>`
+2. Checks: required fields present, no FALSE_POSITIVES matches, no duplicates,
+   all S0/S1 have HIGH/MEDIUM confidence with DUAL_PASS_CONFIRMED
+3. If validation fails: review, fix, re-run
+
+---
+
+## MASTER_DEBT Cross-Reference (DEFERRED in JASON-OS v0.1)
+
+**JASON-OS v0.1 status:** `docs/technical-debt/MASTER_DEBT.jsonl` is not yet
+ported. JASON-OS v0 uses `/add-debt` writing to `.planning/DEBT_LOG.md` (a
+markdown table) as the v0 stub. Audit skills MAY skip MASTER_DEBT
+cross-reference until the canonical debt store ports; for now, cross-reference
+findings against `.planning/DEBT_LOG.md` if it exists, and flag duplicates.
+
+**Original SoNash specification (preserved for the future port):**
+
+**Do NOT present findings for review until cross-referenced against
+MASTER_DEBT.jsonl.**
+
+1. Read `docs/technical-debt/MASTER_DEBT.jsonl`
+2. For each finding, search by: same file path, similar title, same root cause
+3. Classify: **Already Tracked** (skip), **New** (review), **Possibly Related**
+   (flag)
+4. Present only New + Possibly Related in Interactive Review
+
+---
+
+## Interactive Review (MANDATORY - before TDMS intake)
+
+Present findings in **batches of 3-5**, grouped by severity (S0 first). Each
+shows:
+
+```
+### DEBT-XXXX: [Title]
+**Severity:** S_ | **Effort:** E_ | **Confidence:** _%
+**Current:** [What exists now]
+**Suggested Fix:** [Concrete remediation]
+**Counter-argument:** [Why NOT to do this]
+**Recommendation:** ACCEPT/DECLINE/DEFER
+```
+
+Track decisions in `docs/audits/single-session/<type>/REVIEW_DECISIONS.md`.
+After ALL findings reviewed, proceed to TDMS Intake with accepted + deferred
+only.
+
+---
+
+## TDMS Intake & Commit (DEFERRED in JASON-OS v0.1)
+
+**JASON-OS v0.1 status:** None of the SoNash debt-management scripts
+(`scripts/validate-audit.js`, `scripts/reset-audit-triggers.js`,
+`scripts/debt/intake-audit.js`) are ported, and the
+`docs/audits/single-session/` and `docs/technical-debt/` tree does not exist.
+The v0 path uses `/add-debt` (writing to `.planning/DEBT_LOG.md`) as the
+single intake mechanism; threshold-reset and CANON validation reactivate when
+those systems land.
+
+**v0 audit close-out (until TDMS lands):**
+
+1. Display summary to user.
+2. Confirm output JSONL saved to a deliberately-chosen location under
+   `.research/` or `.planning/` (no `docs/audits/single-session/` tree yet).
+3. For each accepted finding, call `/add-debt` (one debt entry per finding).
+4. Ask: "Would you like me to fix any of these issues now?"
+
+**Original SoNash specification (preserved for the future port):**
+
+1. Display summary to user
+2. Confirm files saved to `docs/audits/single-session/<type>/`
+3. Run `node scripts/validate-audit.js` on JSONL file
+4. Validate CANON schema if applicable: `npm run validate:canon`
+5. Update AUDIT_TRACKER.md with entry
+6. Run threshold reset:
+   `node scripts/reset-audit-triggers.js --type=single --category=<type> --apply`
+7. **TDMS Integration (MANDATORY)**:
+   ```bash
+   node scripts/debt/intake-audit.js <output.jsonl> --source "audit-<type>-<date>"
+   ```
+8. Ask: "Would you like me to fix any of these issues now?"
+
+---
+
+## Documentation References
+
+- [PROCEDURE.md](docs/technical-debt/PROCEDURE.md) - Full TDMS workflow
+- [MASTER_DEBT.jsonl](docs/technical-debt/MASTER_DEBT.jsonl) - Canonical debt
+  store
+- [JSONL_SCHEMA_STANDARD.md](docs/templates/JSONL_SCHEMA_STANDARD.md) - Output
+  format requirements
+- [CODE_PATTERNS.md](docs/agent_docs/CODE_PATTERNS.md) - Anti-patterns reference
+
+---
+
+## Script Security Pre-Check (13-Point Checklist)
+
+Before auditing or writing scripts that handle file I/O, git, or shell commands,
+verify these items (derived from PR #389 CRITICAL findings):
+
+1. **Path containment** — All resolved paths checked against allowed root
+   directory
+2. **Symlink guard** — `lstatSync` + `isSymbolicLink()` before writes, or use
+   `isSafeToWrite()` helper
+3. **Path traversal prevention** — Use `/^\.\.(?:[\\/]|$)/.test(rel)` not
+   `startsWith('..')`
+4. **DoS depth limit** — Recursive operations capped (e.g., `MAX_DEPTH = 10`)
+5. **DoS size limit** — File reads bounded (e.g., `MAX_FILE_SIZE = 2MB`)
+6. **DoS entry limit** — Directory scans capped (e.g., `MAX_ENTRIES = 1000`)
+7. **Atomic writes** — Write to tmp, then rename; no direct overwrite
+8. **No rmSync before rename** — rmSync→renameSync creates data loss race
+   condition; use rename-only
+9. **Temp cleanup** — Temp files cleaned in `finally` block or EXIT trap
+10. **BOM handling** — `.replace(/\uFEFF/g, '')` on UTF-8 file reads
+11. **Array.isArray guard** — Before iterating parsed JSON arrays
+12. **JSONL per-line try/catch** — Single corrupt line must not crash script
+13. **exec() /g flag** — Global flag required when using `exec()` in loops
+
+---
+
+## Agent Return Protocol
+
+**CRITICAL**: All agents spawned by audit skills MUST return ONLY:
+
+```
+COMPLETE: [agent-id] wrote N findings to [output-path]
+```
+
+Do NOT return full findings content. The orchestrator checks completion via
+`wc -l` on JSONL files.
+
+---
+
+## Honesty Guardrails
+
+- **No hallucinated file paths** - verify every file:line reference with
+  Read/Grep before including
+- **No inflated severity** - S0/S1 require dual-pass confirmation
+- **No duplicate findings** - cross-reference `.planning/DEBT_LOG.md` (and
+  MASTER_DEBT.jsonl when ported) before intake
+- **Confidence must be honest** - if unsure, use LOW and escalate

@@ -492,7 +492,7 @@ migration_metadata: null
 tabs 5 and 6, velocity-log, commit-log). Sections make the portable lesson
 separable from the product-specific wrapper.
 
-Real file (SoNash): `~/.claude/projects/C--Users-jason-…-sonash-v0/memory/feedback_no_broken_widgets.md`
+Real file (SoNash): `~/.claude/projects/C--Users-<user>-…-sonash-v0/memory/feedback_no_broken_widgets.md`
 
 ```yaml
 name:             feedback_no_broken_widgets

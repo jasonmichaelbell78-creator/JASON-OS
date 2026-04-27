@@ -23,8 +23,8 @@ resolves to three portable scripts and one SoNash-coupled script (safe-cas-io.js
 
 #### Full Dependency Graph
 
-Source: `C:/Users/jason/Workspace/dev-projects/sonash-v0/.claude/skills/session-end/SKILL.md` v2.2
-Source: `C:/Users/jason/Workspace/dev-projects/sonash-v0/scripts/session-end-commit.js`
+Source: `C:/Users/<user>/Workspace/dev-projects/sonash-v0/.claude/skills/session-end/SKILL.md` v2.2
+Source: `C:/Users/<user>/Workspace/dev-projects/sonash-v0/scripts/session-end-commit.js`
 
 **Hard blockers (SoNash-specific, drop for v0):**
 

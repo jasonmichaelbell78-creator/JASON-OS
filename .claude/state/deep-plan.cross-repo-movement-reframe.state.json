@@ -1,0 +1,229 @@
+{
+  "topic": "cross-repo-movement-reframe",
+  "topic_slug": "cross-repo-movement-reframe",
+  "started_at": "2026-04-24",
+  "branch": "fixes-42226",
+  "current_phase": "phase_1_batch_1_in_progress",
+  "phase_1_blocking_question_resolved": "2026-04-24 Session 21 — Option A (discipline). Every Bucket-3 research-recommended default enters its topical batch as its own question with research-default + weakness + three responses (accept / override / ask more). No pre-discovery accept-or-override list.",
+  "session": 21,
+  "tenet_landed_session_20": "tenet_research_recommends_user_decides.md (authority-split: user-locked / filesystem-fact / research-recommended / research-speculation)",
+  "deep_plan_skill_updated_to": "v3.4 — Phase 0 step 8 mandates bucket split; Phase 1 rule 4 mandates research-recommendation-as-question",
+  "phase_0": {
+    "status": "diagnosis_v2_drafted_applying_tenet",
+    "diagnosis_v1_issue": "conflated user-locked with research-recommended — user caught as scope-explosion mechanism",
+    "inputs_consumed": [
+      ".research/cross-repo-movement-reframe/BRAINSTORM.md",
+      ".research/cross-repo-movement-reframe/metadata.json",
+      ".research/cross-repo-movement-reframe/RESEARCH_OUTPUT.md (lines 1-250)",
+      ".research/cross-repo-movement-reframe/challenges/contrarian-deep-research.md",
+      ".research/cross-repo-movement-reframe/challenges/otb-deep-research.md",
+      ".research/cross-repo-movement-reframe/findings/dispute-resolutions.md"
+    ],
+    "codebase_survey_agent": "Explore (2026-04-24)",
+    "filesystem_verifications": [
+      ".planning/cross-repo-movement-reframe/ created",
+      ".claude/state/profiles/ does not exist (greenfield)",
+      ".husky/pre-commit + pre-push both present",
+      "~/.claude/keybindings.json not present on this machine",
+      ".claude/canonical-memory/ exists with MEMORY.md + 7 feedback_*.md + 3 user_*.md + session-end-learnings.md"
+    ],
+    "plans_being_superseded": [
+      ".research/sync-mechanism/",
+      ".planning/piece-2-schema-design/",
+      ".planning/piece-3-labeling-mechanism/",
+      ".planning/piece-3-labeling-mechanism/structural-fix/",
+      ".research/migration-skill/"
+    ],
+    "plans_surviving_unchanged": [
+      ".planning/jason-os/",
+      ".planning/jason-os-mvp/"
+    ],
+    "diagnosis_path": ".planning/cross-repo-movement-reframe/DIAGNOSIS.md",
+    "convergence_loop_verification": "skipped_with_justification_V1_V2_already_verified_research_claims"
+  },
+  "phase_1": {
+    "status": "batch_1_in_progress_q5_q7_retry",
+    "current_batch": 1,
+    "current_batch_theme": "orchestrator_shape",
+    "batch_1_locked": {
+      "q1_orchestrator_name": "/migration (user choice, not in offered list; prior /migration brainstorm on superseded list so name is free)",
+      "q2_routing": "static list in orchestrator SKILL.md",
+      "q3_invocation_mode": "dual — interactive menus default visible surface, utterance works anywhere, top menu simple, helper skills own the depth",
+      "q4_dashboard": "simple top-level; depth in submenus",
+      "q6_orchestrator_writes_state": "yes, following skill-creator + skill-audit pattern — state file as progress meter + compaction recovery",
+      "q8_companion_names": "/port /sync-back /extract /context-sync all accepted as proposed"
+    },
+    "batch_1_complete": {
+      "q5_ci_guard_scope": "shared helper in scripts/lib/ called by all five skills",
+      "q7_first_run_ux": "ask-then-scaffold — /migration detects missing state files, asks permission, then creates them"
+    },
+    "batch_1_carryovers": {
+      "dashboard_on_empty_ledger": "Q7 resolved scaffolding only; dashboard-content-on-empty-ledger deferred to Batch 3 (ledger design)"
+    },
+    "current_sub_batch": "2a_context_sync_record_shape_and_normalization",
+    "batch_2a_locked": {
+      "q9": "separate file at .claude/state/context-sync-state.jsonl",
+      "q10_partial": "7 fields accepted; null-prevention concern raised by user — carried as Q17",
+      "q11": "five drift states (NEW / CLEAN / SOURCE-DRIFTED / DEST-DRIFTED / BOTH-DRIFTED)",
+      "q12": "normalize CRLF to LF before comparing",
+      "q13": "sort JSON keys before comparing (RFC 8785 canonical form)",
+      "q14": "strip hard-coded 4 volatile frontmatter fields (last-modified, synced_at, last-touched, updated_at)",
+      "q15": "comment-only changes count as drift"
+    },
+    "batch_2_meta_locked": {
+      "q16_creation_process_routing": "Option C with mitigation — hybrid handoff via state-file priming of .claude/state/skill-creator.state.json; PLAN.md adds a pre-flight check validating priming against skill-creator's current state schema, fails loudly on drift"
+    },
+    "batch_2_meta_locked_q17": {
+      "q17_null_prevention": "Option B — JSON Schema validation at write time (typed builders validate records against schema before safeAppendFileSync) + periodic sweep; applies to all 4 data structures (ledger, drift record, profile, cache)",
+      "q17_prerequisite": "ajv-formats dep fix elevated to PLAN.md pre-requisite — first implementation step before any data structure lands"
+    },
+    "batch_2_meta_locked_q17b": {
+      "q17b_sweep_location": "Option C — sweep runs in both /context-sync (every invocation) AND /skill-audit Phase 2.5, via shared helper in scripts/lib/"
+    },
+    "batch_2b_locked": {
+      "q18_machine_exclude_mechanism": "Option D — combination: pattern-based default + explicit list override + ask-on-ambiguous for new files",
+      "q19_settings_local_sub_file": "Option A — sidecar file listing excluded JSON key paths (research default)",
+      "q20_tenet_identification": "Option D — filename prefix primary, frontmatter optional secondary; T37 todo added to examine/define core JASON-OS tenets (user has some ideas)",
+      "q21_memory_type_scope_tag_mapping": "Option A — fixed mapping table in /context-sync source code; CRITICAL NOTE from user: auto-memory is used far more than canonical-memory, so auto-memory types MUST be accounted for more than anything else — mapping table must cover auto-memory types (user/feedback/project/reference at ~/.claude/projects/.../memory/) as its primary concern, canonical-memory is secondary",
+      "q22_claude_md_tweak_block": "Option A — sentinel HTML comments (<!-- JASON-OS:UNIVERSAL-START --> / END) wrap universal sections",
+      "q23_per_category_invocation": "Option C — menu-driven default with utterance for express lane; consistent with Batch 1 orchestrator pattern",
+      "q24_windows_path_normalization": "Option A — always store paths as forward-slash; shared toNativePath(stored) helper in scripts/lib/ for read sites"
+    },
+    "cumulative_decisions_count": 25,
+    "todos_spawned_this_session": ["T37_examine_core_jason_os_tenets"],
+    "mid_discovery_check_completed": "Option 3 — accept revised batch plan, tighten process granularity going forward, keep already-locked items as-is. Bundling judgment added per user: don't batch for sake of batching; bundle only when appropriate. Saved as feedback memory.",
+    "revised_batch_plan": {
+      "batch_3": "/port skill + ledger design (merged — skill + primary data structure, pattern from /context-sync + drift record)",
+      "batch_4": "/extract + profile discovery (merged)",
+      "batch_5": "/sync-back skill",
+      "batch_6": "comprehension cache + fast-path (cross-cutting)",
+      "batch_7": "decision register",
+      "batch_8": "closeout mechanics + OTB planning-time glance (merged — both small)"
+    },
+    "current_sub_batch": "3_port_and_ledger",
+    "batch_3_locked": {
+      "q25_ledger_field_budget": "Option B — STRETCH to 14 fields at v1 (adds source_status + source_content_hash). USER OVERRIDE of Bucket 1 12-cap: user explicitly chose to include both to avoid a later revisit. USER INSTRUCTION: 'no null fields — we need protection against that.' This reinforces Q17 schema-at-write-time design — ledger schema will declare all 14 fields as non-nullable; write-time validation fails any null.",
+      "q26_ledger_storage_mechanics": "Accept package — append-only, write-last rollback, forward-pointer edge model with source-hash recomputed on demand, location .claude/state/ledger.jsonl gitignored, locking via safeAppendFileSync+withLock(5s)",
+      "q27_cross_machine_ledger": "Option A — ledger travels via /context-sync with source_wins:true, machine_exclude:false; conflict-merge on same record_id (dedup by id, union the rest) lives in a small shared helper",
+      "q28_unit_type_enum": "Five values — file, family, memory, context-artifact, SYSTEM (renamed from 'concept'). User examples define 'system' as multi-skill/script/file architectural units: TDMS, pr-review/retro, CAS in SoNash. Plan must carry this renaming through all downstream references.",
+      "q29_verdict_enum": "Option C — six values (copy-as-is, sanitize, reshape, rewrite, skip, observe-only); drop greenfield-clone and blocked. Values explained in-skill via /port SKILL.md glossary + menu tooltips at invocation + /migration dashboard resolves codes to human-readable labels",
+      "q30_metric_tagging_discipline": "Option A — three-tag discipline: MEASURED / DERIVED / ESTIMATED on every numeric appearance in PLAN.md and DECISIONS.md; plan self-audit phase lints for untagged numbers",
+      "q31_port_invocation_shape": "Option A — menu-driven default + utterance express lane (consistent with /migration, /context-sync); menu default-highlights 'repeat last port' when ledger record exists",
+      "q32_port_preflight_checks": "Option A — full pre-flight (target profile exists, source clean, target path free or overwrite allowed, repo writable, schema validators pass)",
+      "q33_port_failure_and_conflict": "Option A — atomic with rollback + explicit conflict resolution (halt-and-ask on existing target path)",
+      "q34_port_output": "Option C — minimal one-line summary by default; 'details' trigger flips to full B-style report; minimal line ends with 'say details for more' when warnings exist"
+    },
+    "bucket_1_override_note_q25": "User explicitly overrode the Bucket 1 12-field ledger cap constraint — cap effectively 14 at v1. Note for DECISIONS.md: user-stated reason was 'i'd rather not come back to this later'; the two additional fields (source_status, source_content_hash) gain v1 standing.",
+    "null_prevention_reinforcement_q25": "User 'no null fields' instruction reinforces Q17 schema-at-write-time design. All 14 ledger fields declared non-nullable in schema. Same rule propagates to drift record (7 fields), profile (8+nested), cache (key+value) — every field non-nullable unless explicitly permitted with documented lifecycle reason.",
+    "cumulative_decisions_count": 35,
+    "session_21_pickup_contract_for_session_22": {
+      "current_phase": "phase_1_batch_3_complete_batch_4_next",
+      "next_action": "Invoke /deep-plan cross-repo-movement-reframe — state file resumes at Batch 4 (/extract + profile discovery pairing)",
+      "batch_4_scope": "Roughly 8-10 questions covering: profile discovery shape + owned/unowned split (research default: bare-clone for unowned), companion_files population algorithm (research-recommended heuristic scan with discovery_gap fallback — Dispute 5), profile 8-field structure ratification, 6-field gate record structure, 3-field shape block structure, unowned profile staleness trigger (SHA-based vs time-based), /extract invocation shape, /extract auth handling for protected repos, /extract output format (port recipe vs file dump vs suggestion), large-unowned-repo rate limiting",
+      "remaining_batches": "Batch 5 /sync-back (~5-7 Qs), Batch 6 comprehension cache + fast-path (~5-7 Qs), Batch 7 decision register (~2-3 Qs), Batch 8 closeout + OTB merged (~5-7 Qs)",
+      "projected_total_questions_at_completion": "55-65",
+      "projected_total_decisions_at_completion": "55-65"
+    },
+    "feedback_captured_session_21": [
+      "Plain English is mandatory; technical shorthand (CI, ephemeral, scaffold, pure router) must be translated before use",
+      "Orchestrator is NOT pure router — it writes state as progress meter per skill-creator + skill-audit precedent",
+      "Interactive menus throughout + utterance anywhere; top menu simple, depth in submenus"
+    ],
+    "planned_batches": [
+      {"batch": 1, "theme": "orchestrator_shape"},
+      {"batch": 2, "theme": "context_sync_specifics"},
+      {"batch": 3, "theme": "ledger_design_details"},
+      {"batch": 4, "theme": "profile_discovery"},
+      {"batch": 5, "theme": "comprehension_cache_and_fast_path"},
+      {"batch": 6, "theme": "decision_register"},
+      {"batch": 7, "theme": "closeout_mechanics"},
+      {"batch": 8, "theme": "otb_planning_time_glance"}
+    ],
+    "target_question_count": "40-60 (floor 15, no ceiling)",
+    "decisions_captured": 0,
+    "decisions": [],
+    "batch_2c_locked": {
+      "q2c1_inventory_pass_scope": "Walk every gitignored item reachable from project root (respecting .gitignore + .git/info/exclude + nested ignores). Cheap name-based fast-path classifies large directories (node_modules/, build outputs, etc.) as machine-local-by-design before content inspection — fast-path patterns live alongside Q18's pattern-based defaults in scripts/lib/.",
+      "q2c2_classification_taxonomy": "Three classes for v1: machine-local-by-design / should-sync / ambiguous. No fourth 'worth-surfacing-later' class — ambiguous absorbs that case (surface once, decide once, drop the ambiguity).",
+      "q2c3_surfacing_rule": "Triage file at .claude/state/context-sync-triage.jsonl, NOT mid-sync ask-on-new. /context-sync surfaces triage queue length on every invocation as a one-line 'N items pending triage' reminder. Q18's existing ask-on-new flow stays for files appearing AFTER first inventory (rare, worth interrupting).",
+      "q2c4_should_sync_timing": "v1. Inventory + classification + actual syncing of should-sync items all land together in v1 — no half-tool, per feedback_no_broken_widgets and feedback_no_mvp_defer_later.",
+      "q2c5_drift_record_field_count": "Stretch 7 → 8 fields. New field: gitignore_class (values: tracked / machine-local-by-design / should-sync / ambiguous). Reasoning: every record self-describes; no external lookups. Second field-budget stretch after ledger 12→14, accepted because each is justified by Q17/Q25 'no null fields' discipline rather than scope creep.",
+      "q2c6_q18_reframe": "Q18 stays as-is conceptually, reframed in DECISIONS.md as classifier-input. Q18 is the source of machine-local-by-design signals; A1 is the orchestration layer above. Cross-references in DECISIONS.md prevent confusion."
+    },
+    "batch_2c_meta": {
+      "trigger": "Session 22 hit cross-locale state-file gap firsthand; deep-plan.<topic>.state.json was gitignored, never travelled. RESUME_NOTES.md A1 amendment.",
+      "scope_estimate_at_open": "3-5 questions; actual 6 questions; within tolerance.",
+      "decisions_added": 6,
+      "decisions_revised": 2,
+      "revised_decision_q10_drift_record": "7 fields → 8 fields (gitignore_class added). DECISIONS.md note: Q2C-5 supersedes Q10's field count.",
+      "revised_decision_q18_machine_exclude": "Mechanism unchanged; role reframed from 'gate' to 'classifier-input'. DECISIONS.md note: Q2C-6 supersedes Q18's framing, not its mechanism."
+    },
+    "cumulative_decisions_count": 41,
+    "session_22_amendments": {
+      "infra_bridge_landed": ".gitignore exception for .claude/state/deep-plan.*.state.json — bridges long-lived deep-plan state files cross-locale via git until /context-sync absorbs the responsibility (closeout-phase task).",
+      "superseded_state_files_deleted": ["deep-plan.piece-2-schema-design.state.json", "deep-plan.piece-3-labeling-mechanism.state.json"],
+      "resume_notes_amendment_a1": "Folded into Batch 2c; RESUME_NOTES.md A1 marked resolved.",
+      "current_phase": "phase_1_batch_4a_deferred_pending_delegation_walkthrough",
+      "next_action": "Manual-port repo-analysis from SoNash to JASON-OS with inline SoNash-specific keep/remove/edit walkthrough. Batch 4a re-emerges (smaller) after delegation strategy locks."
+    },
+    "batch_4a_deferred": {
+      "trigger": "User caught wheel-reinvention risk — Q35-Q42 revised set largely restated repo-analysis patterns rather than designing JASON-OS-specific content.",
+      "first_pass_questions": "Q35 (depth tiers), Q36 (blobless+depth-1 fetch), Q37 (companion_files heuristic), Q38 (9-field profile + depth indicator), Q39 (6/3 gate/shape fields), Q40 (single-file location), Q41 (rate-limit safety), Q42 (preserve-on-rewrite contract). Drafted but NOT locked.",
+      "deferral_reason": "Most implementation-axis decisions (Q35, Q36, Q37, Q41) collapse into 'delegate to repo-analysis' once full delegation lands. Output-axis decisions (Q38, Q39, Q40, Q42) survive but in a smaller batch. Re-presenting after delegation walkthrough to avoid locking implementation choices we'll then unlock.",
+      "supersession_status": "DEFERRED — re-emerge as smaller post-delegation batch."
+    },
+    "delegation_decision_locked_session_22": {
+      "decision": "Option 1 — full delegation. Manual-port repo-analysis (and required shared/ + scripts/lib/ deps) from SoNash to JASON-OS as one-off bootstrap. Profile-discovery becomes a JASON-OS-specific TRANSFORMER (acknowledged 500-1000 lines, not 100-200) that invokes repo-analysis and re-shapes its output into JASON-OS profile records.",
+      "transformer_scope_acknowledged": "User clarification: transformer is non-trivial. Three jobs: (1) re-frame Engineer View dimension findings as gate records with companion_directive plain-English text, (2) classify Deep Read enumerations into 5 unit types (file/family/memory/context-artifact/system) and infer 3 shape fields per type, (3) write the 9-field profile. The directive-text generation alone is the bulk of the work.",
+      "why_option_1_still_wins": "The expensive layer is detection (9-phase pipeline, dimension agents, rate-limit safety, fork detection, monorepo handling). repo-analysis provides this intact. The transformer would exist in any option (even Option 3 'inspired-by' would need the same shape-inference + directive-generation code). Option 1 saves the bigger implementation cost.",
+      "rejected_options": {
+        "option_2_targeted_reuse": "Cherry-pick subsystems into scripts/lib/ — rejected: cherry-picking is meaningful work and forks repo-analysis's evolution from day one. User chose Option 1 explicitly.",
+        "option_3_inspired_by": "Re-implement in JASON-OS using repo-analysis as inspiration only — rejected: matches the wheel-reinvention failure mode the user surfaced; explicitly NOT chosen."
+      },
+      "weaknesses_accepted": [
+        "Inheritance of SoNash opinions (TDMS, /synthesize integration, extraction-journal, etc.) — mitigated by inline keep/remove/edit walkthrough at port time.",
+        "Forks-over-time — mitigated long-term by /sync-back; short-term by manual periodic mirror.",
+        "Overhead for cheap cases — mitigated by repo-analysis's Quick depth tier."
+      ],
+      "next_step": "Walkthrough COMPLETE 2026-04-25. All 8 batches locked, 61 decisions captured. Canonical record at .planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md. Next phase: actual port operation (file copy from SoNash + mechanical edit pass applying disposition table). After port lands, main-plan Batch 4 re-emerges as the smaller transformer-design batch."
+    },
+    "port_walkthrough_pointer": ".planning/cross-repo-movement-reframe/repo-analysis-port/PORT_DECISIONS.md — canonical record of the keep/remove/edit walkthrough; 61 decisions LOCKED; survives compaction and cross-locale via git",
+    "port_walkthrough_complete_session_22": {
+      "closed_at": "2026-04-25",
+      "total_decisions": 61,
+      "by_disposition": {
+        "keep": "~37 (incl. KEEP-as-is, KEEP-with-edit, KEEP-with-port-time-adaptation)",
+        "edit": "~10 (substantive reshaping at port-time)",
+        "remove": "~11 (TDMS, extraction-journal, /synthesize, curated-list outputs, SoNash migrations)",
+        "defer": "3 (SQLite search index trio — revisit at >50 analyses)"
+      },
+      "next_action": "Execute the actual port operation — separate session-spanning piece of work, sequencing per PORT_DECISIONS.md 'Next Step' section."
+    },
+    "cumulative_decisions_count": 42
+  },
+  "phase_2": {"status": "not_started", "decisions_md_path": null},
+  "phase_3": {"status": "not_started", "plan_md_path": null},
+  "phase_3_5": {"status": "not_started"},
+  "phase_4": {"status": "not_started"},
+  "handoff": {"route": null},
+  "locked_research_findings": {
+    "ledger_v1": "12 fields, append-only, .claude/state/ledger.jsonl, write-last, safeAppendFileSync+withLock(5s), per-record ledger_schema_version",
+    "drift_record_v1": "7 fields (path, category, src_hash, dst_hash, source_wins, machine_exclude, synced_at), .claude/state/context-sync-state.jsonl, separate from ledger",
+    "profile_v1": "8 top-level fields, 6-field gates, 3-field shapes, .claude/state/profiles/<repo>.json (owned) + /unowned/<slug>.json",
+    "cache_v1": "key = unit_type:source_repo:target_repo:profile_slice_hash; value carries verdict + content_hash_at_last_verdict + confidence; 0.8 threshold ESTIMATED",
+    "architecture": "orchestrator + 4 companions (/context-sync first, /port, /sync-back, /extract); scope-tag enum reused unchanged",
+    "bootstrap_ordering": "context-sync -> ledger -> profile -> cache; shared versioning policy written after step 2",
+    "anti_goals": "no hooks v1, no --flags, no git-tracked ledger, no writes into unowned repos, no fire-and-forget, no over-engineering"
+  },
+  "planning_musts": [
+    "field_budget_12_vs_14_at_v1",
+    "ledger_cross_machine_policy_category_19_or_not",
+    "profile_slice_hash_full_profile_at_v1"
+  ],
+  "otb_alternatives_to_glance": [
+    "per_file_frontmatter_lineage_complement",
+    "github_api_unowned_profile_fast_path",
+    "port_recipe_md_adjacent_fast_path"
+  ],
+  "meta_principle": "thoroughness balanced with not-over-engineering (BRAINSTORM Session 18 verbatim)"
+}

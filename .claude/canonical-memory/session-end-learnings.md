@@ -156,3 +156,106 @@ type: project
   blocks. The gitignored driver at `.claude/state/batch-tmp/run-batch.js`
   reduced boilerplate ~2x and kept batch dispatch consistent. Reusable
   for SoNash Piece 5.5 back-fill when that lands.
+
+## Session 21 close (2026-04-24, `/deep-plan cross-repo-movement-reframe` Phase 1 Batches 1-3)
+
+- **Plain-English tenet requires repeated vigilance even when the tenet fires
+  every turn.** Twice this session I slid into research shorthand
+  (CI-entry guard, ephemeral machines, scaffold, pure router) before the user
+  had to ask for plain explanations. The `UserPromptSubmit` hook prints the
+  tenet on every turn but that text-level reminder didn't auto-translate
+  terminology until explicit correction. Conclusion: the hook reminder is
+  necessary but not sufficient — actual translation has to be a writing-time
+  discipline, not a post-hoc correction.
+- **Recommendations-mandatory rule violated twice in one session.** Dropped
+  "My recommendation: X" from Batch 2a-v2 and from Batch 3-v1, both times
+  interpreting a user style-tightening signal ("tighten granularity,"
+  "don't batch for sake of batching") as license to drop recommendations.
+  User had to flag it both times. Captured as
+  `feedback_recommendations_mandatory.md` — should apply to every future
+  batch in every skill. Pattern failure mode: conflating process-granularity
+  signals with structural-content signals.
+- **Truncation-on-reprint pattern.** When I re-issued a batch with
+  recommendations added, I tightened prose. On the second re-issue (after
+  "inline everything" correction), I truncated further. User called out the
+  iterative-shaving pattern directly. Conclusion: re-issues should preserve
+  original depth — if the user asks for inline presentation, the change is
+  placement, not brevity.
+- **Option-letter interpretation failure ("no recommendations").** User said
+  "no recommendations" meaning "[you provided] no recommendations [which is
+  a violation]." I parsed it as "[drop] recommendations [going forward]" and
+  re-issued the batch stripped. The opposite of what was asked. Conclusion:
+  when a user correction is ambiguous between two interpretations, confirm
+  the direction before acting — even if auto-mode is on.
+- **User-caught research pattern (12-cap → 12 fields).** User noticed the
+  suspicious coincidence between the BRAINSTORM 12-field cap and the research
+  proposing exactly 12 fields. Investigation confirmed research pruned two
+  additional fields (`source_status`, `source_content_hash`) to respect the
+  pre-existing cap — the "coincidence" was back-fill, honestly documented as
+  v1.1 candidates. User opted to override the cap and include both at v1 to
+  avoid a later revisit. Conclusion: transparent pruning documentation
+  preserves user ability to re-evaluate constraints; user did in this case.
+- **Helper-skill gap in batch plan.** Initial batch plan (from DIAGNOSIS.md)
+  treated data structures as if they were skills — `/port`, `/sync-back`,
+  `/extract` had no dedicated discovery batches. User caught this directly
+  ("where are planning questions for the other helper skills?"). Revised
+  plan pairs skill + primary data structure (pattern from `/context-sync` +
+  drift record): Batch 3 `/port`+ledger, Batch 4 `/extract`+profile, Batch 5
+  `/sync-back` (standalone), Batch 6 cache, etc.
+
+## Session 22 (2026-04-25)
+
+- **Subagent delegation for high-volume mechanical edits.** When a new skill
+  registers in `.claude/skills/`, the harness re-injects the full skill list
+  (large payload) on every Edit tool call to that skill's files. After ~5
+  surgical edits to the new `repo-analysis/SKILL.md`, orchestrator context
+  burn was unsustainable. Delegating to a subagent with PORT_DECISIONS.md
+  as the instruction set finished the remaining ~45 edits across 8 batch
+  commits in one agent invocation, with no orchestrator skill-list overhead.
+  Conclusion: when a port or refactor exceeds ~10 surgical edits to a freshly
+  registered skill's files, prefer subagent delegation over inline Edit calls.
+  The trigger is the skill-list re-injection, not the edit count itself.
+
+- **Decisions-table-as-instruction-set works as a delegation contract.**
+  PORT_DECISIONS.md was authored conversationally during the walkthrough as
+  a record for human review. It also worked as a self-contained instruction
+  set for the subagent — 61 numbered decisions with rationale produced
+  mechanical edits without judgment-call drift. Pattern is reusable: when the
+  orchestrator authors a decisions table for human review, that same table is
+  a usable subagent prompt for execution. The decision-with-rationale shape
+  (not just the decision) is what prevents the agent from second-guessing.
+
+- **Bundle-REMOVE invites overcorrection; decompose first.** Item 9 of port
+  walkthrough Batch 2 bundled "Creator View family" as a single REMOVE
+  (creator-view.md + adoption verdict + T1/T2/T3 + absence patterns +
+  Knowledge Candidates section), framed as "SoNash-specific lens for
+  adoption decisions." User pushed back: Creator View captures cross-repo
+  *understanding*, which cross-repo *movement* depends on. Decomposing to
+  per-item disposition (KEEP creator-view.md + KEEP home-repo context loading
+  + KEEP adoption verdict with relabel + KEEP absence patterns + REMOVE only
+  curated-list outputs) was correct. Conclusion: when a REMOVE bundle
+  conjoins items with different rationales, the bundling itself is the
+  failure mode — decompose to per-item before locking. Bundles can be used
+  for batch-presentation efficiency, but each item must carry its own
+  disposition rationale, not a shared one.
+
+- **Cross-locale state recovery worked via narrative + manual file transfer.**
+  Session 21's gitignored deep-plan state file didn't travel between machines.
+  The SESSION_CONTEXT.md "Home resume contract" section the user authored at
+  Session 21 close enabled rough state reconstruction (narrative form), and
+  the user's manual file transfer via Downloads provided the authoritative
+  canonical state. One JSON syntax fix (missing comma) restored full state.
+  Conclusion: the narrative resume contract is a useful fallback even when
+  the structured state file is available — the two layers are mutually
+  reinforcing, not redundant. The infra fix (`.gitignore` exception bridging
+  long-lived plan state files) prevents recurrence.
+
+## Session 23 close (2026-04-27, mid-branch — PR #12 created)
+
+- **The most data-driven insight of this session was a behavioral failure caught by the user.** I default-skipped 4 artifacts during `/repo-analysis` Coverage Audit on relevance grounds ("we don't use Obsidian"). The skill text does NOT endorse that heuristic — it explicitly describes Coverage Audit as "the safety net that catches edge cases" and Phase 3.5 as "applies to ALL repo types." User reversed every skip; the reversed reads contained the highest-value insights of the analysis (search-vs-read tenet, tool-cost ranking, ADAM `coherence_monitor.py` reference, attribution-protocol pattern). Triggered SKILL.md v1.0 → v1.1 hardening across four surfaces simultaneously: Critical Rule 10, Phase 6b prose, Delegation table, Self-Audit check 11. Plus a durable `feedback_repo_analysis_read_by_default.md` auto-memory entry. **Pattern: when a skill default-when-unanswered behavior masks a content-judgment failure, the fix has to land at the skill text level + memory level + tooling level simultaneously — not just one.** A memory alone wouldn't have caught it (the `feedback_never_defer_without_approval.md` rule was already on file and didn't fire). A skill rule alone wouldn't have caught it (the existing prose described Coverage Audit as a "safety net" but didn't gate the default). Combining all three closes the loop.
+- **The "search-by-default" instinct hides under softer framings too.** My first acknowledgment of the error still privileged "the *generalizable* parts transfer" framing, which was a softer version of the same wrong heuristic. User pushed back twice more before I named the deeper principle: external repos earn their place in analysis precisely BECAUSE they have things the home repo doesn't, and pre-read relevance filters defeat that purpose. Worth watching for the soft-failure-mode pattern in any analysis pass.
+- **Step 10 session-end-commit.js script worked first try, again.** Printed both `✓ Updated SESSION_CONTEXT.md` and `✓ Committed session-end changes` + `✓ Pushed to remote`. The gate passed without exercising the fallback block. `--no-push` was not set; push completed cleanly.
+- **Phase 2/3 silent-skip continues to work** — Steps 4, 4b, 5, 5b, 6 all noop'd because Layer 2 sources are absent. Step 7g surfaced commit-log analytics (3 Session-23 commits, avg 6.3 files/commit — skewed by the analysis bundle). Zero errors, zero warnings. v0 port pattern holds.
+- **PR body via `--body-file` worked first try** (per existing memory). No heredoc retry. The PR body file lived briefly inside `.research/analysis/<slug>/.PR_BODY.md` as a hidden temp file and was deleted post-creation.
+- **Two `.claude/state/deep-plan.*.state.json` files persisted across the entire session as untracked.** Both have non-terminal phase status; both pre-date this session; both were left alone per warn-don't-delete discipline. They surfaced during `git fetch --all` at session-begin (visible in `git status` post-pull), again at the smoke-test commit, and again at session-end. The skill text correctly handles them via warn-don't-auto-delete. Bridge retirement is a closeout-phase task in the active `/deep-plan`.
+- **Branch is now 25 commits ahead of `main`.** PR #12 covers Sessions 19-23. Average ~5 commits per session over 5 sessions of work. PR body categorizes by workstream (deep-research / deep-plan tenet / repo-analysis port / Coverage Audit hardening / sundry chores) rather than by session — the cross-session view makes the workstream story coherent.

@@ -437,7 +437,7 @@ passes.
 
 > Read REFERENCE.md for detailed self-audit criteria and report format. Pattern
 > reference:
-> [`.claude/skills/_shared/SELF_AUDIT_PATTERN.md`](../_shared/SELF_AUDIT_PATTERN.md).
+> [`.claude/skills/shared/SELF_AUDIT_PATTERN.md`](../shared/SELF_AUDIT_PATTERN.md).
 
 ### 5.0 Run Self-Audit Script (MUST — first step)
 

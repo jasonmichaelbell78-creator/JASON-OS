@@ -103,7 +103,7 @@ const analysisRecordCore = z.object({
   source: z.string().trim().min(1),
   slug: z.string().trim().min(1),
   title: z.string().trim().min(1),
-  analyzed_at: z.string().trim().min(1).nullable(),
+  analyzed_at: z.string().trim().min(1).nullable().optional().default(null),
   depth: depthEnum,
   tags: z.array(z.string().trim().min(1)).default([]),
   scoring: scoringSchema,

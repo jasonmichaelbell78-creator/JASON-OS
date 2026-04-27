@@ -1,5 +1,19 @@
 # PR Review Learnings
 
+#### Review #20: PR #12 Round 2 — repo-wide PII sweep + Qodo R2 follow-ups (2026-04-27)
+
+**Source:** Qodo (Compliance + PR Code Suggestions)
+**PR/Branch:** PR #12 / `fixes-42226` → `main`
+**Items:** 11 unique total — 1 critical (operator-PII / absolute-path leak across 37 committed research files), 2 verification compliance items (`sanitizeError` audit), 8 code suggestions (importance 3-7).
+
+**Patterns Identified:** [TBD — populated post-fix]
+
+**Resolution:** [TBD — populated post-fix]
+
+**Key Learnings:** [TBD — populated post-fix]
+
+---
+
 #### Review #19: Sessions 19-23 cross-repo-movement-reframe + repo-analysis port (PR #12) — Round 1 (2026-04-27)
 
 **Source:** Mixed (SonarCloud + Qodo + Gemini)

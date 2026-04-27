@@ -343,7 +343,17 @@ function checkBehavioral(ctx) {
   const isStandardOrDeep = ctx.depth === "standard" || ctx.depth === "deep";
   if (!isStandardOrDeep) return results;
 
-  const handler = HANDLER_MAP[ctx.sourceType] || "unknown";
+  // Skip the state-file lookup entirely when source_type is unmapped — we'd
+  // otherwise probe for `unknown.<slug>.state.json`, which can never exist
+  // and produces a confusing "no state file" warning under a misleading
+  // handler name.
+  const handler = HANDLER_MAP[ctx.sourceType];
+  if (!handler) {
+    results.warn.push(
+      `Unknown source_type '${ctx.sourceType}' — skipping state-file check`
+    );
+    return results;
+  }
   const state = loadStateFile(handler, ctx.slug, results);
   if (!state) return results;
 

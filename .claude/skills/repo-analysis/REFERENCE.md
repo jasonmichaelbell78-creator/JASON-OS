@@ -334,7 +334,7 @@ See `.claude/skills/shared/CONVENTIONS.md` Section 12 for schema contract.
 | Field                 | Type   | Description                                                      |
 | --------------------- | ------ | ---------------------------------------------------------------- |
 | `id`                  | string | UUID, stable across rebuilds                                     |
-| `schema_version`      | string | Schema version (`"3.0"`)                                         |
+| `schema_version`      | string | Schema version (`"1.0"`)                                         |
 | `source_type`         | string | Always `"repo"` for this handler                                 |
 | `source`              | string | GitHub `OWNER/REPO` identifier                                   |
 | `slug`                | string | Directory slug for `.research/analysis/<slug>/`                  |
@@ -660,7 +660,7 @@ User override at scan time: `--lens=adoption|creator`
 Both lenses always shown. Primary lens marked with `[PRIMARY]`.
 
 ```
-Adoption Lens: Trial (62) — viable dependency with caveats
+Adoption Lens: experimental-subset (62) — viable dependency with caveats
 Creator Lens:  Study (85) — deep engagement recommended [PRIMARY]
 ```
 
@@ -1009,7 +1009,9 @@ special chars). Examples:
 
 ### Rate Limits
 
-- Always authenticate; never unauthenticated API calls
+- Always authenticate for GitHub API calls; never use unauthenticated GitHub
+  API requests (third-party endpoints like deps.dev are explicitly
+  unauthenticated and unaffected by this rule)
 - Check `gh api /rate_limit` before each API batch; abort if `remaining < 200`
 - Cache ETag on every GET; use `If-None-Match` on subsequent polls
 - Core, search, code_search, and GraphQL are independent rate limit buckets
@@ -1415,10 +1417,13 @@ Absorbed from SKILL.md v2.0 to keep SKILL.md under 300 lines.
 2. LFS check: `GIT_LFS_SKIP_SMUDGE=1` if `.gitattributes` detected
 3. Monorepo detection (turbo.json, nx.json, pnpm-workspace.yaml, etc.)
 4. **Repomix generation (MUST — immediately after clone):**
-   `npx repomix --compress --output <output-dir>/repomix-output.txt`
-   Use the project-installed dep declared in `package.json`. Do NOT use
-   `@latest` — that introduces nondeterminism on upstream releases. Verify
-   file exists. If fails: retry once, report to user. Never skip.
+   `mkdir -p "<output-dir>" && npx --no-install repomix --compress --output "<output-dir>/repomix-output.txt"`
+   `--no-install` forces use of the project-installed dep declared in
+   `package.json`; if it isn't installed, fail loudly rather than silently
+   pulling from the network. Do NOT use `@latest` — that introduces
+   nondeterminism on upstream releases. The `mkdir -p` and quoting protect
+   against missing parent dirs and paths with spaces. Verify file exists.
+   If fails: retry once, report to user. Never skip.
 5. For Deep: `git fetch --unshallow` or `--shallow-since="1 year ago"`
 6. Update state file with clone path and strategy
 

@@ -1,8 +1,8 @@
 # Shared Skill Conventions
 
 <!-- prettier-ignore-start -->
-**Document Version:** 1.1
-**Last Updated:** 2026-04-12
+**Document Version:** 1.2
+**Last Updated:** 2026-04-27
 **Status:** ACTIVE
 <!-- prettier-ignore-end -->
 
@@ -10,6 +10,12 @@ Canonical source for conventions shared across the analysis/synthesis skill
 family: `/analyze`, `/repo-analysis`, `/website-analysis`, `/document-analysis`,
 `/media-analysis`, and `/synthesize`. Individual skills reference this file
 rather than duplicating these rules.
+
+**JASON-OS port status (v0.1):** Only `/repo-analysis` is currently ported. The
+other family members are forward-looking — sections that depend on them carry
+DEFERRED markers and reactivate when the sibling skill lands. See
+[BOOTSTRAP_DEFERRED.md](../../../.planning/jason-os/BOOTSTRAP_DEFERRED.md) for
+the broader deferral ledger.
 
 ---
 
@@ -119,14 +125,17 @@ rubric).
 
 ## 9. Home Context Sources
 
-All skills in the family MUST load these 5 sources before producing
+All skills in the family MUST load these sources before producing
 Creator-facing output (Creator View, synthesis output, fit scoring):
 
 1. `SESSION_CONTEXT.md` — current sprint, active work
-2. `ROADMAP.md` — project direction, planned features
-3. `CLAUDE.md` — conventions, stack, architecture
-4. `.claude/skills/` directory listing — active skills inventory
-5. `MEMORY.md` user/project entries — project initiatives, decisions
+2. `CLAUDE.md` — conventions, stack, architecture
+3. `.claude/skills/` directory listing — active skills inventory
+4. `MEMORY.md` user/project entries — project initiatives, decisions
+
+**DEFERRED (JASON-OS v0.1):** `ROADMAP.md` is not yet present in JASON-OS
+(per `CLAUDE.md` Phase 2 deferral). Restore as a fifth required source when
+ROADMAP.md lands.
 
 ---
 
@@ -142,6 +151,15 @@ All skills SHOULD include a retro prompt at completion and persist the response:
 ---
 
 ## 11. Extraction Context
+
+**DEFERRED (JASON-OS v0.1):** Vacuous in JASON-OS today. The `/extract` skill
+and its outputs (`.research/EXTRACTIONS.md` + `.research/extraction-journal.jsonl`)
+are not yet ported. Until they land, creation-oriented skills (`/brainstorm`,
+`/deep-plan`, `/skill-creator`) have no extraction store to consult — skip this
+step silently and proceed. Reactivate the MUST when the extraction pipeline
+ports.
+
+The original specification (preserved for the future port):
 
 All creation-oriented skills (brainstorm, deep-plan, skill-creator) MUST check
 extraction data during their context-gathering phase and surface relevant
@@ -220,11 +238,16 @@ media-analysis) MUST produce artifacts in `.research/analysis/<slug>/`.
 
 **Standard/Deep only (in addition to above):**
 
-| Artifact           | Phase   | Format                                           |
-| ------------------ | ------- | ------------------------------------------------ |
-| `value-map.json`   | Phase 6 | Candidates array with 4 types                    |
-| `creator-view.md`  | Phase 4 | Conversational prose, 6 sections                 |
-| Extraction entries | Phase 6 | Appended to `.research/extraction-journal.jsonl` |
+| Artifact          | Phase   | Format                            |
+| ----------------- | ------- | --------------------------------- |
+| `value-map.json`  | Phase 6 | Candidates array with 4 types     |
+| `creator-view.md` | Phase 4 | Conversational prose, 6 sections  |
+
+**DEFERRED (JASON-OS v0.1):** The SoNash spec also lists "Extraction entries"
+appended to `.research/extraction-journal.jsonl` as a MUST. The
+extraction-journal pipeline is not yet ported to JASON-OS, so handlers cannot
+satisfy that requirement today and MUST NOT fail on its absence. Restore the
+row when the journal lands.
 
 Quick Scan produces only `analysis.json` (with lightweight creator lens in the
 `creator_view` field). The interactive gate determines whether Standard/Deep
@@ -259,8 +282,8 @@ be flagged by `self-audit.js`.
 
 ### 13.4 Phase Structure
 
-All handlers follow the same phase progression. Use repo-analysis v4.3 as the
-reference template:
+All handlers follow the same phase progression. Use repo-analysis v1.0
+(JASON-OS port; SoNash v5.0 lineage) as the reference template:
 
 ```
 VALIDATE → PHASE 0 (Quick Scan) → GATE → PHASE 1 (Content Load) →
@@ -304,8 +327,10 @@ MUST NOT be applied — these duplicate other fields or carry no information:
 
 ### 14.3 Tag Categories
 
-The controlled vocabulary at `.research/tag-vocabulary.json` groups tags into
-eight categories:
+The controlled vocabulary groups tags into eight categories. (DEFERRED in
+JASON-OS v0.1: `.research/tag-vocabulary.json` is not yet present —
+`/repo-analysis` proposes tags inline against this category list until the
+vocabulary file ports.)
 
 | Category        | Purpose                           | Examples                                                                             |
 | --------------- | --------------------------------- | ------------------------------------------------------------------------------------ |
@@ -326,14 +351,17 @@ an idea you'd discuss.
 
 Before applying a new tag:
 
-1. **Check** `.research/tag-vocabulary.json` for an existing match
+1. **Check** `.research/tag-vocabulary.json` for an existing match (DEFERRED in
+   JASON-OS v0.1 — no vocabulary file yet; check the Section 14.3 categories
+   and prior tags in `.research/analysis/*/analysis.json` instead)
 2. **Check synonyms** — if a parent concept or synonym exists, use it
 3. **Propose** — if genuinely new, propose with category + one-sentence
    definition
 4. **Approve** — user authorizes new vocabulary additions (never auto-added)
 
-The retag script (`scripts/cas/retag.js`) enforces this — unknown tags trigger a
-proposal prompt, not a silent write.
+**DEFERRED (JASON-OS v0.1):** The retag script (`scripts/cas/retag.js`) is not
+yet ported. Until it lands, the proposal/approval flow runs interactively
+inside `/repo-analysis` Phase 6c (Tag Suggestion); no batch retag tool exists.
 
 ### 14.5 Naming Rules
 
@@ -350,10 +378,12 @@ After Value Map (Phase 6), each handler MUST:
 1. Read entry `notes` + source `creator-view.md`
 2. Propose tags covering the content — **at least 3 semantic**, as many more as
    the content warrants
-3. Pull from `.research/tag-vocabulary.json`; for genuinely new tags, propose
-   with category + one-sentence definition
+3. Pull from `.research/tag-vocabulary.json` if present; otherwise propose
+   against the Section 14.3 categories. For genuinely new tags, propose with
+   category + one-sentence definition.
 4. Present to user for accept / modify / add
-5. Write approved tags to both `analysis.json` and `extraction-journal.jsonl`
+5. Write approved tags to `analysis.json`. (DEFERRED in JASON-OS v0.1: also
+   write to `.research/extraction-journal.jsonl` once that file ports.)
 
 **Do not pre-populate tags without user approval.** The suggestion is a draft;
 the user owns the final set.
@@ -410,12 +440,15 @@ Never use slugs, short names, or alternate formats in the `source` field. The
 
 ## 15. Skill Template Contract
 
-All handler skills MUST mirror the repo-analysis v4.3 structure:
+All handler skills MUST mirror the repo-analysis v1.0 (JASON-OS) structure
+(SoNash v5.0 lineage; SoNash siblings will track their own version trail):
 
 1. Same SKILL.md sections: Critical Rules, When to Use, Input, Process Overview,
    phase descriptions, Self-Audit, Routing Menu, State File, Version History
 2. Same REFERENCE.md split principle (Section 6)
-3. Same routing menu options (8 options, same order)
+3. Same routing menu options. JASON-OS v0.1 ships 7 options (TDMS routing
+   option dropped during the port; `/synthesize` routing option DEFERRED until
+   `/synthesize` ports). SoNash retains 8.
 4. Same state file pattern: `.claude/state/<skill-name>.<slug>.state.json`
 5. Same self-audit minimum floor (Section 8) plus domain-specific checks
 
@@ -465,6 +498,12 @@ where user judgment enters the pipeline.
 ---
 
 ## 17. Synthesis Output Contract
+
+**DEFERRED (JASON-OS v0.1):** The entire `/synthesize` skill is not yet ported.
+This section is preserved verbatim from SoNash so the contract is ready when
+`/synthesize` lands, but no JASON-OS skill currently produces or consumes
+these artifacts. `scripts/cas/rebuild-index.js` (referenced in §17.4) is also
+not ported. Reactivate the whole section when `/synthesize` ports.
 
 The `/synthesize` skill is a **consumer skill** — it reads handler output, it
 does not produce handler output. Its contract is distinct from the handler

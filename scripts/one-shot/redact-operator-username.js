@@ -32,6 +32,15 @@ const { execSync } = require("node:child_process");
 const PROJECT_ROOT = path.resolve(__dirname, "../..");
 const DRY_RUN = process.argv.includes("--dry-run");
 
+// The script contains the literal username token inside its regex literals,
+// which means running the script against itself would rewrite those literals
+// and break future invocations. Compute the script's own repo-relative path
+// so we can skip it explicitly during the file walk.
+const SELF_REL = path
+  .relative(PROJECT_ROOT, __filename)
+  .split(path.sep)
+  .join("/");
+
 // Path-shaped replacement patterns. Order matters: the most specific patterns
 // (with explicit separators on both sides) come first so we never replace a
 // `jason` token that isn't unambiguously a username slot. The trailing
@@ -56,9 +65,12 @@ const REPLACEMENTS = [
 ];
 
 function listTrackedFiles() {
-  const out = execSync("git ls-files", { cwd: PROJECT_ROOT, encoding: "utf8" });
+  // -z emits NUL-delimited paths so filenames containing newlines or other
+  // whitespace round-trip cleanly. Defends against a class of repo content
+  // that the older `\n` split would mis-handle.
+  const out = execSync("git ls-files -z", { cwd: PROJECT_ROOT, encoding: "utf8" });
   return out
-    .split("\n")
+    .split("\0")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 }
@@ -71,37 +83,56 @@ function applyReplacements(text) {
   return out;
 }
 
+function readUtf8OrNull(abs) {
+  try {
+    const buf = fs.readFileSync(abs);
+    // Skip binaries — quick heuristic: NUL byte in first 1024 bytes.
+    if (buf.subarray(0, 1024).includes(0)) return null;
+    return buf.toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
+function countOccurrences(text) {
+  let count = 0;
+  for (const { re } of REPLACEMENTS) {
+    const matches = text.match(new RegExp(re.source, re.flags));
+    if (matches) count += matches.length;
+  }
+  return count;
+}
+
+function processFile(rel) {
+  // Never rewrite the script itself — its regex literals contain the
+  // username token by design.
+  if (rel === SELF_REL) return { touched: false, occurrences: 0 };
+
+  const abs = path.join(PROJECT_ROOT, rel);
+  const original = readUtf8OrNull(abs);
+  if (original === null) return { touched: false, occurrences: 0 };
+
+  const updated = applyReplacements(original);
+  if (updated === original) return { touched: false, occurrences: 0 };
+
+  const occurrences = countOccurrences(original);
+  console.log(`${DRY_RUN ? "[dry-run] " : ""}${rel} (${occurrences} replacement${occurrences === 1 ? "" : "s"})`);
+  if (!DRY_RUN) {
+    fs.writeFileSync(abs, updated);
+  }
+  return { touched: true, occurrences };
+}
+
 function main() {
   const files = listTrackedFiles();
   let touched = 0;
   let totalOccurrences = 0;
 
   for (const rel of files) {
-    const abs = path.join(PROJECT_ROOT, rel);
-    let original;
-    try {
-      const buf = fs.readFileSync(abs);
-      // Skip binaries — quick heuristic: NUL byte in first 1024 bytes.
-      if (buf.subarray(0, 1024).includes(0)) continue;
-      original = buf.toString("utf8");
-    } catch {
-      continue;
-    }
-    const updated = applyReplacements(original);
-    if (updated === original) continue;
-
-    // Count occurrences for reporting.
-    let occurrences = 0;
-    for (const { re } of REPLACEMENTS) {
-      const matches = original.match(new RegExp(re.source, re.flags));
-      if (matches) occurrences += matches.length;
-    }
-
-    touched += 1;
-    totalOccurrences += occurrences;
-    console.log(`${DRY_RUN ? "[dry-run] " : ""}${rel} (${occurrences} replacement${occurrences === 1 ? "" : "s"})`);
-    if (!DRY_RUN) {
-      fs.writeFileSync(abs, updated);
+    const result = processFile(rel);
+    if (result.touched) {
+      touched += 1;
+      totalOccurrences += result.occurrences;
     }
   }
 

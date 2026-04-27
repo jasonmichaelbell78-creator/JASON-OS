@@ -178,14 +178,18 @@ not full Creator View.
 
 1. Clone: `git clone --filter=blob:none --depth=1 <url>` to `/tmp/`
 2. **Generate repomix IMMEDIATELY (MUST).** Run
-   `mkdir -p ".research/analysis/<repo-slug>" && npx --no-install repomix --compress --output ".research/analysis/<repo-slug>/repomix-output.txt"`
-   from the cloned directory. `--no-install` forces use of the
-   project-installed version (declared as a dev dep in `package.json`); do
-   NOT use `@latest` — that introduces nondeterminism on upstream releases.
-   The `mkdir -p` and quoting protect against missing parent dirs and paths
-   with spaces. Verify file exists before proceeding. If repomix fails:
-   retry once, then report. Do NOT silently skip — repomix is required for
-   Extract routing.
+   `mkdir -p ".research/analysis/<repo-slug>" && (cd "<clone-dir>" && npx --no-install repomix --compress --output "<absolute-output-path>/repomix-output.txt")`
+   where `<clone-dir>` is the path returned by step 1's clone and
+   `<absolute-output-path>` resolves the output path relative to the home
+   repo (not the clone). The `cd` is mandatory — repomix scans the current
+   working directory by default, so without it the home repo gets scanned
+   instead of the target. The subshell `(...)` scopes the directory change.
+   `--no-install` forces use of the project-installed version (declared as
+   a dev dep in `package.json`); do NOT use `@latest` — that introduces
+   nondeterminism on upstream releases. The `mkdir -p` and quoting protect
+   against missing parent dirs and paths with spaces. Verify file exists
+   before proceeding. If repomix fails: retry once, then report. Do NOT
+   silently skip — repomix is required for Extract routing.
 3. For Deep: `git fetch --unshallow` or `--shallow-since="1 year ago"`.
 4. Update state file.
 

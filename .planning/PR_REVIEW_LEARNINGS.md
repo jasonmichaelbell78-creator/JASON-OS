@@ -1,5 +1,154 @@
 # PR Review Learnings
 
+#### Review #21: PR #12 Round 3 — SonarCloud cognitive complexity + Qodo R3 follow-ups (2026-04-27)
+
+**Source:** Mixed (SonarCloud + Qodo)
+**PR/Branch:** PR #12 / `fixes-42226` → `main`
+**Items:** 9 unique total — 1 SonarCloud cognitive-complexity (redaction script `main()` at 19 vs 15 cap), 8 Qodo code suggestions ranging importance 2-9. Net new — no R1/R2 ghosts.
+
+**Patterns Identified:**
+
+1. **Reviewers flag the "what" but the "why" sometimes lives in
+   surrounding prose.** R3 surfaced a real bug: the repomix command
+   in REFERENCE.md / SKILL.md never `cd`s into the cloned repo
+   before running, so following the literal command verbatim would
+   analyze the home repo instead of the target. The skill text said
+   "from the cloned directory" in prose, but the literal command
+   block is what an agent reads under time pressure. **Lesson: when
+   a markdown command depends on cwd, encode the cwd in the
+   command (`cd "<path>" &&`), not in the surrounding sentence.**
+   The instructional prose can disagree with the literal and the
+   literal wins.
+   - Root cause: ports / refactors of these command blocks have
+     iterated on flags (`--no-install`, `--compress`, etc.) and
+     output paths but never re-checked the cwd assumption that
+     was implicit in the original invocation.
+   - Prevention: mark any markdown command that relies on cwd with
+     an explicit `cd "<dir>" &&` prefix, even when adjacent prose
+     says where to run it.
+
+2. **Trust the reviewer's own importance score on suggestions.**
+   Three of the four R3 rejections were items where Qodo's own
+   self-rating was 2-3/10 with explicit "this would break things"
+   or "this is awkward" rationale embedded in the Why. Q3-S3
+   wanted explanatory text injected directly into a code block
+   (Qodo: "confusing"). Q3-S4 wanted symlink-escape protection
+   added to a one-shot local script (Qodo: "actual security risk
+   negligible"). Q3-S7 wanted relative paths in JSONL records
+   (Qodo: "would likely break tools relying on this specific path
+   format"). **The reviewer is telling us not to apply these — the
+   right move is to record the rejection citing the reviewer's
+   own caveat, not waste time evaluating from scratch.**
+
+3. **Cognitive-complexity refactors continue to follow the
+   "extract per-iteration body into a helper" pattern.** SC-1's
+   `main()` was at 19 vs 15 cap. Same shape as R1's three
+   refactors: outer loop over a list of things + inner per-item
+   classification + inner per-item logging + inner per-item
+   write. Extracting `processFile(rel)` returning
+   `{touched, occurrences}` plus two read-helpers
+   (`readUtf8OrNull`, `countOccurrences`) collapsed it well below
+   15. Same lesson as R1: when the loop body is more than a
+   couple statements, extract it. Keep the outer loop a thin
+   reduce.
+
+4. **Verification surfaces self-modifying-script hazards that
+   neither reviewer caught.** While running the dry-run to
+   confirm the SC-1 refactor preserved behavior, the dry-run
+   reported 17 replacements would land in the redaction script's
+   own file — its regex literals contain the username token by
+   design. In R2 the script was untracked when run, so
+   `git ls-files` skipped it. Now that it's committed, a future
+   non-dry-run would self-corrupt. Added a `SELF_REL` skip
+   guard. **Lesson: any script that walks tracked files and
+   contains literal patterns matching its own walk targets needs
+   an explicit self-skip.**
+
+**Resolution:**
+
+- Fixed: 5 items (+ 1 bonus self-skip guard caught during verification)
+  - SC-1 (cognitive complexity): refactored `main()` in the
+    redaction script. Extracted `readUtf8OrNull`,
+    `countOccurrences`, and `processFile(rel)` helpers.
+    `main()` is now a thin reduce over `processFile` results.
+  - Q3-S1 (repomix cwd bug, importance 9): added `cd "<clone-dir>"`
+    inside a `(...)` subshell to the repomix command in both
+    REFERENCE.md (§15.1) and SKILL.md (Phase 1). Without this,
+    the literal command would scan the home repo instead of the
+    target.
+  - Q3-S2 (sanitize unknown source_type log): wrap
+    `ctx.sourceType` in `String(...).replace(/[\r\n\x1b]/g, " ")`
+    before pushing into the warn message. Defends against
+    CR/LF/escape-sequence injection from a malformed
+    `analysis.json`.
+  - Q3-S5 (severity bucket inconsistency): trends.jsonl example
+    in REFERENCE.md used `S0/S1/S2/S3` but findings.jsonl schema
+    uses `high/medium/low/info`. Updated both the example and
+    the field-description table cell. Pre-existing port-time
+    drift, DAS=1.
+  - Q3-S6 (NUL-delimited file listing): switched
+    `git ls-files` to `git ls-files -z` with `\0` split in the
+    redaction script. Defends against repos with filenames
+    containing newlines.
+  - Bonus: SELF_REL skip guard in the redaction script — caught
+    during smoke-test of SC-1 + Q3-S6 fixes; the script would
+    otherwise rewrite its own regex literals on a future run
+    now that it's tracked in git.
+- Deferred: 0 items.
+- Rejected: 4 items
+  - Q3-S3 (inject explanatory prose into example code block):
+    Qodo's own caveat — "this snippet is a high-level markdown
+    instruction... making the change... confusing." The
+    "Both lenses always shown. Primary marked with [PRIMARY]"
+    framing is type-agnostic by design.
+  - Q3-S4 (realpathSync symlink-escape protection in redaction
+    script): Qodo's own importance 2/10 with rationale "this is
+    a one-shot historical script run locally by the developer,
+    making the actual security risk negligible." The script
+    walks `git ls-files` (only tracked files); symlinks would
+    have been caught at commit time.
+  - Q3-S7 (replace `~/.claude/projects/...` with relative paths
+    in JSONL memory records): Qodo's own importance 2/10 with
+    rationale "changing to a relative path would likely break
+    tools relying on this specific path format." The JSONL
+    records exist specifically to document where memory files
+    live on disk; relative paths defeat the purpose.
+  - Q3-S8 (replace `<user>` placeholder with `REDACTED_USER`):
+    `<user>` is the standard CLI/path-doc placeholder
+    convention and renders as literal text in GitHub-flavored
+    markdown (no recognized HTML tag). Switching would invalidate
+    the R2 mechanical-replacement commit and produce another
+    large diff for marginal gain. If a downstream tool ever
+    actually trips on the angle brackets we'd reconsider.
+
+**Key Learnings:**
+
+- **Markdown command literals win over surrounding prose.** When a
+  command depends on cwd, encode the `cd` in the command itself
+  rather than in the sentence above it. Skill text under time
+  pressure gets read literally.
+- **Reviewer self-ratings are signal, not noise.** Three of four
+  R3 rejections came with the reviewer's own 2-3/10 importance
+  score and embedded "this would break things" rationale. Trust
+  the score; record the reviewer's own caveat as the rejection
+  justification.
+- **Cognitive-complexity refactors follow a predictable shape.**
+  Outer loop + per-item classification/logging/write inside →
+  extract `processItem(...)` helper, collapse outer loop to a
+  thin reduce. Same pattern as R1's three refactors.
+- **Tracked status changes the safety profile of a one-shot
+  script.** A script that's safe to run when untracked can
+  self-corrupt once committed if it walks `git ls-files` and
+  contains its own walk targets in literals. Adding a
+  `SELF_REL` skip guard is cheap insurance.
+- **Defense-in-depth on log sinks pays off in
+  audit/verification scripts.** The `ctx.sourceType` sanitization
+  protects the audit's terminal output from a malformed
+  `analysis.json` containing CR/LF or escape sequences. Cheap,
+  preventive, no behavioral change on the happy path.
+
+---
+
 #### Review #20: PR #12 Round 2 — repo-wide PII sweep + Qodo R2 follow-ups (2026-04-27)
 
 **Source:** Qodo (Compliance + PR Code Suggestions)

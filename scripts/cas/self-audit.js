@@ -349,8 +349,12 @@ function checkBehavioral(ctx) {
   // handler name.
   const handler = HANDLER_MAP[ctx.sourceType];
   if (!handler) {
+    // Sanitize the unknown source_type before logging — a malformed
+    // analysis.json could put CR/LF (or worse, terminal escape sequences)
+    // into source_type and disrupt the audit's terminal output.
+    const safeSourceType = String(ctx.sourceType).replace(/[\r\n\x1b]/g, " ");
     results.warn.push(
-      `Unknown source_type '${ctx.sourceType}' — skipping state-file check`
+      `Unknown source_type '${safeSourceType}' — skipping state-file check`
     );
     return results;
   }

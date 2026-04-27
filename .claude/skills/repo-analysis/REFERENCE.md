@@ -530,10 +530,10 @@ same repo.
   },
   "findings_total": 84,
   "findings_by_severity": {
-    "S0": 2,
-    "S1": 8,
-    "S2": 35,
-    "S3": 39
+    "high": 2,
+    "medium": 8,
+    "low": 35,
+    "info": 39
   },
   "new_findings": 6,
   "resolved_findings": 12,
@@ -558,7 +558,7 @@ same repo.
 | `critical_health_metric` | number | Minimum dimension score                       |
 | `dimensions`             | object | Per-dimension numeric scores                  |
 | `findings_total`         | number | Total findings count                          |
-| `findings_by_severity`   | object | Findings broken out by S0-S3                  |
+| `findings_by_severity`   | object | Findings broken out by high/medium/low/info   |
 | `new_findings`           | number | New findings vs previous run (0 if first run) |
 | `resolved_findings`      | number | Findings resolved since previous run          |
 | `delta_overall`          | number | Score change from previous run                |
@@ -1417,13 +1417,18 @@ Absorbed from SKILL.md v2.0 to keep SKILL.md under 300 lines.
 2. LFS check: `GIT_LFS_SKIP_SMUDGE=1` if `.gitattributes` detected
 3. Monorepo detection (turbo.json, nx.json, pnpm-workspace.yaml, etc.)
 4. **Repomix generation (MUST — immediately after clone):**
-   `mkdir -p "<output-dir>" && npx --no-install repomix --compress --output "<output-dir>/repomix-output.txt"`
-   `--no-install` forces use of the project-installed dep declared in
-   `package.json`; if it isn't installed, fail loudly rather than silently
-   pulling from the network. Do NOT use `@latest` — that introduces
-   nondeterminism on upstream releases. The `mkdir -p` and quoting protect
-   against missing parent dirs and paths with spaces. Verify file exists.
-   If fails: retry once, report to user. Never skip.
+   `mkdir -p "<output-dir>" && (cd "<clone-dir>" && npx --no-install repomix --compress --output "<output-dir>/repomix-output.txt")`
+   The `cd "<clone-dir>"` is mandatory — repomix scans the current working
+   directory by default, so without `cd` it would scan the home repo
+   instead of the cloned target and silently produce a wrong-source
+   repomix file. The `(...)` subshell scopes the directory change so the
+   caller's cwd is unaffected. `--no-install` forces use of the
+   project-installed dep declared in `package.json`; if it isn't
+   installed, fail loudly rather than silently pulling from the network.
+   Do NOT use `@latest` — that introduces nondeterminism on upstream
+   releases. The `mkdir -p` and quoting protect against missing parent
+   dirs and paths with spaces. Verify file exists. If fails: retry once,
+   report to user. Never skip.
 5. For Deep: `git fetch --unshallow` or `--shallow-since="1 year ago"`
 6. Update state file with clone path and strategy
 

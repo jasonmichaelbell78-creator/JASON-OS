@@ -4,13 +4,145 @@
 
 **Source:** Qodo (Compliance + PR Code Suggestions)
 **PR/Branch:** PR #12 / `fixes-42226` → `main`
-**Items:** 11 unique total — 1 critical (operator-PII / absolute-path leak across 37 committed research files), 2 verification compliance items (`sanitizeError` audit), 8 code suggestions (importance 3-7).
+**Items:** 11 unique total — 1 critical (operator-PII / absolute-path leak; Qodo flagged 1 file in PR diff, sweep surfaced 37 files repo-wide), 2 verification compliance items (`sanitizeError` audit), 8 code suggestions (importance 3-7).
 
-**Patterns Identified:** [TBD — populated post-fix]
+**Patterns Identified:**
 
-**Resolution:** [TBD — populated post-fix]
+1. **Reviewer scope is the PR diff, but PII patterns are repo-wide.**
+   Qodo flagged exactly one file (`D9-context-sync-inventory.md`)
+   because that's what PR #12's diff contained. A propagation sweep
+   for the same `C:/Users/<username>/...` shape surfaced **37 files
+   and 550 occurrences** across `.research/` and `.planning/`,
+   accumulated over multiple prior sessions. The lesson: when a
+   reviewer flags PII in a research artifact, never assume the
+   flagged file is the boundary of the leak — committed research
+   directories accumulate operator-state references invisibly. A
+   one-shot redaction script + git-ls-files walk catches the whole
+   set in seconds; hand-editing one file misses 36.
+   - Root cause: research-agent output captures absolute paths from
+     filesystem walks verbatim. There's no sanitization step between
+     "agent found this absolute path" and "agent writes it into a
+     committed JSONL/MD".
+   - Prevention: when porting / adapting research-output skills (deep-
+     research, repo-analysis, sync-mechanism scans), require absolute
+     paths to pass through a placeholder pass before write. The
+     `<user>` placeholder convention is mechanical and reversible
+     for any operator-local re-resolution.
 
-**Key Learnings:** [TBD — populated post-fix]
+2. **`sanitizeError`'s Windows pattern only covered the backslash
+   form.** The regex set covered `C:\Users\<name>\` (backslashes,
+   matching Node fs error output on Windows) but not the
+   forward-slash variant `C:/Users/<name>/`. In practice the
+   Windows-fs error path uses backslashes so this wasn't an active
+   vulnerability — but research artifacts and prose carry the
+   forward-slash form (created via `path.join`-then-display
+   conversions). Adding the `[A-Z]:\/Users\/[^/\s]+` pattern is a
+   non-disruptive hardening that closes the gap before some
+   future error-message path constructs the forward-slash form.
+   - Root cause: the sanitizer was written for the in-practice error
+     surface (Node fs); it didn't anticipate the prose/display
+     surface where the same path takes a different shape.
+   - Prevention: when adding/auditing sanitization patterns, list
+     every shape the same secret/path can take in different
+     contexts (errors, logs, stdout prose, JSON, JSONL) and add
+     all of them.
+
+3. **Pre-existing port-time documentation drift clusters together.**
+   Three of the eight Qodo R2 suggestions were doc-only fixes to
+   `repo-analysis/REFERENCE.md`: `schema_version` cell said `"3.0"`
+   but the JASON-OS port schema is `"1.0"`; the auth guard rule said
+   "always authenticate, never unauthenticated API calls" but the
+   same section listed deps.dev as legitimately unauthenticated;
+   the example output used a verdict label `Trial` that doesn't
+   appear in our schema's verdict enum. **All three were leftovers
+   from the SoNash → JASON-OS port that survived because no one
+   reads documentation top-to-bottom during a port.** They surface
+   only when a reviewer like Qodo specifically cross-references
+   prose against schema/code.
+   - Root cause: port process trims and adapts content but doesn't
+     re-validate every example/cell/rule against the post-port
+     reality.
+   - Prevention: add a port-time linter pass that grabs every quoted
+     value (`"3.0"`, `Trial`, version strings) from REFERENCE.md and
+     verifies they appear in the corresponding schema/enum. Scoped
+     for post-Foundation tooling, not blocking now.
+
+4. **`npx --no-install` enforces "use the project-installed dep".**
+   Markdown commands like `npx repomix --compress ...` look
+   deterministic but silently fall through to network install if
+   the local install is missing. Adding `--no-install` makes the
+   failure visible at exec time instead of producing a wrong-version
+   output that looks correct. Same principle applies to any other
+   `npx`-invoked tool the skills call.
+
+**Resolution:**
+
+- Fixed: 8 items + 2 verified-PASS (no fix needed)
+  - C-1 (PII / absolute-path leak): repo-wide sweep via
+    `scripts/one-shot/redact-operator-username.js`. Replaced the
+    operator username `jason` with `<user>` in 37 files / 550
+    occurrences (all path-shaped contexts only — Windows
+    forward-slash, backslash, git-bash, Unix `/Users/`, and Claude
+    project-hash forms). Project name `jason-os`/`JASON-OS`,
+    user's email, and prose mentions preserved. Added forward-
+    slash variant to `sanitizeError`'s SENSITIVE_PATTERNS so
+    future error paths in that shape get scrubbed automatically.
+    Redaction script kept under `scripts/one-shot/` for
+    reproducibility from history.
+  - V-1, V-2 (Generic: Secure Error Handling + Secure Logging
+    Practices): VERIFIED no fix needed. `sanitizeError` actively
+    redacts Linux/macOS home paths, Windows backslash paths,
+    credentials, bearer tokens, DB connection strings, env-var
+    refs, and internal IPs. Recorded as PASS in this entry.
+  - Q-S1 (self-audit unknown source_type fallback):
+    `checkBehavioral` now skips state-file lookup entirely with a
+    clear warn message instead of probing
+    `unknown.<slug>.state.json`.
+  - Q-S2 + Q-S4 (repomix command hardening): added `--no-install`,
+    `mkdir -p`, and quoted output paths in both SKILL.md (Phase 1)
+    and REFERENCE.md (§15.1).
+  - Q-S3 (analyzed_at optional default): chained
+    `.optional().default(null)` after the existing
+    `trim().min(1).nullable()`.
+  - Q-S5 (schema_version doc cell): `"3.0"` → `"1.0"` in
+    REFERENCE.md.
+  - Q-S6 (auth guard wording): clarified to apply to GitHub API
+    calls only.
+  - Q-S8 (verdict label example): `Trial` → `experimental-subset`.
+- Deferred: 0 items.
+- Rejected: 1 item — Q-S7 (`superRefine` for candidate-count
+  enforcement) with rationale: schema-level enforcement here would
+  couple the schema to a depth-specific business rule that already
+  lives in `self-audit.js`'s `checkCandidateCount`. Schema's job is
+  structural validity; the depth-specific candidate rule is the
+  audit's job and produces a clearer pass/fail message there.
+  Qodo's own importance score (3) reflects the same trade-off.
+
+**Key Learnings:**
+
+- **A reviewer-flagged PII finding is the start of the propagation
+  sweep, not the end.** Qodo only saw 1 file because the PR diff
+  only included 1 file. The same pattern lived in 36 others. A
+  single regex + `git ls-files` walk found them all. This is the
+  pattern for any PII finding in committed research artifacts.
+- **Port-time doc drift hides until a reviewer cross-references
+  prose against schema.** Three independent doc fixes in
+  REFERENCE.md were all leftovers from the SoNash port. Worth a
+  port-time linter pass when post-Foundation tooling allows.
+- **Idempotent one-shot scripts under `scripts/one-shot/` are the
+  right mechanism for repo-wide mechanical replacements.** The
+  redaction is reproducible from history (anyone can re-run it),
+  the regex is reviewable, and the patterns can be extended as
+  new variants surface (case variants, trailing-anchor variants
+  surfaced in two retry passes during this round).
+- **`npx --no-install` is a small, free win** for any markdown
+  command that's claimed to use a project-installed dep. Failure
+  modes become visible instead of silent.
+- **Sanitization patterns need to enumerate every shape of the
+  same secret.** The Windows forward-slash variant slipped past
+  `sanitizeError` not because the code was wrong but because the
+  pattern set didn't enumerate the prose/display shape of the
+  same path.
 
 ---
 
@@ -682,7 +814,7 @@ After triage: 11 fixed, 1 deferred (D2), 1 rejected.
      for cases where full record conversion is too risky.
 
 3. **Propagation sweep surfaces peer-bundle hygiene issues.** Grepping for
-   `C:/Users/jason/` across the repo surfaced 6 instances in
+   `C:/Users/<user>/` across the repo surfaced 6 instances in
    `.research/jason-os-mvp/` (sources.jsonl, G1-session-rhythm-infra.md,
    GV1-codebase-claims.md) — out of this PR's scope but same
    absolute-local-path anti-pattern.
@@ -714,7 +846,7 @@ After triage: 11 fixed, 1 deferred (D2), 1 rejected.
   the field mapping to the canonical schema. Did NOT convert 222 records
   (risk > reward — no consumer, would break audit integrity).
 - **Item 3 (Qodo, MINOR — local path leak):** `PORT_ANALYSIS.md` replaced
-  absolute `C:/Users/jason/Workspace/dev-projects/sonash-v0/...` with
+  absolute `C:/Users/<user>/Workspace/dev-projects/sonash-v0/...` with
   `<local SoNash checkout>/...` generic placeholder.
 - **G1 (Gemini, MINOR — team header stale):** `research-plan-team.md`
   example header "state management migration" → "cross-project sync

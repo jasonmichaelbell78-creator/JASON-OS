@@ -3,7 +3,7 @@
 **Agent:** D4b-3
 **Profile:** codebase
 **Date:** 2026-04-18
-**Coverage:** 20 memory files from `C:/Users/jason/.claude/projects/C--Users-jason-Workspace-dev-projects-JASON-OS/memory/`
+**Coverage:** 20 memory files from `C:/Users/<user>/.claude/projects/C--Users-<user>-Workspace-dev-projects-JASON-OS/memory/`
 **Sub-batch indices:** 43–62
 
 ---

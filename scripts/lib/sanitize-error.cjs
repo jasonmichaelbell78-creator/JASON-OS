@@ -23,6 +23,13 @@ const SENSITIVE_PATTERNS = [
   /\/home\/[^/\s]+/gi,
   /\/Users\/[^/\s]+/gi,
   /C:\\Users\\[^\\]+/gi,
+  // Forward-slash Windows variant — Node fs errors use backslashes on
+  // Windows so the backslash form above covers the in-practice case, but
+  // research artifacts and prose can carry `C:/Users/<name>/...` (e.g.,
+  // when an absolute path was constructed in JS via `path.join`-then-
+  // `.replace(/\\/g, "/")` for display). This pattern catches that form
+  // before it lands in any log sink.
+  /[A-Z]:\/Users\/[^/\s]+/gi,
   /\/etc\/[^\s]+/gi,
   /\/var\/[^\s]+/gi,
   /(?:"?(?:password|api[_-]?key|token|secret|credential|auth)"?\s*[=:]\s*)"([^"\\]|\\.)+"/gi,

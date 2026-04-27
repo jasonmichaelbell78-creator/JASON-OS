@@ -13,7 +13,7 @@
 #### V1: scripts/lib/safe-fs.js and scripts/lib/parse-jsonl-line.js PRESENT in JASON-OS
 - **Source:** G1, Item G1 "Soft blockers" table and C-G14-03
 - **Verdict:** VERIFIED
-- **Evidence:** `C:/Users/jason/Workspace/dev-projects/jason-os/scripts/lib/` directory listing contains `safe-fs.js` and `parse-jsonl-line.js`. Both present exactly as claimed.
+- **Evidence:** `C:/Users/<user>/Workspace/dev-projects/jason-os/scripts/lib/` directory listing contains `safe-fs.js` and `parse-jsonl-line.js`. Both present exactly as claimed.
 
 #### V2: JASON-OS hooks/lib contains ONLY symlink-guard.js (git-utils, state-utils, sanitize-input, rotate-state all absent)
 - **Source:** G1, Item G2 "Missing hooks/lib Files" table; G3, post-read-handler deps
@@ -68,7 +68,7 @@
 #### R1: git-utils.js is "already present in JASON-OS/.claude/hooks/lib/git-utils.js"
 - **Source:** G4, Item G5 line 70 — "3. `./lib/git-utils` — already present in `JASON-OS/.claude/hooks/lib/git-utils.js`."
 - **Verdict:** REFUTED
-- **Evidence:** `ls C:/Users/jason/Workspace/dev-projects/jason-os/.claude/hooks/lib/` → `symlink-guard.js` only. git-utils.js is NOT present. This contradicts the G4 claim directly.
+- **Evidence:** `ls C:/Users/<user>/Workspace/dev-projects/jason-os/.claude/hooks/lib/` → `symlink-guard.js` only. git-utils.js is NOT present. This contradicts the G4 claim directly.
 - **Impact:** G4's porting assessment for pre-commit-agent-compliance.js states dependency #3 (git-utils) is "already satisfied" — this is wrong. git-utils.js must be copied from SoNash as part of the port, not assumed present. This also affects G3's post-read-handler portability assessment (G3 correctly identifies git-utils as absent; G4 incorrectly claims it is present). The G1/G2 findings correctly list git-utils as absent — G4 is the outlier with the error.
 
 ---

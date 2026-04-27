@@ -32,7 +32,7 @@ reference" (48 memory files, based on stale multi-layer-memory prior research's
 - **Total `.md` in memory dir: 83**
 
 Source:
-`ls C:/Users/jason/.claude/projects/C--Users-jason-Workspace-dev-projects-sonash-v0/memory/{feedback,user,project,reference}_*.md | wc -l`
+`ls C:/Users/<user>/.claude/projects/C--Users-<user>-Workspace-dev-projects-sonash-v0/memory/{feedback,user,project,reference}_*.md | wc -l`
 
 **Impact on recommendation:** Strengthens rather than weakens. The prior
 research's concern about growth is validated — memory files grew 89% in 18 days.

@@ -48,15 +48,15 @@ dimension that causes breakage if synced blindly.
 
 | Item type | Concrete example from JASON-OS | How often it crosses machines | Breakage mode if it crosses unintentionally |
 |---|---|---|---|
-| **`settings.local.json` allowedPaths entries** | `"Bash(mkdir -p C:/Users/jason/.claude/projects/C--Users-jason-Workspace-dev-projects-jason-os/memory)"` — observed directly in `.claude/settings.local.json` line 8 | Every sync of settings.local.json | Work machine applies a home-machine absolute path to its Bash allow-rule; rule silently fails (path doesn't exist) or worse, allows unintended path on work machine |
-| **`settings.local.json` copy command** | `"Bash(cp 'C:/Users/jason/Workspace/dev-projects/jason-os/.claude/canonical-memory/*.md' C:/Users/jason/..."` — observed in settings.local.json line 22 | Every sync | Work machine's Claude attempts a cp from a path that doesn't exist; command errors at runtime |
+| **`settings.local.json` allowedPaths entries** | `"Bash(mkdir -p C:/Users/<user>/.claude/projects/C--Users-<user>-Workspace-dev-projects-jason-os/memory)"` — observed directly in `.claude/settings.local.json` line 8 | Every sync of settings.local.json | Work machine applies a home-machine absolute path to its Bash allow-rule; rule silently fails (path doesn't exist) or worse, allows unintended path on work machine |
+| **`settings.local.json` copy command** | `"Bash(cp 'C:/Users/<user>/Workspace/dev-projects/jason-os/.claude/canonical-memory/*.md' C:/Users/<user>/..."` — observed in settings.local.json line 22 | Every sync | Work machine's Claude attempts a cp from a path that doesn't exist; command errors at runtime |
 | **Canonical memory prose referencing locale** | `user_communication_preferences.md`: "Two-locale: work (jbell, restricted Windows) and home (jason, unrestricted)" — the prose itself is correct and should travel, but the username difference (jbell vs jason) in the text is locale-specific | Low — prose is read by humans, not parsed by tools | No runtime breakage, but prose accuracy degrades on the work machine if it refers only to "jason" paths |
-| **Slash-command aliases that hard-code project paths** | A command alias that invokes `C:/Users/jason/Workspace/dev-projects/JASON-OS/scripts/foo.js` | Medium — any alias created on home machine that runs a project script | Alias fails silently or errors on work machine where the path is `C:/Users/jbell/...` |
+| **Slash-command aliases that hard-code project paths** | A command alias that invokes `C:/Users/<user>/Workspace/dev-projects/JASON-OS/scripts/foo.js` | Medium — any alias created on home machine that runs a project script | Alias fails silently or errors on work machine where the path is `C:/Users/jbell/...` |
 | **Keybindings referencing machine-installed tools** | A chord assigned to open a specific binary at an absolute path (e.g., a local editor install) | Low — Claude Code keybindings rarely reference local binaries | Tool invocation fails; keybinding silently does nothing |
 | **Status-line binary path** | `~/.claude/statusline/jason-statusline-v2.exe` — machine-specific binary per CLAUDE.md §1 (gitignored); the `.claude/statusline-command.sh` references it | Every sync of statusline config | Work machine tries to invoke binary that doesn't exist or has wrong version |
 | **Git config signing key / credential helper** | `~/.gitconfig [credential]` helper = a path to a platform-specific binary (e.g., Windows Credential Manager vs. macOS Keychain) | Every sync of git config overrides | Git operations on the receiving machine use wrong credential helper; auth fails |
 | **Env variables that reference local paths** | `CLAUDE_CODE_GLOB_TIMEOUT_SECONDS` (generic) travels fine; but a hypothetical `EDITOR=/home/jbell/.local/bin/hx` does not | Depends on value | Env var set to non-existent path; tools fail to launch |
-| **`~/.claude/projects/<hash>/` directory naming** | The hash is derived from the project's absolute path (e.g., `C--Users-jason-Workspace-dev-projects-JASON-OS` vs. `C--Users-jbell-...`); user-level memory files live under different hash directories on each machine | Every attempt to read project memory cross-machine | Memory files are "orphaned" — tools look for them under a hash that differs per machine; memories not loaded |
+| **`~/.claude/projects/<hash>/` directory naming** | The hash is derived from the project's absolute path (e.g., `C--Users-<user>-Workspace-dev-projects-JASON-OS` vs. `C--Users-jbell-...`); user-level memory files live under different hash directories on each machine | Every attempt to read project memory cross-machine | Memory files are "orphaned" — tools look for them under a hash that differs per machine; memories not loaded |
 | **Husky local hooks referencing project root** | `.husky/_/husky.sh` itself is generated and references `$PATH` etc., but any user-added pre-push hook that contains an absolute path would be machine-bound | Low — husky local is generated, not authored | Hook errors at pre-commit time on receiving machine |
 
 ### Frequency summary
@@ -197,7 +197,7 @@ This was after-the-fact remediation — the tool did not catch these at write ti
 
 **Weakness:**
 - False positives: a CLAUDE.md tweak that mentions absolute paths *in documentation*
-  ("the source lives at `C:\Users\jason\...`") would be flagged even though the
+  ("the source lives at `C:\Users\<user>\...`") would be flagged even though the
   prose is informational, not operative. Example: the PR #10 R2 fix itself shows
   that 782 occurrences across 60 research files were replaced — most of these were
   harmless documentation references, not operative paths.
@@ -272,7 +272,7 @@ Commit `088a077` [4]:
 > "research findings and other committed files disclosed absolute Windows paths to
 > internal user directories, revealing usernames (jbell, jason) and machine-specific
 > directory structure: C:\Users\jbell\.local\bin\JASON-OS\...,
-> C:\Users\jason\Workspace\dev-projects\JASON-OS\..., etc."
+> C:\Users\<user>\Workspace\dev-projects\JASON-OS\..., etc."
 >
 > Fix: one-shot transformer replaced all 7 known repo-root prefixes with portable
 > placeholders (`<JASON_OS_ROOT>`, `<SONASH_ROOT>`, etc.) across all tracked
@@ -296,7 +296,7 @@ into committed files (gap flagged in research, no gate exists as of 2026-04-23).
 File: `.claude/settings.local.json` [5]
 
 Contains both portable entries (e.g., `"Bash(chmod +x *)"`) and
-machine-specific entries (e.g., `"Bash(mkdir -p C:/Users/jason/...")`). This is
+machine-specific entries (e.g., `"Bash(mkdir -p C:/Users/<user>/...")`). This is
 the primary real-world example of a file that is nominally user-scoped but
 contains machine-specific content. The file is gitignored (`.gitignore` lists
 `settings.local.json`), which means git itself treats it as machine-local.
@@ -310,7 +310,7 @@ solves — what's needed is per-entry analysis within the file.
 
 ### 5.5 `~/.claude/projects/<hash>/` — structurally machine-specific, not labeled so
 
-The `<hash>` component of `~/.claude/projects/C--Users-jason-Workspace-dev-projects-JASON-OS/`
+The `<hash>` component of `~/.claude/projects/C--Users-<user>-Workspace-dev-projects-JASON-OS/`
 is derived from the project's absolute path. On the work machine, where the username
 is `jbell` and the path is different, the hash differs. Memory files written on the
 home machine are therefore located at a different path on the work machine.
@@ -454,7 +454,7 @@ All units reach the compare step.
 **Step 2 — Layer 2 scans `settings.local.json` content.**
 
 The source file (home machine's settings.local.json, being synced to work) contains:
-`"Bash(mkdir -p C:/Users/jason/.claude/projects/..."`.
+`"Bash(mkdir -p C:/Users/<user>/.claude/projects/..."`.
 
 Pattern `C:\\Users\\[^\\]+` matches. State becomes `MACHINE-BOUND-DETECTED`.
 
@@ -489,7 +489,7 @@ drift record written.
 **Step 5 — `~/.claude/projects/<hash>/` path.**
 
 The home machine's memory files are at:
-`~/.claude/projects/C--Users-jason-Workspace-dev-projects-JASON-OS/memory/`
+`~/.claude/projects/C--Users-<user>-Workspace-dev-projects-JASON-OS/memory/`
 
 On the work machine, the correct destination is:
 `~/.claude/projects/C--Users-jbell-Workspace-dev-projects-JASON-OS/memory/`
@@ -507,7 +507,7 @@ before writing. This is the "bootstrap the memory directory" case.
 **Step 6 — Status-line config.**
 
 Source file references `~/.claude/statusline/jason-statusline-v2.exe`. Pattern
-matches (`/Users/jason/` or `C:\Users\jason\`). State: `MACHINE-BOUND-DETECTED`.
+matches (`/Users/<user>/` or `C:\Users\<user>\`). State: `MACHINE-BOUND-DETECTED`.
 Tool warns. User answers "no" — they will rebuild the binary on the work machine
 separately (per CLAUDE.md §1: "Operators who don't rebuild it don't need Go
 installed"). Drift record not written; unit remains un-synced.
@@ -538,11 +538,11 @@ The user's work machine diverges from home only intentionally.
 
 1. **`settings.local.json` in JASON-OS contains both portable and machine-bound
    entries in the same file.** [HIGH — directly observed: lines 8 and 22 contain
-   `C:/Users/jason/` absolute paths alongside generic `Bash(chmod +x *)` entries.] [5]
+   `C:/Users/<user>/` absolute paths alongside generic `Bash(chmod +x *)` entries.] [5]
 
 2. **The `~/.claude/projects/<hash>/` directory name encodes the project's absolute
    path, making it structurally different per machine.** [HIGH — inferred from observed
-   directory name `C--Users-jason-Workspace-dev-projects-JASON-OS` which is a
+   directory name `C--Users-<user>-Workspace-dev-projects-JASON-OS` which is a
    path-derived hash, confirmed by C1's D8 gap note and canonical-memory location
    observation.] [6]
 

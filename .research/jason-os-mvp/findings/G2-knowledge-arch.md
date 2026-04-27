@@ -336,7 +336,7 @@ is intentional.
 - Content: 11 feedback files + 5 project files + 4 reference files + 3 user files
   + MEMORY.md (from filesystem inspection)
 
-**SoNash global memory** (`<HOME>\.claude\projects\C--Users-jason-...\memory\`):
+**SoNash global memory** (`<HOME>\.claude\projects\C--Users-<user>-...\memory\`):
 - 77+ files (the full live set, per D2d Finding 8)
 - Machine-local, NOT git-tracked
 - Much richer than canonical (37 feedback + 28 project + 7 reference + 4 user)
@@ -376,7 +376,7 @@ operating state for a curated subset.
 - Content matches the bootstrapped set: 7 feedback + 3 user + 0 project + 0 reference
 - Committed to git — travels with the repo
 
-**JASON-OS global memory** (`<HOME>\.claude\projects\C--Users-jason-...-jason-os\memory\`):
+**JASON-OS global memory** (`<HOME>\.claude\projects\C--Users-<user>-...-jason-os\memory\`):
 - 11 files: MEMORY.md + 10 topic files
 - **Identical content to canonical-memory** (verified by filesystem comparison)
 

@@ -3,7 +3,7 @@
 **Agent:** D4d
 **Profile:** codebase
 **Date:** 2026-04-18
-**Scope:** `~/.claude/projects/C--Users-jason-Workspace-dev-projects-sonash-v0/memory/` positions 64–83 (alphabetical sort)
+**Scope:** `~/.claude/projects/C--Users-<user>-Workspace-dev-projects-sonash-v0/memory/` positions 64–83 (alphabetical sort)
 **Memory count:** 20
 **Files covered:** `project_skill_audit_tracking_broken.md` through `user_os_vision.md`
 **Census verification:** `ls | wc -l` = **83** — CONFIRMED EXACT
@@ -329,7 +329,7 @@ D4a's MEMORY.md index noted the canonical version carries stale "Node.js/scripti
 | D4d | D4d | 20 | 64–83 |
 | **Total** | | **83** | |
 
-**Census: 83 files confirmed.** `ls ~/.claude/projects/C--Users-jason-Workspace-dev-projects-sonash-v0/memory/ | wc -l` = 83.
+**Census: 83 files confirmed.** `ls ~/.claude/projects/C--Users-<user>-Workspace-dev-projects-sonash-v0/memory/ | wc -l` = 83.
 
 **D4c gap:** Positions 43–63 (21 files: `feedback_testing_with_writes.md` through `project_reviews_system_health.md`) are NOT inventoried in the findings directory. This gap must be filled before D22 (schema surveyor) can synthesize the full corpus.
 

@@ -7,8 +7,8 @@ manually from SoNash to JASON-OS. JASON-OS profile-discovery becomes a
 500-1000 line transformer over repo-analysis output (acknowledged scope —
 not the 100-200 line glue originally estimated).
 
-**Source repo:** `C:\Users\jason\Workspace\dev-projects\sonash-v0\.claude\skills\repo-analysis\`
-**Target location:** `C:\Users\jason\Workspace\dev-projects\JASON-OS\.claude\skills\repo-analysis\`
+**Source repo:** `C:\Users\<user>\Workspace\dev-projects\sonash-v0\.claude\skills\repo-analysis\`
+**Target location:** `C:\Users\<user>\Workspace\dev-projects\JASON-OS\.claude\skills\repo-analysis\`
 **Sibling resources to port:** SoNash uses `.claude/skills/shared/` for
 cross-skill resources (CONVENTIONS.md, SKILL_STANDARDS.md, TAG_SUGGESTION.md,
 AUDIT_TEMPLATE.md, SELF_AUDIT_PATTERN.md). JASON-OS will create

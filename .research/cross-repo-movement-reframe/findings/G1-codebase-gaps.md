@@ -13,8 +13,8 @@
 The de facto convention is the `t[N]_` filename prefix — NOT `type: tenet` frontmatter.
 
 **Observed files with `t[N]_` prefix:**
-- `/c/Users/jason/.claude/projects/C--Users-jason-Workspace-dev-projects-jason-os/memory/t3_convergence_loops.md` — `type: reference`
-- `/c/Users/jason/.claude/projects/c--Users-jason-Workspace-dev-projects-sonash-v0/memory/t3_convergence_loops.md` — `type: reference`
+- `/c/Users/<user>/.claude/projects/C--Users-<user>-Workspace-dev-projects-jason-os/memory/t3_convergence_loops.md` — `type: reference`
+- `/c/Users/<user>/.claude/projects/c--Users-<user>-Workspace-dev-projects-sonash-v0/memory/t3_convergence_loops.md` — `type: reference`
 
 **`type: tenet` frontmatter usage:** Zero files in either the JASON-OS project memory dir or the SoNash project memory dir use `type: tenet`. The only tenet file found (`t3_convergence_loops.md`) carries `type: reference`.
 
@@ -48,10 +48,10 @@ encoded = absolute_path
 
 | Absolute path | Encoded dir name |
 |---|---|
-| `C:\Users\jason` | `C--Users-jason` |
-| `C:\Users\jason\.claude` | `C--Users-jason--CLAUDE` |
-| `C:\Users\jason\Workspace\dev-projects\JASON-OS` | `C--Users-jason-Workspace-dev-projects-jason-os` |
-| `C:\Users\jason\Workspace\dev-projects\sonash-v0` | `c--Users-jason-Workspace-dev-projects-sonash-v0` |
+| `C:\Users\<user>` | `C--Users-<user>` |
+| `C:\Users\<user>\.claude` | `C--Users-<user>--CLAUDE` |
+| `C:\Users\<user>\Workspace\dev-projects\JASON-OS` | `C--Users-<user>-Workspace-dev-projects-jason-os` |
+| `C:\Users\<user>\Workspace\dev-projects\sonash-v0` | `c--Users-<user>-Workspace-dev-projects-sonash-v0` |
 
 **Important observations:**
 1. The encoding is deterministic and **reversible**: split on `--` to recover the drive letter and colon, then replace remaining `-` with `\` to recover path separators.
@@ -137,11 +137,11 @@ Three config locations per scope:
 
 ## Sources
 
-- Filesystem: `/c/Users/jason/.claude/projects/C--Users-jason-Workspace-dev-projects-jason-os/memory/` — all files inspected via `grep -r "type:"` and `ls`
-- Filesystem: `/c/Users/jason/.claude/projects/c--Users-jason-Workspace-dev-projects-sonash-v0/memory/` — same
-- Filesystem: `/c/Users/jason/.claude/` top-level listing — confirmed `mcp.json.bak` only
-- Filesystem: `/c/Users/jason/Workspace/dev-projects/JASON-OS/.claude/sync/schema/enums.json` — `memory_type` enum confirmed
-- Filesystem: `/c/Users/jason/Workspace/dev-projects/JASON-OS/.claude/settings.json` — MCP permission entries
+- Filesystem: `/c/Users/<user>/.claude/projects/C--Users-<user>-Workspace-dev-projects-jason-os/memory/` — all files inspected via `grep -r "type:"` and `ls`
+- Filesystem: `/c/Users/<user>/.claude/projects/c--Users-<user>-Workspace-dev-projects-sonash-v0/memory/` — same
+- Filesystem: `/c/Users/<user>/.claude/` top-level listing — confirmed `mcp.json.bak` only
+- Filesystem: `/c/Users/<user>/Workspace/dev-projects/JASON-OS/.claude/sync/schema/enums.json` — `memory_type` enum confirmed
+- Filesystem: `/c/Users/<user>/Workspace/dev-projects/JASON-OS/.claude/settings.json` — MCP permission entries
 - Canonical docs: https://code.claude.com/docs/en/mcp — MCP scope table, `~/.claude.json` as current canonical file
 - Filesystem pattern analysis: 4+ `~/.claude/projects/` dir names correlated with known absolute paths
 

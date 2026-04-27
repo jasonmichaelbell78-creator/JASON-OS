@@ -2,7 +2,7 @@
 
 **Agent:** D4b-1
 **Date:** 2026-04-18
-**Source:** `~/.claude/projects/C--Users-jason-Workspace-dev-projects-JASON-OS/memory/`
+**Source:** `~/.claude/projects/C--Users-<user>-Workspace-dev-projects-JASON-OS/memory/`
 **Canonical set:** `.claude/canonical-memory/` (12 files)
 **Files scanned:** 21
 

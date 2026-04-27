@@ -485,7 +485,7 @@ These five findings are the items Piece 2 schema design cannot afford to miss or
 
 ### 5.2 50-File Canonical-Memory Gap
 
-Only 12 of 62 user-home memories are git-tracked in `.claude/canonical-memory/`. Approximately 50 portable behavioral rules — including the full library of skill-operational memories (deep_plan_research_check, deep_research_phases_mandatory, etc.) and agent-behavior memories — exist only in `~/.claude/projects/C--Users-jason-.../memory/`. These files are session-memory only: they load during sessions but are not version-controlled, cannot be diffed, and cannot be reviewed. The sync mechanism must have a canonical-promotion workflow as a first-class feature, not an afterthought.
+Only 12 of 62 user-home memories are git-tracked in `.claude/canonical-memory/`. Approximately 50 portable behavioral rules — including the full library of skill-operational memories (deep_plan_research_check, deep_research_phases_mandatory, etc.) and agent-behavior memories — exist only in `~/.claude/projects/C--Users-<user>-.../memory/`. These files are session-memory only: they load during sessions but are not version-controlled, cannot be diffed, and cannot be reviewed. The sync mechanism must have a canonical-promotion workflow as a first-class feature, not an afterthought.
 
 ### 5.3 source_scope vs runtime_scope Split Required
 

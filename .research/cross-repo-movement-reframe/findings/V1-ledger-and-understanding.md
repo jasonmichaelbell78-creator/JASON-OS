@@ -130,7 +130,7 @@
 **Type:** CODEBASE
 **Verdict:** VERIFIED
 **Evidence:**
-- `withLock` confirmed at `/c/Users/jason/Workspace/dev-projects/JASON-OS/scripts/lib/safe-fs.js:614-621`
+- `withLock` confirmed at `/c/Users/<user>/Workspace/dev-projects/JASON-OS/scripts/lib/safe-fs.js:614-621`
 - `LOCK_TIMEOUT_MS = 5_000` confirmed at line 372
 - `isLockHolderAlive` function confirmed at lines 442-456 — uses `process.kill(pid, 0)` for PID liveness check, falls back to age heuristic for cross-host
 - `Atomics.wait` for non-busy-spin sleep confirmed at lines 374-379

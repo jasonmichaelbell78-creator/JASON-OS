@@ -37,7 +37,7 @@
 {"id":"S-037","url_or_path":".claude/settings.json","title":"JASON-OS settings.json (hook registration, permissions, env vars)","type":"codebase","trust":"HIGH","cited_by":["D4","D5","D9"]}
 {"id":"S-038","url_or_path":".husky/_/","title":"JASON-OS .husky/_/ (generated Husky v9 shims — deprecated, not user-authored)","type":"codebase","trust":"HIGH","cited_by":["D4","D5","D9"]}
 {"id":"S-039","url_or_path":"~/.claude/commands/","title":"User-level slash-command aliases directory (gsd/, sc/ subdirs confirmed)","type":"codebase","trust":"HIGH","cited_by":["D4","D8","D9"]}
-{"id":"S-040","url_or_path":"~/.claude/projects/C--Users-jason-Workspace-dev-projects-JASON-OS/memory/","title":"User project memory directory (69+ files, frontmatter shape)","type":"codebase","trust":"HIGH","cited_by":["D4","D9"]}
+{"id":"S-040","url_or_path":"~/.claude/projects/C--Users-<user>-Workspace-dev-projects-JASON-OS/memory/","title":"User project memory directory (69+ files, frontmatter shape)","type":"codebase","trust":"HIGH","cited_by":["D4","D9"]}
 {"id":"S-041","url_or_path":".github/workflows/semgrep.yml","title":"JASON-OS semgrep.yml CI workflow","type":"codebase","trust":"HIGH","cited_by":["D5"]}
 {"id":"S-042","url_or_path":".github/workflows/codeql.yml","title":"JASON-OS codeql.yml CI workflow","type":"codebase","trust":"HIGH","cited_by":["D5"]}
 {"id":"S-043","url_or_path":".github/workflows/sonarcloud.yml","title":"JASON-OS sonarcloud.yml CI workflow","type":"codebase","trust":"HIGH","cited_by":["D5"]}

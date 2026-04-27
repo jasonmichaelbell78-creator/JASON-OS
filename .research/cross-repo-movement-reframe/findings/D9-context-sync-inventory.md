@@ -25,7 +25,7 @@ Walked the full JASON-OS filesystem at `.claude/`, `~/.claude/`, `.husky/`,
 `tools/statusline/`, and related paths. Read:
 
 - `.claude/canonical-memory/*.md` — frontmatter shape, type field values
-- `~/.claude/projects/C--Users-jason-Workspace-dev-projects-JASON-OS/memory/` — user-level memory shape
+- `~/.claude/projects/C--Users-<user>-Workspace-dev-projects-JASON-OS/memory/` — user-level memory shape
 - `.claude/settings.local.json` — confirmed absolute-path content
 - `~/.claude/settings.json` — user-level env block
 - `.claude/settings.json` — project-level env block
@@ -58,7 +58,7 @@ Each row from the brainstorm's named list, located on disk, and classified.
 | 1 | **Canonical memories** | `.claude/canonical-memory/*.md` (JASON-OS repo, git-tracked) | `~/.claude/projects/<project-hash>/memory/*.md` (user-level, per-project) | YES — 12 files in canonical-memory; 60+ files in user project memory | `user` | Frontmatter `type` field classifies: `user`, `feedback`, `project`, `reference`, `tenet`, `index`. Most are `user` or `feedback`. |
 | 2 | **Tenets (user + project)** | No dedicated path — tenets live IN the memory dirs. Identified by filename prefix (`t3_*`) or `type: tenet` frontmatter. `t3_convergence_loops.md` found in user project memory. | Same memory dir as canonical memories | YES — at least one confirmed (`t3_convergence_loops.md`). No `type: tenet` found in frontmatter (type is `reference`). | `user` (user tenets); `project` (project tenets) | Tenet identity comes from naming convention (`t3_`) not frontmatter `type: tenet`. BRAINSTORM mentions `type: tenet` as distinguishing; not yet in `memory_type` enum values. See §4 below. |
 | 3 | **CLAUDE.md local tweaks** | `CLAUDE.md` in each consumer project root (the per-project override sections) | Other consumer project's `CLAUDE.md` | YES — JASON-OS `CLAUDE.md` is present and git-tracked | `project` | The CLAUDE.md body is mixed-scope (universal shared sections + project-specific overrides). See §6 for split treatment. |
-| 4 | **`settings.local.json`** | `.claude/settings.local.json` (project root, gitignored) | Consumer project's `.claude/settings.local.json` | YES — confirmed at `.claude/settings.local.json` with absolute-path Bash allow rules | `machine` | Contains absolute Windows paths (e.g., `C:/Users/jason/Workspace/...`). Inherently machine-specific. |
+| 4 | **`settings.local.json`** | `.claude/settings.local.json` (project root, gitignored) | Consumer project's `.claude/settings.local.json` | YES — confirmed at `.claude/settings.local.json` with absolute-path Bash allow rules | `machine` | Contains absolute Windows paths (e.g., `C:/Users/<user>/Workspace/...`). Inherently machine-specific. |
 | 5 | **Env variables** | `settings.json` `env` block (project root, git-tracked); `~/.claude/settings.json` `env` block (user-level) | Consumer project's `settings.json` env block | YES — `env` block exists in `.claude/settings.json` with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` and `CLAUDE_CODE_GLOB_TIMEOUT_SECONDS`. `~/.claude/settings.json` has no `env` block currently. | `user` (general env flags); `machine` (locale-specific tokens/paths) | Mixed-scope: experiment flags are user-scoped; API keys and locale paths are machine-scoped. See §6. |
 | 6 | **Slash-command aliases** | `~/.claude/commands/gsd/` (user-level, per-skill subdirs); `~/.claude/commands/sc/` (user-level) | Another locale's `~/.claude/commands/` | YES — confirmed `gsd/` and `sc/` subdirectories with command `.md` files inside | `user` | Iteration unit is the directory (one entry per command subdir). No project-level commands directory found in JASON-OS. |
 | 7 | **Keybindings (Claude Code)** | `~/.claude/keybindings.json` | Same path on other locale | NOT FOUND — no `~/.claude/keybindings.json` exists on this machine | `user` | May only exist when user has customized. Walk must handle absent-file case. |
@@ -72,7 +72,7 @@ Each row from the brainstorm's named list, located on disk, and classified.
 
 ### 4.1 `~/.claude/CLAUDE.md` (user-level CLAUDE.md)
 
-**Status: NOT PRESENT on this machine.** Checked at `/c/Users/jason/.claude/CLAUDE.md` — file does not exist. Anthropic Claude Code supports a user-level `CLAUDE.md` at `~/.claude/CLAUDE.md` that loads for every project. This is distinct from project CLAUDE.md. It is a valid sync source **in principle** — if the user creates one, it carries user-level behavioral tenets that should travel across locales.
+**Status: NOT PRESENT on this machine.** Checked at `/c/Users/<user>/.claude/CLAUDE.md` — file does not exist. Anthropic Claude Code supports a user-level `CLAUDE.md` at `~/.claude/CLAUDE.md` that loads for every project. This is distinct from project CLAUDE.md. It is a valid sync source **in principle** — if the user creates one, it carries user-level behavioral tenets that should travel across locales.
 
 **Disposition:** Add as a reserved category. Source: `~/.claude/CLAUDE.md`. Destination: same path on other locale. Scope-tag: `user`. Not yet present — walk must handle absent-file gracefully (treat as NEW when first written).
 
@@ -143,8 +143,8 @@ Each row from the brainstorm's named list, located on disk, and classified.
 ### 4.10 VSCode / Cursor IDE keybindings
 
 **Status: PRESENT for both VSCode and Cursor.**
-- VSCode: `C:/Users/jason/AppData/Roaming/Code/User/keybindings.json` — confirmed present (shift+enter terminal sequence binding)
-- Cursor: `C:/Users/jason/AppData/Roaming/Cursor/User/keybindings.json` — confirmed present
+- VSCode: `C:/Users/<user>/AppData/Roaming/Code/User/keybindings.json` — confirmed present (shift+enter terminal sequence binding)
+- Cursor: `C:/Users/<user>/AppData/Roaming/Cursor/User/keybindings.json` — confirmed present
 
 **Disposition:** The brainstorm lists "keybindings (`~/.claude/keybindings.json`)" but this appears to mean Claude Code keybindings specifically. IDE keybindings (VSCode/Cursor) are a separate surface. They are valid sync candidates if the user uses the same IDE on both locales. Scope-tag: `user` (IDE-personal preference) but path is deeply machine-specific on Windows (AppData paths). Add as an optional/advisory category. NOT a core `/context-sync` item; it should be an opt-in category.
 
@@ -183,7 +183,7 @@ These patterns apply to error sanitization at runtime. Context-sync needs analog
 | 1 | **Canonical memories** | SOMETIMES — memory files record decisions; could inadvertently capture project codenames, API patterns, or operator details in prose. `type: user` and `type: feedback` files: low risk. `type: project` files: SOMETIMES (project names, internal URLs). | Gitleaks-style pattern scan (SENSITIVE_PATTERNS) on content before sync. Flag on match. | Warn + hold — surface matched pattern to user, require explicit confirmation before syncing. Do not auto-skip. | Path itself (e.g., `memory/feedback_ack_requires_approval.md`) is NOT sensitive — generic filenames. Safe to store path in drift record. |
 | 2 | **Tenets** | RARELY — tenets are behavioral rules, not credentials. Risk is project codenames in project-scoped tenets. | Same SENSITIVE_PATTERNS scan. | Same: warn + hold. | Path safe. |
 | 3 | **CLAUDE.md local tweaks** | SOMETIMES — project-specific override sections can reference internal service names, internal URLs, project codenames. | SENSITIVE_PATTERNS scan on the tweak block content only (not the whole file). | Warn + hold per tweak block. | Path (`CLAUDE.md`) is not sensitive. Section slug stored in path field is safe. |
-| 4 | **`settings.local.json`** | YES — confirmed on this machine: contains absolute Windows paths (`C:/Users/jason/Workspace/dev-projects/jason-os/...`) in Bash allow rules. Could also contain credential helpers or operator-specific paths. | SENSITIVE_PATTERNS path-pattern scan PLUS: check every string value in the JSON for path-like content (`C:\\`, `/home/`, `/Users/`). | Block by default. Before syncing, strip known-absolute-path values and replace with placeholder or require user to confirm path remapping. The `machine_exclude = true` flag is the correct mechanism: ask once, always exclude. | Path (`.claude/settings.local.json`) is NOT sensitive. BUT: the `src_hash` and `dst_hash` in the drift record hash the whole file content — which includes the absolute paths. Hashes do not expose the paths themselves, but confirm that the file with those paths was processed. Safe to store hash; do not store file content. |
+| 4 | **`settings.local.json`** | YES — confirmed on this machine: contains absolute Windows paths (`C:/Users/<user>/Workspace/dev-projects/jason-os/...`) in Bash allow rules. Could also contain credential helpers or operator-specific paths. | SENSITIVE_PATTERNS path-pattern scan PLUS: check every string value in the JSON for path-like content (`C:\\`, `/home/`, `/Users/`). | Block by default. Before syncing, strip known-absolute-path values and replace with placeholder or require user to confirm path remapping. The `machine_exclude = true` flag is the correct mechanism: ask once, always exclude. | Path (`.claude/settings.local.json`) is NOT sensitive. BUT: the `src_hash` and `dst_hash` in the drift record hash the whole file content — which includes the absolute paths. Hashes do not expose the paths themselves, but confirm that the file with those paths was processed. Safe to store hash; do not store file content. |
 | 5 | **Env variables** | YES — env vars can be API keys, tokens, secrets. Even the `env` block in git-tracked `settings.json` currently only has `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` (safe), but the sync mechanism cannot assume this. `~/.claude/settings.json` could carry user-level env with tokens. | SENSITIVE_PATTERNS scan on each env key-value pair. Keys matching `token`, `key`, `secret`, `password`, `auth`, `credential` patterns → flag immediately. | Block on matched key. Require user to explicitly mark env var as machine-local (`machine_exclude = true`) or confirm it's safe to sync. Never auto-sync an env var whose key matches a secrets pattern. | Env var keys stored as path field (e.g., `env/CLAUDE_CODE_GLOB_TIMEOUT_SECONDS`) expose variable names. This is generally acceptable — key names are not secrets. But keys matching secrets patterns should be stored with a redacted marker in the path field (e.g., `env/REDACTED_KEY_3`) rather than the literal key name. |
 | 6 | **Slash-command aliases** | SOMETIMES — command bodies (`.md` files in command dirs) could embed server URLs, project-specific identifiers, or (rarely) secrets hardcoded in command text. | SENSITIVE_PATTERNS scan on command file contents. | Warn + hold. User must confirm before syncing command files with flagged content. | Path field (e.g., `commands/gsd/execute-phase.md`) is safe — generic names. |
 | 7 | **Keybindings (Claude Code)** | NO — key binding definitions are key sequences and command identifiers. No credentials. | No secrets scan needed. | Direct sync with hash comparison only. | Path (`~/.claude/keybindings.json`) is safe. |
@@ -278,7 +278,7 @@ Using the existing enum: `universal | user | project | machine | ephemeral`.
 
 ## 8. Claims
 
-1. **`.claude/settings.local.json` contains absolute Windows paths.** [HIGH] Direct filesystem read — file contains `"C:/Users/jason/Workspace/dev-projects/jason-os/..."` in Bash allow rules. Confirms machine scope and secrets risk.
+1. **`.claude/settings.local.json` contains absolute Windows paths.** [HIGH] Direct filesystem read — file contains `"C:/Users/<user>/Workspace/dev-projects/jason-os/..."` in Bash allow rules. Confirms machine scope and secrets risk.
 
 2. **`~/.claude/statusline/config.local.toml` contains a real API key (`weather_api_key`).** [HIGH] Direct filesystem read confirmed the key is present and well-formed; the verbatim value is REDACTED from this document per security protocol. This file must be excluded by default, not just warned about.
 
@@ -292,7 +292,7 @@ Using the existing enum: `universal | user | project | machine | ephemeral`.
 
 7. **`~/.claude/keybindings.json` does not exist on this machine.** [HIGH] Direct check returned not-found. Walk must handle absent-file as NEW state when first created.
 
-8. **VSCode and Cursor IDE keybindings both exist at OS-specific AppData paths.** [HIGH] Confirmed both `C:/Users/jason/AppData/Roaming/Code/User/keybindings.json` and `C:/Users/jason/AppData/Roaming/Cursor/User/keybindings.json`. These are valid sync candidates but path resolution is platform-specific.
+8. **VSCode and Cursor IDE keybindings both exist at OS-specific AppData paths.** [HIGH] Confirmed both `C:/Users/<user>/AppData/Roaming/Code/User/keybindings.json` and `C:/Users/<user>/AppData/Roaming/Cursor/User/keybindings.json`. These are valid sync candidates but path resolution is platform-specific.
 
 9. **`~/.gitconfig` contains user identity (PII: name + email) alongside machine-specific content (`[safe] directory` with absolute paths).** [HIGH] Direct read confirmed. Section-level split is required; no single scope-tag fits the whole file.
 
@@ -321,7 +321,7 @@ Using the existing enum: `universal | user | project | machine | ephemeral`.
 | # | Location | Title | Type | Trust | CRAAP avg | Date |
 |---|---|---|---|---|---|---|
 | 1 | `.claude/canonical-memory/*.md` | Canonical memory files — frontmatter shape | Codebase ground truth | HIGH | 5.0 | 2026 |
-| 2 | `~/.claude/projects/C--Users-jason-Workspace-dev-projects-JASON-OS/memory/*.md` | User project memory files | Codebase ground truth | HIGH | 5.0 | 2026 |
+| 2 | `~/.claude/projects/C--Users-<user>-Workspace-dev-projects-JASON-OS/memory/*.md` | User project memory files | Codebase ground truth | HIGH | 5.0 | 2026 |
 | 3 | `.claude/settings.local.json` | Machine-specific settings (Bash allow rules) | Codebase ground truth | HIGH | 5.0 | 2026 |
 | 4 | `.claude/settings.json` | Project settings (env block) | Codebase ground truth | HIGH | 5.0 | 2026 |
 | 5 | `~/.claude/settings.json` | User-level settings (hooks, plugins, model) | Codebase ground truth | HIGH | 5.0 | 2026 |
@@ -350,7 +350,7 @@ Using the existing enum: `universal | user | project | machine | ephemeral`.
 
 3. **`~/.claude/CLAUDE.md` behavior when present.** The file does not exist on this machine. It is documented as user-level context that applies across all Claude Code projects. When it exists, how Claude Code merges it with project CLAUDE.md is not confirmed from the codebase — only inferred from Anthropic's documented behavior.
 
-4. **Cross-locale project-path hash resolution.** The `~/.claude/projects/` directory name is derived from the project's absolute path (e.g., `C--Users-jason-Workspace-dev-projects-JASON-OS`). On a second locale with a different absolute path for the same repo (e.g., different username or drive letter), the hash will differ. C3 owns this; noted here as a gap that affects the walk strategy for memory destination paths.
+4. **Cross-locale project-path hash resolution.** The `~/.claude/projects/` directory name is derived from the project's absolute path (e.g., `C--Users-<user>-Workspace-dev-projects-JASON-OS`). On a second locale with a different absolute path for the same repo (e.g., different username or drive letter), the hash will differ. C3 owns this; noted here as a gap that affects the walk strategy for memory destination paths.
 
 5. **MCP configuration sync scope.** The `mcpServers` block in `~/.claude/settings.json` was not explicitly called out in the brainstorm. It is partially relevant to context-sync (MCP servers the user uses across projects). However, MCP server commands often contain absolute paths or secrets (API keys passed as env vars). This category needs deeper analysis before including it in v1.
 

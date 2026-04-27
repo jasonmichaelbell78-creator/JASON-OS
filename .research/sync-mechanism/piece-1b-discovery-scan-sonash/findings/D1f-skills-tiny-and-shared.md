@@ -418,7 +418,7 @@ From D1a findings: `hook-ecosystem-audit`, `session-ecosystem-audit`, `health-ec
 
 2. **Deprecated skills need `status: deprecated` enforcement.** `website-synthesis` and `repo-synthesis` are explicitly deprecated in their SKILL.md but still exist as directories. The synthesis showed that skill deprecated-redirect stubs have a defined one-session overlap policy. Scan methodology should flag `status: deprecated` on any skill whose SKILL.md body declares DEPRECATED in the first line of the H1. These should be excluded from portability analysis.
 
-3. **Port status claims in spawn prompts need filesystem verification.** `using-superpowers` was claimed as "ported" but is absent from JASON-OS. D1d flagged the same issue for `systematic-debugging`. Spawn prompt portability claims have a non-trivial false positive rate. Always verify against `ls /c/Users/jason/Workspace/dev-projects/JASON-OS/.claude/skills/`.
+3. **Port status claims in spawn prompts need filesystem verification.** `using-superpowers` was claimed as "ported" but is absent from JASON-OS. D1d flagged the same issue for `systematic-debugging`. Spawn prompt portability claims have a non-trivial false positive rate. Always verify against `ls /c/Users/<user>/Workspace/dev-projects/JASON-OS/.claude/skills/`.
 
 4. **`skills:` injection mechanism is architecturally significant.** The `sonash-context` pattern of using YAML `skills:` frontmatter in agent definitions to inject project context is a portable mechanism — only the content is SoNash-specific. The JASON-OS equivalent would be a `jason-os-context` skill. D21/synthesizer should flag this as a high-value port target (the mechanism, not the content).
 

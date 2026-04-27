@@ -325,7 +325,7 @@ Priority-ordered based on value:
 
 2. **.vscode/mcp.json gitignore status unverified.** The file exists but should be gitignored. `git check-ignore` not run.
 
-3. **.claude/projects/ internal structure not fully read.** Only listed top-level dir (`C--Users-jason-Workspace-dev-projects-sonash-v0/`). Contents likely mirror user-home memory structure. D18 or D23 should investigate.
+3. **.claude/projects/ internal structure not fully read.** Only listed top-level dir (`C--Users-<user>-Workspace-dev-projects-sonash-v0/`). Contents likely mirror user-home memory structure. D18 or D23 should investigate.
 
 4. **.claude/config/ file contents not individually read.** Three files listed (high-churn-watchlist.json, hook-audit-suppressions.json, propagation-intentional-divergence.json) but only enumerated, not read. Their schemas may be relevant to D22's data contract analysis.
 

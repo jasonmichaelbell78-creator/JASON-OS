@@ -188,7 +188,7 @@
 **Claim:** The ~/.claude/projects/<hash>/ directory name encodes the project's absolute path. Resolution: walk ~/.claude/projects/ empirically for a subdirectory whose memory/ folder contains a known filename.
 **Type:** CODEBASE + DERIVED
 **Verdict:** VERIFIED
-**Evidence:** Direct filesystem observation: directory is named `C--Users-jason-Workspace-dev-projects-JASON-OS` — clearly derived from the absolute path `C:\Users\jason\Workspace\dev-projects\JASON-OS`. D10 claim 2 marks this HIGH confidence. D10 claim 12 (empirical walk resolution) is MEDIUM confidence — no documentation of the hash function.
+**Evidence:** Direct filesystem observation: directory is named `C--Users-<user>-Workspace-dev-projects-JASON-OS` — clearly derived from the absolute path `C:\Users\<user>\Workspace\dev-projects\JASON-OS`. D10 claim 2 marks this HIGH confidence. D10 claim 12 (empirical walk resolution) is MEDIUM confidence — no documentation of the hash function.
 **Notes:** The path-encoding observation is confirmed. The empirical resolution approach is reasonable but unverified against actual Claude Code behavior.
 
 #### C-039
@@ -234,10 +234,10 @@
 **Notes:** HIGH confidence. The machine_exclude recommendation follows directly from the API key presence.
 
 #### C-057
-**Claim:** settings.local.json in JASON-OS contains both portable and machine-bound entries in the same JSON array (e.g., generic Bash(chmod +x *) alongside machine-specific C:/Users/jason/... paths).
+**Claim:** settings.local.json in JASON-OS contains both portable and machine-bound entries in the same JSON array (e.g., generic Bash(chmod +x *) alongside machine-specific C:/Users/<user>/... paths).
 **Type:** CODEBASE
 **Verdict:** VERIFIED
-**Evidence:** Direct filesystem check: `settings.local.json` contains exactly 2 occurrences of `C:/` (absolute Windows paths) confirmed by grep count. D9 claim 1 specifically states the file "contains absolute Windows paths" confirmed. D10 §3 table row 1 shows concrete examples including `C:/Users/jason/Workspace/...` entries.
+**Evidence:** Direct filesystem check: `settings.local.json` contains exactly 2 occurrences of `C:/` (absolute Windows paths) confirmed by grep count. D9 claim 1 specifically states the file "contains absolute Windows paths" confirmed. D10 §3 table row 1 shows concrete examples including `C:/Users/<user>/Workspace/...` entries.
 **Notes:** Both portable entries (Bash(chmod +x *)) and machine-bound entries (C:/ paths) confirmed present. The JSON array co-location is the sub-file sync problem.
 
 #### C-060

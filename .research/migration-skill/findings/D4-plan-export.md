@@ -28,7 +28,7 @@ generated_by: /migration v<X.Y.Z>
 generated_at: 2026-04-21T13:45:00-04:00
 source_endpoint:
   repo: sonash-v0
-  path: C:/Users/jason/Workspace/dev-projects/sonash-v0
+  path: C:/Users/<user>/Workspace/dev-projects/sonash-v0
   commit: abc1234
   branch: main
 destination_endpoint:

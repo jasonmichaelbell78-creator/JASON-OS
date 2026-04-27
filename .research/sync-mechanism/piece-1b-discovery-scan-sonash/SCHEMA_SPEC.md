@@ -242,7 +242,7 @@ This matrix is the contract.
 | `tools/` | D13 | — |
 | `types/` | D19b | — |
 
-**User-home memories** (`~/.claude/projects/C--Users-jason-Workspace-dev-projects-sonash-v0/memory/`):
+**User-home memories** (`~/.claude/projects/C--Users-<user>-Workspace-dev-projects-sonash-v0/memory/`):
 D4a-d.
 
 **Root-level files:** 17 .md files + ~35 config files + CLAUDE.md: D17a-b.

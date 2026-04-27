@@ -496,7 +496,7 @@ The `type: tenet` frontmatter value exists in `enums.json` but is completely unu
 
 ### Project-directory encoding (C-G3, C-G4, C-G5, C-G9)
 
-`~/.claude/projects/` directory names are NOT cryptographic hashes — they are deterministic, reversible path-encodings [C-G3]. The algorithm: `path.replace(':', '--').replace(/[\\/]/g, '-')`. Verified against 4+ observed directory names (e.g., `C:\Users\jason\Workspace\dev-projects\JASON-OS` → `C--Users-jason-Workspace-dev-projects-jason-os`).
+`~/.claude/projects/` directory names are NOT cryptographic hashes — they are deterministic, reversible path-encodings [C-G3]. The algorithm: `path.replace(':', '--').replace(/[\\/]/g, '-')`. Verified against 4+ observed directory names (e.g., `C:\Users\<user>\Workspace\dev-projects\JASON-OS` → `C--Users-<user>-Workspace-dev-projects-jason-os`).
 
 This matters for multi-machine sync because different absolute paths on different machines produce different directory names [C-G4]. The sync tool cannot use the encoded path as a stable cross-machine identifier. No `project.json` manifest file exists inside the directory to recover the original path [C-G5]. The stable cross-machine identifier should be the git remote URL or repo name — not the encoded path.
 

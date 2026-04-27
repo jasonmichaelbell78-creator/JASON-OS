@@ -64,3 +64,8 @@ tools/**/*.exe
 tools/**/bin/
 tools/statusline/jason-statusline-v*
 !tools/statusline/jason-statusline-v*.go
+
+# repo-analysis — repomix dumps are large, machine-local, regeneratable.
+# Per .claude/skills/repo-analysis/SKILL.md output spec, repomix-output.txt
+# is gitignored. The rest of .research/analysis/<slug>/ artifacts ship.
+.research/analysis/*/repomix-output.txt

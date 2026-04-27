@@ -1,0 +1,290 @@
+{
+  "schema_version": "1.0",
+  "source": "jdpolasky/ai-chief-of-staff",
+  "primary_lens": "creator",
+  "candidates": {
+    "patterns": [
+      {
+        "id": "P-01",
+        "name": "Memory firings log + decay analysis with bootstrap gate",
+        "type": "pattern",
+        "novelty": "medium",
+        "effort": "E1",
+        "relevance": "medium",
+        "port_priority": "port-when-needed",
+        "summary": "Append one line per memory-that-fired to a session-indexed log; decay analysis surfaces dormant memories; analysis gated on 10 distinct sessions to avoid false signal during bootstrap. Concrete cost: one append per turn.",
+        "applies_when": "JASON-OS auto-memory exceeds ~30-40 entries OR stale-memory drift becomes visible",
+        "source_file": "docs/memory.md, .claude/skills/audit/SKILL.md, .claude/skills/wrap/SKILL.md"
+      },
+      {
+        "id": "P-02",
+        "name": "Two-tier user-readable vs machinery file separation",
+        "type": "design-principle",
+        "novelty": "medium",
+        "effort": "E1",
+        "relevance": "medium",
+        "port_priority": "port-when-needed",
+        "summary": "User-facing daily-read files at the top level (Command Center, To-Do); machinery (session counter, hot context, append-only logs) lives behind a single folder boundary (_system/). The split is the design.",
+        "applies_when": "JASON-OS grows a user-facing layer beyond CLAUDE.md and SESSION_CONTEXT.md",
+        "source_file": "ARCHITECTURE.md §Technical, docs/protocols.md"
+      },
+      {
+        "id": "P-03",
+        "name": "/audit skill as scheduled aggregate cross-system check",
+        "type": "pattern",
+        "novelty": "low",
+        "effort": "E1",
+        "relevance": "medium",
+        "port_priority": "port-when-needed",
+        "summary": "Read-mostly periodic check (every 7 sessions). Six dimensions: redundant memory, stale memory, MEMORY.md index drift, broken wikilinks, skill-vs-system drift, gated decay analysis. Surfaces findings; user picks fixes.",
+        "applies_when": "JASON-OS skill count or rule count grows past ~20 and aggregate drift becomes invisible",
+        "source_file": ".claude/skills/audit/SKILL.md"
+      },
+      {
+        "id": "P-04",
+        "name": "Setup skill as runnable first-time interview",
+        "type": "pattern",
+        "novelty": "low",
+        "effort": "E1",
+        "relevance": "low",
+        "port_priority": "port-when-needed",
+        "summary": "Skippable conversational interview that ships a working system in 10 minutes; minimum 4 questions then explicit ship-it-or-keep-going gate. Edge cases for input variations handled inline.",
+        "applies_when": "JASON-OS ships as a clone-and-run template (not a current goal)",
+        "source_file": ".claude/skills/setup/SKILL.md"
+      },
+      {
+        "id": "P-05",
+        "name": "Use-both / bridge-via-Claude-MCP architecture pattern",
+        "type": "architecture-pattern",
+        "novelty": "high",
+        "effort": "E0",
+        "relevance": "medium",
+        "port_priority": "note-only",
+        "summary": "Personal layer in tool A + collaborative layer in tool B + Claude reading both via MCP. Maps onto SoNash + JASON-OS + cross-repo-movement-reframe split. Shape reference, not a port.",
+        "applies_when": "Cross-repo-movement-reframe planning when the layer split is up for design",
+        "source_file": "docs/notion-vs-obsidian.md, docs/notion-vs-obsidian-deep.md"
+      },
+      {
+        "id": "P-06",
+        "name": "ADAM coherence_monitor.py reading session JSONL for compaction events",
+        "type": "pattern",
+        "novelty": "medium",
+        "effort": "E1",
+        "relevance": "medium",
+        "port_priority": "note-only",
+        "summary": "Read Claude Code JSONL session files; detect compaction events; write alerts. JASON-OS has compact-restore.js as part of session-start hook layer. Pattern is to MONITOR session JSONL for state changes.",
+        "applies_when": "When JASON-OS hook-layer expansion is on the agenda. Worth a future /repo-analysis on the ADAM repo itself.",
+        "source_file": "CREDITS.md (script not shipped in repo)"
+      },
+      {
+        "id": "P-07",
+        "name": "Dual-mode docs (human-readable AND LLM-walkthrough-ready)",
+        "type": "workflow-pattern",
+        "novelty": "medium",
+        "effort": "E0",
+        "relevance": "low",
+        "port_priority": "note-only",
+        "summary": "README written so a human reads it as install steps OR pastes it into Claude and Claude walks them through. obsidian-setup.md has 'For the human reading this' section followed by 'Below the line is Claude's operating manual.'",
+        "applies_when": "If/when JASON-OS produces public-facing documentation",
+        "source_file": "README.md, docs/obsidian-setup.md"
+      }
+    ],
+    "knowledge": [
+      {
+        "id": "K-01",
+        "name": "Rubber-stamp danger for AI-drafted feedback memories",
+        "type": "knowledge",
+        "novelty": "high",
+        "effort": "E0",
+        "relevance": "high",
+        "port_priority": "port-now",
+        "summary": "When the model drafts a feedback memory after a correction, the same model that just made the mistake is now writing the rule meant to prevent it. Review like an intern wrote it; reject anything that sounds self-exculpating; tighten rules that try to cover more ground than the moment justified.",
+        "where_to_apply": "JASON-OS auto-memory writing instructions in CLAUDE.md (or a tenet memory)",
+        "source_file": "docs/feedback-loop.md"
+      },
+      {
+        "id": "K-02",
+        "name": "Search-vs-read structural design tenet",
+        "type": "knowledge",
+        "novelty": "high",
+        "effort": "E0",
+        "relevance": "high",
+        "port_priority": "port-now",
+        "summary": "AI working through a search-API-mediated workspace degrades on cross-source synthesis; AI with direct file-system access handles it. Articulates the access-pattern angle of JASON-OS's existing filesystem-verification posture.",
+        "where_to_apply": "Pair with tenet_filesystem_verification.md as a tenet candidate, or extend that tenet with the access-pattern angle",
+        "source_file": "docs/notion-vs-obsidian.md, docs/notion-vs-obsidian-deep.md"
+      },
+      {
+        "id": "K-03",
+        "name": "Tool-cost ranking + cheapest-tool-first rule",
+        "type": "knowledge",
+        "novelty": "high",
+        "effort": "E0",
+        "relevance": "high",
+        "port_priority": "port-now",
+        "summary": "Ranking: raw file read < CLI shell exec < eval-via-CLI < MCP server. MCP servers cost tokens before any call (schemas load up-front). Rule: 'raw reads for known paths, CLI for search and listings, semantic only for cross-domain, MCP only when you need rendered view.' JASON-OS has ToolSearch for deferred MCP tools but no stated principle.",
+        "where_to_apply": "JASON-OS tenet candidate. Authors picking among Read/Bash/Grep/Skill/MCP every day get a rule of thumb.",
+        "source_file": "docs/obsidian-setup.md Layer 5"
+      },
+      {
+        "id": "K-04",
+        "name": "Format-longevity / plain-text-outlives-the-tool",
+        "type": "knowledge",
+        "novelty": "low",
+        "effort": "E0",
+        "relevance": "medium",
+        "port_priority": "port-when-needed",
+        "summary": "Plain-text markdown is readable in any text editor in 30 years; proprietary databases aren't. Asymmetric migration pain (Notion→Obsidian clean, Obsidian→Notion lossy). JASON-OS lives this implicitly; doesn't articulate it.",
+        "where_to_apply": "Tenet candidate. Worth surfacing if/when a substrate decision is up for debate.",
+        "source_file": "docs/notion-vs-obsidian-deep.md"
+      },
+      {
+        "id": "K-05",
+        "name": "Compact four-laws crystallization as CLAUDE.md frame",
+        "type": "knowledge",
+        "novelty": "low",
+        "effort": "E0",
+        "relevance": "medium",
+        "port_priority": "note-only",
+        "summary": "Four operating laws (Operating Constraint, Verification Protocol, Scope Discipline, Execute-Don't-Meta-Talk) with rationale and copy-pasteable instruction blocks. Compactness contrasts with JASON-OS CLAUDE.md §4's 16 behavioral guardrails — comparison data for a future trim pass.",
+        "where_to_apply": "Future JASON-OS CLAUDE.md audit pass",
+        "source_file": "docs/laws.md"
+      },
+      {
+        "id": "K-06",
+        "name": "MEMORY.md index discipline: specific descriptions are load-bearing",
+        "type": "knowledge",
+        "novelty": "low",
+        "effort": "E0",
+        "relevance": "low",
+        "port_priority": "already-applied",
+        "summary": "MEMORY.md is loaded every session; specific descriptions let the model route, generic ones don't. JASON-OS auto-memory MEMORY.md already follows this convention.",
+        "where_to_apply": "Already in place — validates current JASON-OS pattern.",
+        "source_file": "docs/memory.md"
+      },
+      {
+        "id": "K-07",
+        "name": "Memory has decay; needs scheduled review with bootstrap gate",
+        "type": "knowledge",
+        "novelty": "medium",
+        "effort": "E0",
+        "relevance": "medium",
+        "port_priority": "note-only",
+        "summary": "Memory rules go stale. Two mechanisms: ambient (when a memory fires and the user disagrees, the rule gets revisited) + scheduled (every N sessions, surface dormant memories). Bootstrap gate prevents false-positive dormant flags during initial accumulation.",
+        "where_to_apply": "Conceptual pairing with P-01 above",
+        "source_file": "docs/memory.md, docs/feedback-loop.md"
+      },
+      {
+        "id": "K-08",
+        "name": "Don't-batch-install operational discipline",
+        "type": "knowledge",
+        "novelty": "low",
+        "effort": "E0",
+        "relevance": "medium",
+        "port_priority": "port-now",
+        "summary": "'Add these one at a time. Verify each one works before adding the next. Never batch-install MCP servers and hope they all come up.' Generalizes to skill-porting, hook-adding, dependency-introduction.",
+        "where_to_apply": "JASON-OS conventions or CLAUDE.md §4 as a stated cross-cutting rule",
+        "source_file": "docs/obsidian-setup.md Layer 4"
+      },
+      {
+        "id": "K-09",
+        "name": "CREDITS.md as a maintained attribution protocol",
+        "type": "workflow-pattern",
+        "novelty": "medium",
+        "effort": "E1",
+        "relevance": "medium",
+        "port_priority": "port-when-needed",
+        "summary": "Written rules for when attribution gets added; per-file docstring requirements for code-adapted vs concept-adapted; full MIT copyright + URL + path on code-adapted. JASON-OS has SoNash lineage that the whole repo embodies.",
+        "where_to_apply": "When JASON-OS ↔ SoNash cross-pollination gets dense enough that informal attribution stops working",
+        "source_file": "CREDITS.md"
+      },
+      {
+        "id": "K-10",
+        "name": "Adjacent-implementations listing as research-honesty discipline",
+        "type": "knowledge",
+        "novelty": "medium",
+        "effort": "E0",
+        "relevance": "low",
+        "port_priority": "note-only",
+        "summary": "Naming peer projects (with rationale per project) so 'the field is named rather than strawmanned.' JASON-OS deep-research outputs already cite sources; a discrete 'adjacent implementations' framing for any public-facing positioning would borrow this discipline.",
+        "where_to_apply": "Inspirational shape for future research-output framing",
+        "source_file": "CREDITS.md, ARCHITECTURE.md"
+      },
+      {
+        "id": "K-11",
+        "name": "Markdown-as-substrate scaling pattern (Dataview/Smart-Connections/Templater inspiration)",
+        "type": "knowledge",
+        "novelty": "medium",
+        "effort": "E0",
+        "relevance": "low",
+        "port_priority": "note-only",
+        "summary": "Obsidian plugin ecosystem demonstrates that typed-markdown corpus with frontmatter has more depth than 'a folder of notes': declarative queries, local-embedding semantic layer, logic-in-templates. Existence proof of where markdown-substrate systems can grow.",
+        "where_to_apply": "When JASON-OS auto-memory or .research/ output grows to need cross-source synthesis beyond keyword grep",
+        "source_file": "docs/obsidian-setup.md Layer 2"
+      },
+      {
+        "id": "K-12",
+        "name": "Editor-as-CLI tool-tier insight",
+        "type": "knowledge",
+        "novelty": "medium",
+        "effort": "E0",
+        "relevance": "medium",
+        "port_priority": "note-only",
+        "summary": "Author's hard-won lesson: 'I spent weeks doing MCP gymnastics that the CLI would have replaced in a single command.' Validates the cheapest-tool-first principle (K-03) from a different angle.",
+        "where_to_apply": "Reinforces K-03 rationale",
+        "source_file": "docs/obsidian-setup.md Layer 3"
+      },
+      {
+        "id": "K-13",
+        "name": "Rule-why-apply format for feedback memories",
+        "type": "knowledge",
+        "novelty": "low",
+        "effort": "E0",
+        "relevance": "low",
+        "port_priority": "already-applied",
+        "summary": "JASON-OS auto-memory rules already use this format. Validates the convention.",
+        "where_to_apply": "Already in place",
+        "source_file": "docs/feedback-loop.md"
+      }
+    ],
+    "content": [],
+    "anti_patterns_for_creator_view": [
+      {
+        "id": "A-01",
+        "name": "Don't ship a public template with no CI security pipeline",
+        "summary": "ai-chief-of-staff ships executable Python in a public MIT-licensed template with no Gitleaks, no Dependabot, no Semgrep. JASON-OS already has the security pipeline; preserve that posture.",
+        "lesson": "Narrow threat surface excuses many absences; missing secrets-scanning isn't one of them for any public repo with executable code.",
+        "source_file": "(absence — no .github/workflows/)"
+      },
+      {
+        "id": "A-02",
+        "name": "Don't auto-fix during decay analysis",
+        "summary": "ai-chief-of-staff /audit is read-mostly: surfaces findings; user picks fixes. Memory deletion or merging without explicit human approval is a known anti-pattern.",
+        "lesson": "When porting decay analysis, preserve the surface-don't-delete discipline.",
+        "source_file": ".claude/skills/audit/SKILL.md"
+      },
+      {
+        "id": "A-03",
+        "name": "Don't conflate single-operator simplicity with skill-system simplicity",
+        "summary": "ai-chief-of-staff has 5 skills because it's one person's daily loop. JASON-OS solves a different problem where one-person-loop simplicity isn't the target.",
+        "lesson": "Compactness inspires; it doesn't prescribe. Don't trim JASON-OS skill count to match.",
+        "source_file": "(comparison observation)"
+      },
+      {
+        "id": "A-04",
+        "name": "Don't dismiss artifacts because the technology is unfamiliar",
+        "summary": "Meta-lesson from doing this analysis. The Obsidian-specific docs were the most productive single source of JASON-OS-relevant ideas in the entire repo. Specifics inspire by analogy.",
+        "lesson": "Coverage Audit reads-by-default. Relevance is post-read judgment. SKILL.md v1.1 hard-gates this.",
+        "source_file": "(this analysis pass)"
+      },
+      {
+        "id": "A-05",
+        "name": "Don't reach for the heaviest tool first",
+        "summary": "Author: 'I spent weeks doing MCP gymnastics that the CLI would have replaced in a single command.'",
+        "lesson": "Reach for the cheapest tool that does the job. JASON-OS skill authors who default to MCP server calls when Read or Grep would do are paying the cost up-front.",
+        "source_file": "docs/obsidian-setup.md Layer 3"
+      }
+    ]
+  },
+  "schema_drift_note": "JASON-OS analysisRecord schema (scripts/lib/analysis-schema.js) prunes 'anti-pattern' and 'content' candidate types per PORT_DECISIONS.md Batch 2. SKILL.md still describes 4 candidate types in Phase 6 prose. Drift logged as a finding for future reconciliation; this value-map.json keeps anti-patterns in a separate non-schema field for Creator View §6 reference."
+}

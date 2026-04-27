@@ -68,6 +68,18 @@ Before any work begins, display:
    just its health.
 9. **Conversational, not clinical.** Creator View MUST be written in
    conversational prose. Anti-goal: must NOT read like a technical manual.
+10. **Coverage Audit is hard-gated; relevance-based skips are FORBIDDEN.**
+    Coverage decisions are user-locked scope authority. The skill MUST present
+    every deferred item to the user. Skip reasons MUST be budget-based (file
+    size, time pressure user signaled, content demonstrably out of scope per
+    the repo's own framing). "Low relevance to home repo" / "we don't use this
+    technology" / "doesn't transfer" / "out of scope for our work" is NEVER a
+    valid skip reason — relevance is a POST-READ judgment that belongs in
+    value-map AFTER reading the artifact, not a PRE-READ filter. The whole
+    point of analyzing external repos is to surface things the home repo
+    doesn't already have; pre-read relevance filters defeat that purpose.
+    Exception: if Coverage Audit identifies zero deferred items, skip the user
+    prompt silently — the gate only fires when there is something to decide.
 
 ## When to Use
 
@@ -340,12 +352,27 @@ content + anti-pattern promotion rules applied.
 ## Coverage Audit (Phase 6b of M — MUST for Standard/Deep)
 
 After all artifacts are written, scan for content that exists in the repo but
-was NOT analyzed. The safety net that catches edge cases. Interactive prompt:
-Analyze all / Select categories / Skip. Record user decision in
-`coverage-audit.jsonl` — never silently discard.
+was NOT analyzed. The safety net that catches edge cases.
+
+**Hard-gated user prompt (per Critical Rule 10).** If any items were deferred
+during the main passes, the skill MUST present them to the user with the
+proposed skip reason for each, and wait for an explicit user decision per item
+(or a blanket "analyze all" / "skip the budget-based ones / read the rest").
+Default-skip is FORBIDDEN when items are present. The only silent path is when
+Coverage Audit finds zero deferred items.
+
+**Skip-reason discipline.** Skip reasons MUST be budget-based, never
+relevance-based. Acceptable: "file is 50K+ lines / would blow time budget,"
+"identical to a sibling already read," "binary / generated artifact." Not
+acceptable: "we don't use this technology," "low expected relevance to home
+repo," "doesn't transfer to our stack." The whole point of analyzing external
+repos is to surface things the home repo doesn't already have.
+
+Record user decision in `coverage-audit.jsonl` — never silently discard.
 
 **Done when:** coverage-audit.jsonl exists AND every item has a `user_decision`
-field (`analyze` / `skip`) or `status: "analyzed"`.
+field (`analyze` / `skip`) or `status: "analyzed"` AND no skip reason contains
+relevance-language (verified by Self-Audit check 11).
 
 > **Full detail** — categories scanned, output format, re-analysis triggering —
 > see REFERENCE.md §15.5.
@@ -374,7 +401,7 @@ the default explicitly in state so self-audit can verify.
 | Gate                             | Default                                     |
 | -------------------------------- | ------------------------------------------- |
 | `--depth` unspecified            | `standard`                                  |
-| Coverage Audit unanswered        | `skip all` (logged in coverage-audit.jsonl) |
+| Coverage Audit unanswered        | **BLOCK — present each item to user** (per Critical Rule 10; default-skip is forbidden when items are present; silent only when zero items deferred) |
 | Tag Suggestion unanswered        | **never auto-approve** — block with prompt  |
 | Scope-explosion prompt           | `top 50 by signal`                          |
 | Routing menu unanswered          | `7. Done` (cleanup + invocation track)      |
@@ -434,6 +461,13 @@ Run minimum floor per CONVENTIONS §8 plus domain checks:
    before `self-audit`
 10. Prior feedback replay — `prior_feedback_shown: true` if prior state existed
     (CONVENTIONS §18)
+11. **Coverage Audit relevance-skip check (per Critical Rule 10).** Scan
+    `coverage-audit.jsonl` for skip reasons containing relevance-language —
+    "low relevance", "doesn't apply", "we don't use", "out of scope",
+    "doesn't transfer", "not applicable to home", "low expected relevance".
+    Any match = REQUIRES_USER_REVIEW. Block routing until each flagged item
+    is either re-classified with a budget-based reason or moved to
+    `analyze` and the artifact actually read.
 
 Report failures to user before routing.
 
@@ -525,13 +559,15 @@ file is git-tracked (state-pattern) and survives session boundaries.
 
 ---
 
-_v1.0 | 2026-04-25 | Initial port from SoNash repo-analysis v5.0
-(PORT_DECISIONS.md disposition applied across 8 batches, 61 LOCKED
-decisions). JASON-OS schema versioning restarts at 1.0; SoNash version
-trail preserved in [ARCHIVE.md](./ARCHIVE.md)._
+_v1.1 | 2026-04-27 | Coverage Audit hard-gate + relevance-skip prohibition
+(Critical Rule 10) + self-audit check 11. Surfaced by Session 23 smoke-test
+of `jdpolasky/ai-chief-of-staff` — relevance-based skips collapsed the
+Coverage Audit safety net. SKILL.md hardens the gate so future runs cannot
+default-skip on relevance grounds._
 
 ## Version History
 
 | Version | Date       | Description                                                                                |
 | ------- | ---------- | ------------------------------------------------------------------------------------------ |
 | 1.0     | 2026-04-25 | Initial port from SoNash repo-analysis v5.0 (PORT_DECISIONS.md disposition applied).       |
+| 1.1     | 2026-04-27 | Coverage Audit hard-gate + relevance-skip prohibition (Critical Rule 10, self-audit 11).  |

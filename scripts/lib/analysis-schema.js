@@ -73,15 +73,15 @@ const chainTierEnum = z.enum(["overview", "tutorial", "implementation", "theory"
 // --- Candidate schema (shared in analysis + extraction) ---
 
 const candidateSchema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1),
   type: candidateTypeEnum,
-  description: z.string(),
+  description: z.string().trim().min(1),
   novelty: noveltyEnum,
   effort: effortEnum,
   relevance: relevanceEnum,
-  tags: z.array(z.string()).default([]),
-  url: z.string().nullable().optional(),
-  finding_refs: z.array(z.string()).optional(),
+  tags: z.array(z.string().trim().min(1)).default([]),
+  url: z.string().trim().min(1).nullable().optional(),
+  finding_refs: z.array(z.string().trim().min(1)).optional(),
 });
 
 // --- Scoring schema ---
@@ -98,21 +98,21 @@ const scoringSchema = z.object({
 
 const analysisRecordCore = z.object({
   id: z.string().uuid(),
-  schema_version: z.string(),
+  schema_version: z.string().trim().min(1),
   source_type: sourceTypeEnum,
-  source: z.string(),
-  slug: z.string(),
-  title: z.string(),
-  analyzed_at: z.string().nullable(),
+  source: z.string().trim().min(1),
+  slug: z.string().trim().min(1),
+  title: z.string().trim().min(1),
+  analyzed_at: z.string().trim().min(1).nullable(),
   depth: depthEnum,
-  tags: z.array(z.string()).default([]),
+  tags: z.array(z.string().trim().min(1)).default([]),
   scoring: scoringSchema,
-  summary: z.string(),
-  creator_view: z.string(),
+  summary: z.string().trim().min(1),
+  creator_view: z.string().trim().min(1),
   candidates: z.array(candidateSchema),
   // JASON-OS port stub (PORT_DECISIONS.md Batch 1 #2): preserves a future
   // /synthesize re-activation path without later schema migration.
-  cross_repo_links: z.array(z.string()).nullable().default(null),
+  cross_repo_links: z.array(z.string().trim().min(1)).nullable().default(null),
 });
 
 // --- Type-specific optional fields ---

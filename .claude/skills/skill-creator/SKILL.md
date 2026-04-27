@@ -15,7 +15,7 @@ metadata:
 
 Structured creation workflow that produces high-quality skills by front-loading
 decision-making through exhaustive discovery. Effectiveness is measured against
-the quality checklist in [SKILL_STANDARDS.md](../_shared/SKILL_STANDARDS.md).
+the quality checklist in [SKILL_STANDARDS.md](../shared/SKILL_STANDARDS.md).
 
 ## Critical Rules (MUST follow)
 
@@ -256,7 +256,7 @@ contract.
    specific deliverables, downstream contracts, and regression detection needs
    from Phase 3 planning.
 2. **Scaffold the script** — create `scripts/skills/<skill-name>/self-audit.js`
-   per [SELF_AUDIT_PATTERN.md](../_shared/SELF_AUDIT_PATTERN.md). Use
+   per [SELF_AUDIT_PATTERN.md](../shared/SELF_AUDIT_PATTERN.md). Use
    `scripts/skills/skill-audit/self-audit.js` as the template and replace
    domain-specific dimension checks. The Phase 5 prose in SKILL.md MUST invoke
    this script first (per pattern doc §Wiring to SKILL.md Phase 5), with prose
@@ -295,7 +295,7 @@ templates, question banks to companion files.
    SKILL.md includes a self-audit phase positioned as penultimate, referencing
    SKILL_STANDARDS.md dimensions appropriate to tier; (b)
    `scripts/skills/<name>/self-audit.js` exists and follows
-   [SELF_AUDIT_PATTERN.md](../_shared/SELF_AUDIT_PATTERN.md) (matching CLI
+   [SELF_AUDIT_PATTERN.md](../shared/SELF_AUDIT_PATTERN.md) (matching CLI
    shape, exit codes, SUMMARY block, required helpers).
 8. **Contract verification wired** (MUST if downstream consumers) — verify the
    self-audit checks output against documented consumer expectations
@@ -356,8 +356,8 @@ behavioral quality that structural validation cannot catch.
   (check all skills), `/create-audit` (audit-specific scaffolding),
   `/convergence-loop` (Phase 4.3: wire into created skill if T25 applies; Phase
   5: verify created skill's codebase claims)
-- **References:** [SKILL_STANDARDS.md](../_shared/SKILL_STANDARDS.md) (Phase 5
-  content checklist), [SELF_AUDIT_PATTERN.md](../_shared/SELF_AUDIT_PATTERN.md)
+- **References:** [SKILL_STANDARDS.md](../shared/SKILL_STANDARDS.md) (Phase 5
+  content checklist), [SELF_AUDIT_PATTERN.md](../shared/SELF_AUDIT_PATTERN.md)
   (Phase 4.3 scaffold + Phase 5 verification),
   [SKILL_AGENT_POLICY.md](../../../docs/agent_docs/SKILL_AGENT_POLICY.md)
 - **Handoff:** State file documents intent + discovery decisions for skill-audit

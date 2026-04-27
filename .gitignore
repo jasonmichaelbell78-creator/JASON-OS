@@ -65,7 +65,11 @@ tools/**/bin/
 tools/statusline/jason-statusline-v*
 !tools/statusline/jason-statusline-v*.go
 
-# repo-analysis — repomix dumps are large, machine-local, regeneratable.
-# Per .claude/skills/repo-analysis/SKILL.md output spec, repomix-output.txt
-# is gitignored. The rest of .research/analysis/<slug>/ artifacts ship.
+# repo-analysis — repomix dumps and copied source/ trees are large,
+# machine-local, regeneratable. Per .claude/skills/repo-analysis/SKILL.md
+# output spec, repomix-output.txt is gitignored; per Phase 2 (Dimension Wave),
+# large repos copy their clone into source/ for agent processing — that
+# directory must NEVER be committed (would import external repo code).
+# The rest of .research/analysis/<slug>/ artifacts ship.
 .research/analysis/*/repomix-output.txt
+.research/analysis/*/source/

@@ -1,5 +1,173 @@
 # PR Review Learnings
 
+#### Review #19: Sessions 19-23 cross-repo-movement-reframe + repo-analysis port (PR #12) — Round 1 (2026-04-27)
+
+**Source:** Mixed (SonarCloud + Qodo + Gemini)
+**PR/Branch:** PR #12 / `fixes-42226` → `main`
+**Items:** 24 unique total — SonarCloud 3 (cognitive complexity), Qodo Code Review 4, Qodo PR Compliance 3 (custom-rule failures), Qodo Suggestions 5, Gemini 9. All this-PR origin (no DAS scoring needed). After triage: 22 fixed, 1 deferred via /add-debt (G-2: SKILL.md exceeds 500-line limit), 1 rejected with technical justification (Q-4: uuid override out-of-range — intentional Dependabot resolution).
+
+**Patterns Identified:**
+
+1. **Cognitive-complexity hotspots cluster in main + checkArtifacts +
+   checkSchema in CLI scripts.** SonarCloud flagged three functions in
+   `scripts/cas/self-audit.js` with cognitive complexity scores of 24,
+   21, 16 against a 15-allowed cap. The shape was the same in all three:
+   one function held both the "iterate over a static config list of
+   things to check" outer loop AND the "decide the verdict + format the
+   pass/fail/warn message" inner branching. Splitting by **what gets
+   evaluated** (per-MUST-artifact, per-SHOULD-artifact, per-WRONG-name
+   for checkArtifacts; loadAnalysisOrFail / checkSchemaVersion /
+   runZodValidation / checkCandidateCount / checkMediaSpecific for
+   checkSchema; validateSlug / resolveAnalysisDir / readAnalysisMetadata
+   / aggregateResults / printAggregate for main) dropped each well below
+   15 without touching behavior. The win comes from factoring **the
+   per-item verdict into its own helper** — once the loop body is one
+   function call, the complexity collapses.
+   - Root cause: scripts grew incrementally — one config list at a
+     time. Each addition added a new branch to the same function rather
+     than extracting because "it's still small."
+   - Prevention: when a script's per-item-evaluation function reaches
+     more than two distinct verdict shapes (pass / fail / warn /
+     special-case), eagerly extract `evaluateOne(...)`. This pattern
+     transfers to all CAS handler scripts and any future linter-style
+     pipelines.
+
+2. **Schema-validator strictness gap: required strings accepted empty +
+   whitespace.** `analysis-schema.js` declared every required identifier
+   field as `z.string()` with no `.min(1)` / `.trim()`. The Zod
+   schema accepted `""` and `"   "` for `id`, `slug`, `title`,
+   `summary`, `creator_view`, etc., which would only surface downstream
+   when a self-audit assertion or human reader hit the empty value.
+   Pattern for any Zod schema: required string fields that act as
+   identifiers or content MUST chain `.trim().min(1)` so the validator
+   rejects whitespace-only content at the boundary, not three layers
+   deeper.
+   - Root cause: schema written greenfield with the assumption "writers
+     populate these correctly" — true for the happy path but not for
+     coercion edge cases.
+   - Prevention: add `.trim().min(1)` to every required string in
+     analysis-schema.js as part of port hardening; check the same
+     pattern when porting/writing future schemas (extraction journal,
+     synthesis ledger, etc.).
+
+3. **Path-handling security debt clusters around four
+   primitives.** Qodo and SonarCloud's security pass on
+   `scripts/cas/self-audit.js` independently surfaced four related
+   gaps: (a) absolute path leaked in error message → use slug instead;
+   (b) `existsSync` in `findBrokenHomeRefs` follows symlinks → use
+   `refuseSymlinkWithParents` + `lstatSync`; (c) `fs.existsSync(dir)`
+   on the analysis directory check is TOCTOU + symlink-following → use
+   `lstatSync` + `isDirectory` in one call; (d) `safeReadText` did not
+   verify regular-file before delegating to readUtf8Sync. **All four
+   reduce to: at every filesystem boundary, refuse symlinks AND verify
+   file type AND avoid leaking absolute paths in user-facing
+   strings.** The four feel separate but are one pattern.
+   - Root cause: scripts used the JASON-OS safe I/O helpers but only
+     in the obvious read paths — auxiliary paths (existence checks,
+     error messages, parent-directory checks) drifted to raw `fs.*`
+     calls.
+   - Prevention: when porting scripts, audit every `fs.existsSync`
+     and every error-message-with-path string. The grep for both is
+     30 seconds and catches this whole pattern at once.
+
+4. **DAS framework + delegated-accept worked as designed.** All 24
+   items were this-PR origin, so DAS scoring was only needed for the
+   single Gemini structural deferral (G-2 / DEBT D3). DAS = 2
+   (Recommend act) + user delegation = filed cleanly to debt log
+   without further interaction. The split between "fix now" and "track
+   as debt" stayed crisp because the debt entry preserved DAS scoring
+   in the notes field for future reviewers.
+
+**Resolution:**
+
+- Fixed: 22 items
+  - SonarCloud cognitive-complexity refactor (S-1, S-2, S-3) — split
+    `checkArtifacts`, `checkSchema`, `main` in `scripts/cas/self-audit.js`
+    into focused helpers; complexity scores all under 15 now.
+  - Qodo Q-1 (error swallowing in getDepth) → main now reads metadata
+    once and surfaces non-ENOENT errors via `console.error`.
+  - Qodo Q-2 (zod missing as production dep) → already moved to
+    `dependencies` via `npm install zod`; lockfile updated.
+  - Qodo Q-3 (candidate-type prose drift) → SKILL.md Phase 6 prose
+    aligned with `analysis-schema.js` enum (six types listed: pattern,
+    knowledge, architecture-pattern, design-principle,
+    workflow-pattern, tool).
+  - Qodo Q-4 (uuid override out-of-range) → REJECTED: uuid v14 is
+    API-compatible with v8 for node-notifier's `uuid.v4()` usage; the
+    semver mismatch is the intentional cost of resolving Dependabot
+    alert #1.
+  - Qodo Compliance QC-1 (abs-path leak) → main prints
+    `slug` not `dir`.
+  - Qodo Compliance QC-2 (process_feedback content logged) → only
+    length is logged now.
+  - Qodo Compliance QC-S1 (state-file path containment) →
+    `validatePathInDir(STATE_DIR, stateRel)` before the join.
+  - Qodo Suggestions QS-1 (strict slug validation) → `SLUG_RE`
+    regex + `.`/`..` rejection at entry.
+  - Qodo Suggestions QS-2 (existsSync follows symlinks) →
+    `pathExistsRefusingSymlinks` helper.
+  - Qodo Suggestions QS-3 (race-safe directory check) →
+    `refuseSymlinkWithParents` + `lstatSync` + `isDirectory` in
+    `resolveAnalysisDir`.
+  - Qodo Suggestions QS-4 (safeReadText regular-file enforcement) →
+    `lstatSync` + `isFile` check before `readUtf8Sync`.
+  - Qodo Suggestions QS-5 (schema strictness) → `.trim().min(1)` on
+    every required string + nested array of strings in
+    `analysisRecordCore` and `candidateSchema`.
+  - Gemini G-1 (`.research/analysis/*/source/` not in .gitignore) →
+    rule added.
+  - Gemini G-3 (SKILL.md repomix command) → corrected to
+    `npx repomix --compress --output <slug>/repomix-output.txt`.
+  - Gemini G-4 (REFERENCE.md repomix command) → same fix.
+  - Gemini G-5 (`_shared/` path drift in active skills) → propagation
+    sweep across `deep-plan`, `skill-audit`, `skill-creator`,
+    `repo-analysis` — all `_shared/` references corrected to
+    `shared/`.
+  - Gemini G-6 (Invocation Tracking section in SKILL_STANDARDS.md)
+    → rewritten to JASON-OS-native `safeAppendFileSync` pattern.
+  - Gemini G-7 (`_shared/` in AUDIT_TEMPLATE.md) → fixed.
+  - Gemini G-8 (MASTER_DEBT cross-reference DEFERRED) → marker added
+    pointing at `.planning/DEBT_LOG.md` as the v0 stub.
+  - Gemini G-9 (TDMS Intake DEFERRED) → marker added; v0 close-out
+    uses `/add-debt` per accepted finding.
+- Deferred: 1 item — DEBT D3 (G-2: SKILL.md exceeds soft line cap, 590
+  vs ~500 target). DAS = 2, user delegated.
+- Rejected: 1 item — Q-4 (UUID semver override) with technical
+  justification: uuid v14 is API-compatible with v8 for the
+  `uuid.v4()` call shape that node-notifier uses; the override is the
+  intentional resolution of Dependabot alert #1.
+
+**Key Learnings:**
+
+- **Cognitive-complexity refactors are mostly mechanical when the
+  loop body becomes a helper.** All three S-* items reduced cleanly
+  by extracting the per-item verdict logic. No semantic changes,
+  no behavior changes — just reshape. This is the pattern for any
+  CAS handler script that grows past 200 lines.
+- **Run propagation sweeps before committing path-rename fixes.**
+  G-7 surfaced because the `_shared/` rename hit two files in the
+  initial fix but four others in active skills. The Critical Rule 7
+  propagation sweep caught the rest in 30 seconds via one Grep call.
+  Without it, the next /skill-audit invocation would have hit a
+  broken link.
+- **Filesystem boundary hardening clusters into one pattern.** The
+  four QS-* security items (QS-2, QS-3, QS-4, plus QC-1's
+  abs-path leak) all reduce to: refuse symlinks, verify type,
+  hide absolute paths from output. When porting CAS scripts that
+  use `fs.existsSync` or print paths in errors, audit all four
+  patterns simultaneously rather than treating them as separate.
+- **Zod schemas need `.trim().min(1)` on identifier strings as a
+  default.** The `analysisRecordCore` change validated against the
+  smoke-test artifact without breaking the existing record — this
+  is non-disruptive hardening that should be the porting default,
+  not a post-review patch.
+- **DAS framework + delegated-accept handled the structural debt
+  cleanly.** G-2 was the only deferral and the DAS score (2,
+  Recommend act, user delegated) plus debt entry preserved the
+  reasoning for the next refactor pass.
+
+---
+
 #### Review #18: Sessions 15-18 structural-fix + back-fill machinery (PR #11) — Round 1 (2026-04-23)
 
 **Source:** Mixed (Qodo + Gemini)

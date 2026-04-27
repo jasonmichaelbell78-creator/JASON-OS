@@ -133,7 +133,7 @@ PHASE 2b of 9 Deep Read       -> Read internal artifacts beyond code
 PHASE 3.5 of 9 Content Eval   -> Evaluate embedded content (links, APIs, refs) — BEFORE Creator View
 PHASE 4 of 9   Creator View   -> Load home context + Deep Read + Content Eval, compare, challenge
 PHASE 5 of 9   Engineer View  -> Merge dimensions, compute bands, dual-lens scoring
-PHASE 6 of 9   Value Map      -> Pattern + knowledge + content + anti-pattern candidates
+PHASE 6 of 9   Value Map      -> Pattern / knowledge / architecture-pattern / design-principle / workflow-pattern / tool candidates (per analysis-schema.js)
 PHASE 6b of 9  Coverage Audit -> Scan for unexplored content (interactive)
 PHASE 6c of 9  Tag Suggestion -> Per shared/TAG_SUGGESTION.md
 SELF-AUDIT + ROUTING
@@ -177,10 +177,13 @@ not full Creator View.
 ## Clone + Repomix (Phase 1 of M)
 
 1. Clone: `git clone --filter=blob:none --depth=1 <url>` to `/tmp/`
-2. **Generate repomix IMMEDIATELY (MUST).** Run `npx repomix@latest --compress`
-   and save to output directory. Verify file exists before proceeding. If
-   repomix fails: retry once, then report. Do NOT silently skip — repomix is
-   required for Extract routing.
+2. **Generate repomix IMMEDIATELY (MUST).** Run
+   `npx repomix --compress --output .research/analysis/<repo-slug>/repomix-output.txt`
+   from the cloned directory. Use the project-installed version (declared as a
+   dev dep in `package.json`); do NOT use `@latest` — that introduces
+   nondeterminism on upstream releases. Verify file exists before proceeding.
+   If repomix fails: retry once, then report. Do NOT silently skip — repomix
+   is required for Extract routing.
 3. For Deep: `git fetch --unshallow` or `--shallow-since="1 year ago"`.
 4. Update state file.
 
@@ -324,28 +327,42 @@ pattern verdict + adoption classification.
 
 ## Value Map (Phase 6 of M)
 
-Generate `value-map.json` with four candidate types:
+Generate `value-map.json` with the candidate types defined by the analysis
+schema (`scripts/lib/analysis-schema.js` `candidateTypeEnum`). JASON-OS port
+prunes `content` and `anti-pattern` per `PORT_DECISIONS.md` Batch 2 #6 and
+#10; the schema enforces this. Output that includes those types fails Zod
+validation in self-audit.
 
-- **Pattern** — code, architecture, tooling to extract
-- **Knowledge** — understanding, methodology, insights to learn (E0-E1)
-- **Content** — specific items FROM the repo's content (tutorials, APIs, guides,
-  papers) with direct home applicability. Promoted from `content-eval.jsonl`:
-  any `high` relevance item MUST become a content candidate AND an extraction
-  entry.
-- **Anti-pattern** — cautionary lessons from Creator View §6. Each actionable
-  warning MUST become an anti-pattern candidate.
+The six valid candidate types in JASON-OS v0.1:
 
-All four use the same ranking fields (novelty, effort, relevance). Content
-candidates include a `url`. Knowledge candidates use E0-E1. Anti-pattern
-candidates use E0.
+- **`pattern`** — code, architecture, or tooling to extract.
+- **`knowledge`** — understanding, methodology, insights to learn (E0–E1).
+- **`architecture-pattern`** — higher-level structural pattern (multi-module,
+  cross-system).
+- **`design-principle`** — operating principle the repo embodies (e.g.,
+  format-longevity, two-tier separation).
+- **`workflow-pattern`** — process / discipline / writing-pattern (e.g.,
+  rule-why-apply feedback format, dual-mode docs).
+- **`tool`** — concrete tool/utility worth knowing about.
+
+All six use the same ranking fields (novelty, effort, relevance). Optional
+`url` for any candidate. Knowledge candidates typically use E0–E1.
+
+**Anti-pattern observations** (cautionary lessons from Creator View §6) do
+NOT become candidates in JASON-OS v0.1 — they live inside `creator-view.md`
+§6 only. The schema does not carry them.
+
+**Content references** from `content-eval.jsonl` (e.g., specific tutorials,
+APIs, guides, papers) feed Creator View §2 "What's Relevant To Your Work"
+prose; they do not promote to candidates as a separate type.
 
 **Scope-explosion prompt:** For curated-list repos with **>100 entries**,
 prompt:
 `"Curated list has N entries. Evaluate all / top 50 by signal / custom scope?"`.
 Soft user-confirmation; never hard-block.
 
-**Done when:** value-map.json exists AND all 4 candidate arrays present AND
-content + anti-pattern promotion rules applied.
+**Done when:** value-map.json exists AND candidates conform to the
+`candidateTypeEnum` (validation enforced by self-audit Step 2).
 
 ---
 

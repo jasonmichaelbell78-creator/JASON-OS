@@ -7,7 +7,14 @@
 <!-- prettier-ignore-end -->
 
 Common boilerplate for all single-session audit skills. Referenced via:
-`Read .claude/skills/_shared/AUDIT_TEMPLATE.md for standard audit procedures.`
+`Read .claude/skills/shared/AUDIT_TEMPLATE.md for standard audit procedures.`
+
+**JASON-OS v0.1 scope note:** Sections referencing infrastructure not yet
+ported (`docs/technical-debt/MASTER_DEBT.jsonl`, `scripts/debt/intake-audit.js`,
+`scripts/reset-audit-triggers.js`, `npm run validate:canon`,
+`docs/audits/single-session/`) carry DEFERRED markers inline. The procedures
+themselves remain spec-correct for the future port; today, audit skills MAY
+skip the gated steps silently.
 
 ---
 
@@ -126,7 +133,15 @@ Before finalizing:
 
 ---
 
-## MASTER_DEBT Cross-Reference (MANDATORY - before Interactive Review)
+## MASTER_DEBT Cross-Reference (DEFERRED in JASON-OS v0.1)
+
+**JASON-OS v0.1 status:** `docs/technical-debt/MASTER_DEBT.jsonl` is not yet
+ported. JASON-OS v0 uses `/add-debt` writing to `.planning/DEBT_LOG.md` (a
+markdown table) as the v0 stub. Audit skills MAY skip MASTER_DEBT
+cross-reference until the canonical debt store ports; for now, cross-reference
+findings against `.planning/DEBT_LOG.md` if it exists, and flag duplicates.
+
+**Original SoNash specification (preserved for the future port):**
 
 **Do NOT present findings for review until cross-referenced against
 MASTER_DEBT.jsonl.**
@@ -159,7 +174,25 @@ only.
 
 ---
 
-## TDMS Intake & Commit
+## TDMS Intake & Commit (DEFERRED in JASON-OS v0.1)
+
+**JASON-OS v0.1 status:** None of the SoNash debt-management scripts
+(`scripts/validate-audit.js`, `scripts/reset-audit-triggers.js`,
+`scripts/debt/intake-audit.js`) are ported, and the
+`docs/audits/single-session/` and `docs/technical-debt/` tree does not exist.
+The v0 path uses `/add-debt` (writing to `.planning/DEBT_LOG.md`) as the
+single intake mechanism; threshold-reset and CANON validation reactivate when
+those systems land.
+
+**v0 audit close-out (until TDMS lands):**
+
+1. Display summary to user.
+2. Confirm output JSONL saved to a deliberately-chosen location under
+   `.research/` or `.planning/` (no `docs/audits/single-session/` tree yet).
+3. For each accepted finding, call `/add-debt` (one debt entry per finding).
+4. Ask: "Would you like me to fix any of these issues now?"
+
+**Original SoNash specification (preserved for the future port):**
 
 1. Display summary to user
 2. Confirm files saved to `docs/audits/single-session/<type>/`
@@ -230,5 +263,6 @@ Do NOT return full findings content. The orchestrator checks completion via
 - **No hallucinated file paths** - verify every file:line reference with
   Read/Grep before including
 - **No inflated severity** - S0/S1 require dual-pass confirmation
-- **No duplicate findings** - cross-reference MASTER_DEBT before intake
+- **No duplicate findings** - cross-reference `.planning/DEBT_LOG.md` (and
+  MASTER_DEBT.jsonl when ported) before intake
 - **Confidence must be honest** - if unsure, use LOW and escalate

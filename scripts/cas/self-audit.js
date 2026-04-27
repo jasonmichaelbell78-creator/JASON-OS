@@ -35,6 +35,11 @@ const { readUtf8Sync } = require("../lib/safe-fs.js");
 
 const PROJECT_ROOT = path.resolve(__dirname, "../.."); // validatePathInDir: constant-path (no user input)
 const ANALYSIS_DIR = path.join(PROJECT_ROOT, ".research", "analysis");
+const STATE_DIR = path.join(PROJECT_ROOT, ".claude", "state");
+
+// Strict slug pattern (QS-1): alphanumerics, dot, dash, underscore only.
+// Rejects path separators, NUL bytes, traversal sequences, and shell metas.
+const SLUG_RE = /^[A-Za-z0-9._-]+$/;
 
 // JASON-OS port: SoNash had a separate `scripts/lib/safe-cas-io.js` module
 // providing `safeReadText` / `safeReadJson` / `isValidArtifactFile`. Those
@@ -43,6 +48,14 @@ const ANALYSIS_DIR = path.join(PROJECT_ROOT, ".research", "analysis");
 // refusal, regular-file enforcement, ENOENT propagation.
 function safeReadText(filePath) {
   refuseSymlinkWithParents(filePath);
+  // QS-4: enforce regular-file before read; readUtf8Sync would otherwise
+  // happily slurp a FIFO/socket/device.
+  const st = fs.lstatSync(filePath);
+  if (!st.isFile()) {
+    const err = new Error("Not a regular file");
+    err.code = "ENOTFILE";
+    throw err;
+  }
   return readUtf8Sync(filePath);
 }
 function safeReadJson(filePath) {
@@ -125,22 +138,11 @@ const WRONG_NAMES = [
   { file: "SITE-ANALYSIS.md", correct: "creator-view.md", reason: "CONVENTIONS Section 13" },
 ];
 
-function parseArgs(argv) {
+function parseSlug(argv) {
   for (const arg of argv.slice(2)) {
     if (arg.startsWith("--slug=")) return arg.slice(7);
   }
   return null;
-}
-
-function getDepth(dir) {
-  const analysisPath = path.join(dir, "analysis.json");
-  try {
-    // safeReadJson refuses symlinks (final + parent chain) and rejects non-files.
-    const data = safeReadJson(analysisPath);
-    return data.depth || "quick";
-  } catch {
-    return "quick";
-  }
 }
 
 // Safe path join: validates containment within ANALYSIS_DIR before returning.
@@ -157,189 +159,200 @@ function safePath(slugPart, filePart) {
 // null if the path does not exist, is a symlink (final or any parent), or is
 // not a regular file. Never throws — suitable for size reporting in loops.
 function safeFileStat(filePath) {
-  if (!isValidArtifactFile(filePath)) {
-    // isValidArtifactFile already rejected empty files, but for reporting we
-    // still want stat when non-empty. Re-check without the size guard.
-    try {
-      refuseSymlinkWithParents(filePath);
-      const st = fs.lstatSync(filePath);
-      if (st.isSymbolicLink()) return null;
-      if (!st.isFile()) return null;
-      return st;
-    } catch {
-      return null;
-    }
-  }
   try {
-    return fs.lstatSync(filePath);
+    refuseSymlinkWithParents(filePath);
+    const st = fs.lstatSync(filePath);
+    if (st.isSymbolicLink()) return null;
+    if (!st.isFile()) return null;
+    return st;
   } catch {
     return null;
   }
 }
 
-function checkArtifacts(dir, slug) {
+// --- Artifact checks (split from monolithic checkArtifacts for S-1) ---
+
+function evaluateMustArtifact(ctx, file, description, results) {
+  const filePath = safePath(ctx.slug, file);
+  const stat = safeFileStat(filePath);
+  if (!stat) {
+    results.fail.push(`MUST artifact missing: ${file} (${description})`);
+    return;
+  }
+  if (stat.size === 0) {
+    results.fail.push(`MUST artifact empty: ${file} (${description})`);
+    return;
+  }
+  results.pass.push(`${file} (${stat.size} bytes)`);
+}
+
+function evaluateShouldArtifact(ctx, entry, results, isStandardOrDeep) {
+  const { file, description, phase } = entry;
+  const filePath = safePath(ctx.slug, file);
+  const stat = safeFileStat(filePath);
+  if (stat && stat.size > 0) {
+    results.pass.push(`${file} (${stat.size} bytes)`);
+    return;
+  }
+  if (!isStandardOrDeep) return;
+  const reason = stat
+    ? `SHOULD artifact empty: ${file} (${description}) — Phase ${phase} may have been skipped`
+    : `SHOULD artifact missing: ${file} (${description}) — Phase ${phase} skipped`;
+  results.warn.push(reason);
+}
+
+function evaluateWrongName(ctx, entry, results) {
+  const { file, correct, reason } = entry;
+  if (safeFileStat(safePath(ctx.slug, file))) {
+    results.fail.push(`Wrong artifact name: ${file} should be ${correct} (${reason})`);
+  }
+}
+
+function checkArtifacts(ctx) {
   const results = { pass: [], fail: [], warn: [] };
-  const depth = getDepth(dir);
-  const isStandardOrDeep = depth === "standard" || depth === "deep";
+  const isStandardOrDeep = ctx.depth === "standard" || ctx.depth === "deep";
 
-  // MUST artifacts (all depths)
-  for (const { file, description } of MUST_ALL_DEPTHS) {
-    const filePath = safePath(slug, file);
-    const stat = safeFileStat(filePath);
-    if (!stat) {
-      results.fail.push(`MUST artifact missing: ${file} (${description})`);
-    } else if (stat.size === 0) {
-      results.fail.push(`MUST artifact empty: ${file} (${description})`);
-    } else {
-      results.pass.push(`${file} (${stat.size} bytes)`);
-    }
+  for (const entry of MUST_ALL_DEPTHS) {
+    evaluateMustArtifact(ctx, entry.file, entry.description, results);
   }
-
-  // MUST artifacts (Standard/Deep only)
   if (isStandardOrDeep) {
-    for (const { file, description } of MUST_STANDARD_DEEP) {
-      const filePath = safePath(slug, file);
-      const stat = safeFileStat(filePath);
-      if (!stat) {
-        results.fail.push(`MUST artifact missing: ${file} (${description})`);
-      } else if (stat.size === 0) {
-        results.fail.push(`MUST artifact empty: ${file} (${description})`);
-      } else {
-        results.pass.push(`${file} (${stat.size} bytes)`);
-      }
+    for (const entry of MUST_STANDARD_DEEP) {
+      evaluateMustArtifact(ctx, entry.file, entry.description, results);
     }
   }
-
-  // SHOULD artifacts — only warn for Standard/Deep
-  for (const { file, description, phase } of SHOULD_ARTIFACTS) {
-    const filePath = safePath(slug, file);
-    const stat = safeFileStat(filePath);
-    if (stat && stat.size > 0) {
-      results.pass.push(`${file} (${stat.size} bytes)`);
-    } else if (isStandardOrDeep) {
-      const reason = stat
-        ? `SHOULD artifact empty: ${file} (${description}) — Phase ${phase} may have been skipped`
-        : `SHOULD artifact missing: ${file} (${description}) — Phase ${phase} skipped`;
-      results.warn.push(reason);
-    }
+  for (const entry of SHOULD_ARTIFACTS) {
+    evaluateShouldArtifact(ctx, entry, results, isStandardOrDeep);
   }
-
-  // WRONG names (naming violations)
-  for (const { file, correct, reason } of WRONG_NAMES) {
-    if (safeFileStat(safePath(slug, file))) {
-      results.fail.push(`Wrong artifact name: ${file} should be ${correct} (${reason})`);
-    }
+  for (const entry of WRONG_NAMES) {
+    evaluateWrongName(ctx, entry, results);
   }
 
   return results;
 }
 
-function checkSchema(dir, slug) {
-  const results = { pass: [], fail: [] };
-  const analysisPath = path.join(dir, "analysis.json");
+// --- Schema checks (split from monolithic checkSchema for S-2) ---
 
-  let data;
+function loadAnalysisOrFail(dir, results) {
+  const analysisPath = path.join(dir, "analysis.json");
   try {
-    // safeReadJson refuses parent-chain symlinks and enforces regular-file.
-    data = safeReadJson(analysisPath);
+    return safeReadJson(analysisPath);
   } catch (err) {
     if (err.code === "ENOENT") {
       results.fail.push("Cannot validate schema — analysis.json missing");
     } else {
       results.fail.push(`analysis.json parse error: ${sanitizeError(err)}`);
     }
-    return results;
+    return null;
   }
+}
 
+function checkSchemaVersion(data, results) {
+  if (data.schema_version) {
+    results.pass.push(`schema_version: ${data.schema_version}`);
+  } else {
+    results.fail.push("analysis.json missing schema_version field");
+  }
+}
+
+function runZodValidation(data, results) {
   try {
-    // Check schema_version
-    if (data.schema_version) {
-      results.pass.push(`schema_version: ${data.schema_version}`);
+    const { validate } = require("../lib/analysis-schema.js");
+    const result = validate(data, "analysis");
+    if (result.success) {
+      results.pass.push("Zod schema validation: PASS");
     } else {
-      results.fail.push("analysis.json missing schema_version field");
-    }
-
-    // Validate against Zod schema
-    try {
-      const { validate } = require("../lib/analysis-schema.js");
-      const result = validate(data, "analysis");
-      if (result.success) {
-        results.pass.push("Zod schema validation: PASS");
-      } else {
-        results.fail.push(`Zod schema validation: FAIL — ${result.error}`);
-      }
-    } catch (err) {
-      results.fail.push(`Zod schema validation error: ${sanitizeError(err)}`);
-    }
-
-    // Check candidates populated (Standard/Deep should have them)
-    if (data.depth !== "quick" && (!data.candidates || data.candidates.length === 0)) {
-      results.fail.push("Standard/Deep analysis has 0 candidates — value-map likely empty too");
-    } else if (data.candidates) {
-      results.pass.push(`${data.candidates.length} candidates in analysis.json`);
-    }
-
-    // Media-specific: transcript_source must be set (CONVENTIONS 13.3)
-    if (data.source_type === "media") {
-      if (data.transcript_source) {
-        results.pass.push(`transcript_source: ${data.transcript_source}`);
-      } else {
-        results.fail.push("Media analysis missing transcript_source field (CONVENTIONS 13.3)");
-      }
-      // transcript.md must exist
-      const transcriptPath = safePath(slug, "transcript.md");
-      const tStat = safeFileStat(transcriptPath);
-      if (tStat && tStat.size > 0) {
-        results.pass.push(`transcript.md (${tStat.size} bytes)`);
-      } else {
-        results.fail.push("Media analysis missing transcript.md (CONVENTIONS 13.3 MUST)");
-      }
+      results.fail.push(`Zod schema validation: FAIL — ${result.error}`);
     }
   } catch (err) {
-    results.fail.push(`analysis.json parse error: ${sanitizeError(err)}`);
+    results.fail.push(`Zod schema validation error: ${sanitizeError(err)}`);
   }
+}
 
+function checkCandidateCount(data, results) {
+  if (data.depth !== "quick" && (!data.candidates || data.candidates.length === 0)) {
+    results.fail.push("Standard/Deep analysis has 0 candidates — value-map likely empty too");
+    return;
+  }
+  if (data.candidates) {
+    results.pass.push(`${data.candidates.length} candidates in analysis.json`);
+  }
+}
+
+function checkMediaSpecific(data, ctx, results) {
+  if (data.source_type !== "media") return;
+  if (data.transcript_source) {
+    results.pass.push(`transcript_source: ${data.transcript_source}`);
+  } else {
+    results.fail.push("Media analysis missing transcript_source field (CONVENTIONS 13.3)");
+  }
+  const transcriptPath = safePath(ctx.slug, "transcript.md");
+  const tStat = safeFileStat(transcriptPath);
+  if (tStat && tStat.size > 0) {
+    results.pass.push(`transcript.md (${tStat.size} bytes)`);
+  } else {
+    results.fail.push("Media analysis missing transcript.md (CONVENTIONS 13.3 MUST)");
+  }
+}
+
+function checkSchema(ctx) {
+  const results = { pass: [], fail: [] };
+  const data = loadAnalysisOrFail(ctx.dir, results);
+  if (!data) return results;
+  checkSchemaVersion(data, results);
+  runZodValidation(data, results);
+  checkCandidateCount(data, results);
+  checkMediaSpecific(data, ctx, results);
   return results;
 }
 
-function checkBehavioral(dir, slug, sourceType) {
-  const results = { pass: [], fail: [], warn: [] };
-  const depth = getDepth(dir);
-  const isStandardOrDeep = depth === "standard" || depth === "deep";
+// --- Behavioral checks ---
 
-  if (!isStandardOrDeep) return results;
+const HANDLER_MAP = {
+  repo: "repo-analysis",
+  website: "website-analysis",
+  document: "document-analysis",
+  media: "media-analysis",
+};
 
-  // State file check (CONVENTIONS 16.4)
-  const handlerMap = {
-    repo: "repo-analysis",
-    website: "website-analysis",
-    document: "document-analysis",
-    media: "media-analysis",
-  };
-  const handler = handlerMap[sourceType] || "unknown";
-  const stateDir = path.join(PROJECT_ROOT, ".claude", "state");
-  const stateFile = path.join(stateDir, `${handler}.${slug}.state.json`);
-
-  let state;
+function loadStateFile(handler, slug, results) {
+  // QC-S1: validate the constructed state filename does not escape STATE_DIR.
+  const stateRel = `${handler}.${slug}.state.json`;
   try {
-    // safeReadJson throws ENOENT when missing and refuses parent-chain symlinks.
-    state = safeReadJson(stateFile);
+    validatePathInDir(STATE_DIR, stateRel);
+  } catch (err) {
+    results.warn.push(`State file path rejected by containment check: ${sanitizeError(err)}`);
+    return null;
+  }
+  const stateFile = path.join(STATE_DIR, stateRel);
+  try {
+    return safeReadJson(stateFile);
   } catch (err) {
     if (err.code === "ENOENT") {
       results.warn.push(
-        `No state file — pipeline tail (tags, retro, routing) may have been skipped (CONVENTIONS 16)`
+        "No state file — pipeline tail (tags, retro, routing) may have been skipped (CONVENTIONS 16)"
       );
     } else {
       results.warn.push(`State file exists but is malformed or unsafe: ${sanitizeError(err)}`);
     }
-    return results;
+    return null;
   }
+}
 
-  results.pass.push(`State file exists (${handler}.${slug})`);
+function checkBehavioral(ctx) {
+  const results = { pass: [], fail: [], warn: [] };
+  const isStandardOrDeep = ctx.depth === "standard" || ctx.depth === "deep";
+  if (!isStandardOrDeep) return results;
+
+  const handler = HANDLER_MAP[ctx.sourceType] || "unknown";
+  const state = loadStateFile(handler, ctx.slug, results);
+  if (!state) return results;
+
+  results.pass.push(`State file exists (${handler}.${ctx.slug})`);
+  // QC-2: do NOT echo process_feedback content — it can contain user
+  // sentiment / private notes. Confirm presence + length only.
   if (state.process_feedback) {
-    results.pass.push(
-      `Retro feedback captured: "${String(state.process_feedback).substring(0, 50)}..."`
-    );
+    const len = String(state.process_feedback).length;
+    results.pass.push(`Retro feedback captured (${len} chars)`);
   } else {
     results.warn.push(
       "State file exists but process_feedback is empty — retro may have been skipped (CONVENTIONS 16.2)"
@@ -477,6 +490,21 @@ function collectHomeRepoCandidates(text) {
   return candidates;
 }
 
+// QS-2: presence check refuses symlinked-into-tree references. lstatSync
+// throws ENOENT for missing entries; refuseSymlinkWithParents short-circuits
+// on any symlink in the parent chain. Either failure mode marks the
+// reference as broken — symlink misuse is treated as broken, not silently
+// followed.
+function pathExistsRefusingSymlinks(abs) {
+  try {
+    refuseSymlinkWithParents(abs);
+    fs.lstatSync(abs);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function findBrokenHomeRefs(candidatePaths) {
   const broken = [];
   for (const rel of candidatePaths) {
@@ -490,7 +518,7 @@ function findBrokenHomeRefs(candidatePaths) {
       continue;
     }
     const abs = path.join(PROJECT_ROOT, clean);
-    if (!fs.existsSync(abs)) broken.push(clean);
+    if (!pathExistsRefusingSymlinks(abs)) broken.push(clean);
   }
   return broken;
 }
@@ -528,100 +556,136 @@ function check5cHomeRepoRefs(dir, results) {
 
 function check8ReanalysisSignal(dir, results) {
   const trendsPath = path.join(dir, "trends.jsonl");
-  if (fs.existsSync(trendsPath)) {
-    const stat = safeFileStat(trendsPath);
-    if (stat && stat.size > 0) {
-      results.pass.push(
-        `trends.jsonl present (${stat.size} bytes) — prior re-analysis history (Step 10.5 check 8)`
-      );
-    }
+  const stat = safeFileStat(trendsPath);
+  if (stat && stat.size > 0) {
+    results.pass.push(
+      `trends.jsonl present (${stat.size} bytes) — prior re-analysis history (Step 10.5 check 8)`
+    );
   }
   // Absence is not a fail — most sources have no trends.jsonl yet.
 }
 
-function checkStep10Extended(dir, slug /* unused after journal-check drop */) {
+function checkStep10Extended(ctx) {
   const results = { pass: [], fail: [], warn: [] };
-  const depth = getDepth(dir);
-  const isStandardOrDeep = depth === "standard" || depth === "deep";
+  const isStandardOrDeep = ctx.depth === "standard" || ctx.depth === "deep";
   if (!isStandardOrDeep) return results;
 
-  check5aSpecificCitations(dir, results);
-  check5cHomeRepoRefs(dir, results);
-  check8ReanalysisSignal(dir, results);
+  check5aSpecificCitations(ctx.dir, results);
+  check5cHomeRepoRefs(ctx.dir, results);
+  check8ReanalysisSignal(ctx.dir, results);
 
   return results;
 }
 
-function main() {
-  const slug = parseArgs(process.argv);
+// --- main() helpers (split for S-3) ---
+
+function validateSlug(slug) {
   if (!slug) {
     console.error("Usage: node scripts/cas/self-audit.js --slug=<slug>");
     process.exit(1);
   }
-
-  // Validate slug doesn't escape ANALYSIS_DIR (path containment)
-  validatePathInDir(ANALYSIS_DIR, slug);
-  const dir = path.join(ANALYSIS_DIR, slug);
-  if (!fs.existsSync(dir)) {
-    console.error(`Output directory not found: ${dir}`);
+  // QS-1: reject slugs containing path separators, dot-dot sequences, NUL,
+  // or any other character outside the explicit safelist BEFORE feeding
+  // into validatePathInDir. validatePathInDir checks containment but not
+  // the shape of the input.
+  if (!SLUG_RE.test(slug) || slug === "." || slug === "..") {
+    console.error("Invalid slug: must match [A-Za-z0-9._-]+ and not be '.' or '..'");
     process.exit(1);
   }
+  validatePathInDir(ANALYSIS_DIR, slug);
+}
 
-  // Determine source name and type from analysis.json if possible
-  let source = slug;
-  let sourceType = "repo";
+function resolveAnalysisDir(slug) {
+  const dir = path.join(ANALYSIS_DIR, slug);
+  // QS-3: race-safe directory check. existsSync follows symlinks (TOCTOU
+  // window) and tells us nothing about file type. lstat + isDirectory in
+  // one call avoids the race and rejects symlinked dirs.
+  let dirStat;
+  try {
+    refuseSymlinkWithParents(dir);
+    dirStat = fs.lstatSync(dir);
+  } catch {
+    console.error(`Output directory not found for slug: ${slug}`);
+    process.exit(1);
+  }
+  if (!dirStat.isDirectory()) {
+    console.error(`Output path is not a directory for slug: ${slug}`);
+    process.exit(1);
+  }
+  return dir;
+}
+
+// Q-1: read analysis metadata once; surface depth + identity to callers via
+// ctx so individual check functions don't re-open analysis.json. ENOENT
+// degrades to defaults silently (Quick Scan path); other errors are
+// reported but the audit continues so downstream checks still run.
+function readAnalysisMetadata(dir, slug) {
+  const meta = { source: slug, sourceType: "repo", depth: "quick" };
   const analysisPath = path.join(dir, "analysis.json");
   try {
-    // safeReadJson refuses parent-chain symlinks and throws ENOENT if missing.
     const data = safeReadJson(analysisPath);
-    if (data.source) source = data.source;
-    if (data.source_type) sourceType = data.source_type;
-  } catch {
-    // fall through — use slug as fallback identifier
+    if (data.source) meta.source = data.source;
+    if (data.source_type) meta.sourceType = data.source_type;
+    if (data.depth) meta.depth = data.depth;
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      // Surface non-ENOENT errors instead of silently swallowing them.
+      console.error(`Warning: could not read analysis.json: ${sanitizeError(err)}`);
+    }
   }
+  return meta;
+}
 
+function aggregateResults(sections) {
+  const aggregate = { pass: [], fail: [], warn: [] };
+  for (const section of sections) {
+    if (section.pass) aggregate.pass.push(...section.pass);
+    if (section.fail) aggregate.fail.push(...section.fail);
+    if (section.warn) aggregate.warn.push(...section.warn);
+  }
+  return aggregate;
+}
+
+function printAggregate(aggregate) {
+  if (aggregate.pass.length > 0) {
+    console.log(`\nPASS (${aggregate.pass.length}):`);
+    for (const p of aggregate.pass) console.log(`  + ${p}`);
+  }
+  if (aggregate.warn.length > 0) {
+    console.log(`\nWARN (${aggregate.warn.length}):`);
+    for (const w of aggregate.warn) console.log(`  ~ ${w}`);
+  }
+  if (aggregate.fail.length > 0) {
+    console.log(`\nFAIL (${aggregate.fail.length}):`);
+    for (const f of aggregate.fail) console.log(`  x ${f}`);
+  }
+  console.log(
+    `\n---\nResult: ${aggregate.fail.length === 0 ? "PASS" : "FAIL"} (${aggregate.pass.length} pass, ${aggregate.warn.length} warn, ${aggregate.fail.length} fail)`
+  );
+}
+
+function main() {
+  const slug = parseSlug(process.argv);
+  validateSlug(slug);
+  const dir = resolveAnalysisDir(slug);
+  const meta = readAnalysisMetadata(dir, slug);
+  const ctx = { dir, slug, sourceType: meta.sourceType, depth: meta.depth };
+
+  // QC-1: identify the audit by slug, not by absolute path. Absolute paths
+  // can leak username / install layout into shared logs.
   console.log(`CAS Self-Audit: ${slug}`);
-  console.log(`Source: ${source}`);
+  console.log(`Source: ${meta.source}`);
   console.log("---");
 
-  const artifacts = checkArtifacts(dir, slug);
-  const schema = checkSchema(dir, slug);
-  const behavioral = checkBehavioral(dir, slug, sourceType);
-  const extended = checkStep10Extended(dir, slug);
-
-  const allPass = [
-    ...artifacts.pass,
-    ...schema.pass,
-    ...behavioral.pass,
-    ...extended.pass,
+  const sections = [
+    checkArtifacts(ctx),
+    checkSchema(ctx),
+    checkBehavioral(ctx),
+    checkStep10Extended(ctx),
   ];
-  const allFail = [
-    ...artifacts.fail,
-    ...schema.fail,
-    ...behavioral.fail,
-    ...extended.fail,
-  ];
-  const allWarn = [...artifacts.warn, ...behavioral.warn, ...extended.warn];
-
-  if (allPass.length > 0) {
-    console.log(`\nPASS (${allPass.length}):`);
-    for (const p of allPass) console.log(`  + ${p}`);
-  }
-
-  if (allWarn.length > 0) {
-    console.log(`\nWARN (${allWarn.length}):`);
-    for (const w of allWarn) console.log(`  ~ ${w}`);
-  }
-
-  if (allFail.length > 0) {
-    console.log(`\nFAIL (${allFail.length}):`);
-    for (const f of allFail) console.log(`  x ${f}`);
-  }
-
-  console.log(
-    `\n---\nResult: ${allFail.length === 0 ? "PASS" : "FAIL"} (${allPass.length} pass, ${allWarn.length} warn, ${allFail.length} fail)`
-  );
-  process.exit(allFail.length > 0 ? 1 : 0);
+  const aggregate = aggregateResults(sections);
+  printAggregate(aggregate);
+  process.exit(aggregate.fail.length > 0 ? 1 : 0);
 }
 
 try {

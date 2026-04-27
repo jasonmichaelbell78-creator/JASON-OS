@@ -1415,8 +1415,10 @@ Absorbed from SKILL.md v2.0 to keep SKILL.md under 300 lines.
 2. LFS check: `GIT_LFS_SKIP_SMUDGE=1` if `.gitattributes` detected
 3. Monorepo detection (turbo.json, nx.json, pnpm-workspace.yaml, etc.)
 4. **Repomix generation (MUST — immediately after clone):**
-   `npx repomix@latest --compress --output <output-dir>/repomix-output.txt`
-   Verify file exists. If fails: retry once, report to user. Never skip.
+   `npx repomix --compress --output <output-dir>/repomix-output.txt`
+   Use the project-installed dep declared in `package.json`. Do NOT use
+   `@latest` — that introduces nondeterminism on upstream releases. Verify
+   file exists. If fails: retry once, report to user. Never skip.
 5. For Deep: `git fetch --unshallow` or `--shallow-since="1 year ago"`
 6. Update state file with clone path and strategy
 

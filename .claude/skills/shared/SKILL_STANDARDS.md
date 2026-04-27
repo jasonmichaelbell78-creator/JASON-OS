@@ -148,7 +148,7 @@ ordering required. Wave N+1 depends on Wave N completion.
 
 ## Shared Templates
 
-Common boilerplate lives in `.claude/skills/_shared/`:
+Common boilerplate lives in `.claude/skills/shared/`:
 
 | Template               | Purpose                                  | Used by                      |
 | ---------------------- | ---------------------------------------- | ---------------------------- |
@@ -161,7 +161,7 @@ Audit skills reference the shared template instead of duplicating boilerplate:
 ```markdown
 ## Standard Audit Procedures
 
-> Read `.claude/skills/_shared/AUDIT_TEMPLATE.md` for: Evidence Requirements,
+> Read `.claude/skills/shared/AUDIT_TEMPLATE.md` for: Evidence Requirements,
 > Dual-Pass Verification, JSONL Output Format, MASTER_DEBT Cross-Reference,
 > Interactive Review, TDMS Intake & Commit, and Honesty Guardrails.
 ```
@@ -169,7 +169,7 @@ Audit skills reference the shared template instead of duplicating boilerplate:
 Ecosystem audit skills reference shared protocols:
 
 ```markdown
-> Read `.claude/skills/_shared/ecosystem-audit/CRITICAL_RULES.md` and follow all
+> Read `.claude/skills/shared/ecosystem-audit/CRITICAL_RULES.md` and follow all
 > 8 rules.
 ```
 
@@ -202,7 +202,7 @@ Ecosystem audit skills reference shared protocols:
 | Skill name | lowercase-kebab-case      | `audit-code`             |
 | Directory  | `.claude/skills/<name>/`  | `.claude/skills/alerts/` |
 | Companion  | lowercase with extension  | `prompts.md`             |
-| Shared     | `.claude/skills/_shared/` | UPPERCASE filenames      |
+| Shared     | `.claude/skills/shared/` | UPPERCASE filenames      |
 
 ---
 
@@ -329,62 +329,55 @@ These apply to ALL tiers (including Simple via "Done when:" gates):
 ## Invocation Tracking
 
 Every skill SHOULD log a single invocation record at completion to
-`data/ecosystem-v2/invocations.jsonl` via `scripts/reviews/write-invocation.ts`.
-The records feed the ecosystem dashboards and pr-retro analyses.
+`.claude/state/invocations.jsonl` via `safeAppendFileSync` from
+`scripts/lib/safe-fs.js`. JASON-OS replaces the SoNash
+`scripts/reviews/write-invocation.ts` mechanic with this simpler JSONL append
+per `PORT_DECISIONS.md` Batch 6 #7. The file is git-tracked (state-pattern)
+and survives session boundaries; any future analytics tool consumes the JSONL
+stream incrementally.
 
 ### Canonical Caller Snippet
 
-```bash
-cd scripts/reviews && npx tsx write-invocation.ts --data '{
-  "skill": "SKILL_NAME",
-  "type": "skill",
-  "success": true,
-  "schema_version": 1,
-  "completeness": "stub",
-  "origin": { "type": "manual" },
-  "context": { "trigger": "...", "session": "..." }
-}'
+```js
+const path = require("node:path");
+const { safeAppendFileSync } = require("./scripts/lib/safe-fs.js");
+
+const row = {
+  timestamp: new Date().toISOString(),
+  skill: "SKILL_NAME",
+  target: TARGET,                   // skill-specific identifier (e.g., "owner/name" for repo-analysis)
+  depth: DEPTH,                     // skill-specific (e.g., "quick" | "standard" | "deep")
+  success: true,
+  decisions_count: DECISION_COUNT,  // optional
+  candidates_count: CANDIDATE_COUNT, // optional
+};
+
+safeAppendFileSync(
+  path.join(".claude", "state", "invocations.jsonl"),
+  JSON.stringify(row) + "\n"
+);
 ```
 
-### Required vs Auto-Filled Fields
+### Required Fields
 
-The writer auto-fills these fields when omitted (so legacy snippets keep
-working), but new and modernized snippets SHOULD pass them explicitly:
+| Field       | Type    | Notes                                                  |
+| ----------- | ------- | ------------------------------------------------------ |
+| `timestamp` | string  | ISO 8601 — `new Date().toISOString()`                  |
+| `skill`     | string  | The skill name (matches the slash command)            |
+| `success`   | boolean | Whether the invocation completed cleanly               |
 
-| Field            | Auto-fill default      | When to override                             |
-| ---------------- | ---------------------- | -------------------------------------------- |
-| `id`             | `inv-{ts}-{pid}-{seq}` | Never — let the writer assign                |
-| `date`           | Today (YYYY-MM-DD)     | Never — let the writer assign                |
-| `schema_version` | `1`                    | Bump only when BaseRecord schema changes     |
-| `completeness`   | `"stub"`               | `"full"` if all context fields populated     |
-| `origin`         | `{ type: "manual" }`   | `{ type: "pr-review", pr: 505 }` for PR work |
+### Optional / Skill-Specific Fields
 
-The `type` enum on `origin` is
-`pr-review | pr-retro | backfill | migration | manual`. Use `manual` for
-human-invoked skill runs (the default).
+Skills MAY add domain-specific fields (`target`, `depth`, `decisions_count`,
+`candidates_count`, etc.). Keep the row a flat JSON object with primitive
+values where possible. There is no Zod validator on the JSONL stream in v0.1
+— consumers read defensively.
 
-### Required Caller Fields
+### DEFERRED (JASON-OS v0.1 → SoNash parity)
 
-| Field     | Type                         | Notes                                      |
-| --------- | ---------------------------- | ------------------------------------------ |
-| `skill`   | string                       | The skill name (matches the slash command) |
-| `type`    | `skill` \| `agent` \| `team` | What ran                                   |
-| `success` | boolean                      | Whether the invocation completed cleanly   |
-
-### Optional Context Fields
-
-The `context` object accepts a fixed set of keys defined in
-`scripts/reviews/lib/schemas/invocation.ts`. Common ones: `trigger`, `session`,
-`topic`, `decisions`, `score`, `note`. **Unknown context keys are silently
-stripped by Zod** — if a skill needs a new context field, add it to the
-`InvocationRecord` schema first.
-
-### Where Defaults Live
-
-The auto-fill logic lives in `scripts/reviews/write-invocation.ts`
-(`writeInvocation()`). Schema-of-record is
-`scripts/reviews/lib/schemas/invocation.ts` (`InvocationRecord`) which extends
-`BaseRecord` from `scripts/reviews/lib/schemas/shared.ts`.
+The richer SoNash `InvocationRecord` (auto-filled `id`, `date`, `origin`,
+`completeness`, `context.{trigger,session,topic,decisions,score,note}`) is
+not ported. Add these only when a JASON-OS-native consumer needs them.
 
 ---
 
